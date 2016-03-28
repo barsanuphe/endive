@@ -5,7 +5,7 @@ type Library struct {
 	Root              string
 	ConfigurationFile string
 
-	Epubs []Epub
+	Epubs Epubs
 }
 
 func (l *Library) ImportRetail() (err error) {
@@ -15,3 +15,6 @@ func (l *Library) ImportRetail() (err error) {
 func (l *Library) ImportNonRetail() (err error) {
 	return err
 }
+
+
+
