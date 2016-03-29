@@ -27,6 +27,7 @@ type Epub struct {
 	Series          []Series
 	Author          string
 	Title           string
+	Language	string
 	PublicationYear int
 	ReadDate        string // month
 	Tags            []string
@@ -36,7 +37,7 @@ type Epub struct {
 
 // String returns a string representation of Epub
 func (e *Epub) String() (desc string) {
-	return e.Filename + ":\t" + e.Author + " (" + strconv.Itoa(e.PublicationYear) + ") " + e.Title
+	return e.Filename + ":\t" + e.Author + " (" + strconv.Itoa(e.PublicationYear) + ") " + e.Title + " [" + e.Language + "]"
 }
 
 // GetHash calculates an epub's current hash
@@ -105,8 +106,6 @@ func (e *Epub) GetMetadata() (err error) {
 	}
 	defer book.Close()
 
-	// book.MetadataFields()
-
 	title, err := book.Metadata("title")
 	if err != nil {
 		fmt.Println("Error parsing EPUB")
@@ -121,6 +120,14 @@ func (e *Epub) GetMetadata() (err error) {
 		e.Author = "Unknown"
 	} else {
 		e.Author = author[0]
+	}
+
+	language, err := book.Metadata("language")
+	if err != nil {
+		fmt.Println("Error parsing EPUB")
+		e.Language = "Unknown"
+	} else {
+		e.Language = language[0]
 	}
 
 	dateEvents, err := book.MetadataAttr("date")

@@ -12,6 +12,7 @@ var epubs = []struct {
 	expectedTitle           string
 	expectedAuthor          string
 	expectedPublicationYear int
+	expectedLanguage	string
 }{
 	{
 		"test/pg17989.epub",
@@ -19,6 +20,7 @@ var epubs = []struct {
 		"Le comte de Monte-Cristo, Tome I",
 		"Alexandre Dumas",
 		2006,
+		"fr",
 	},
 	{
 		"test/pg16328.epub",
@@ -26,6 +28,7 @@ var epubs = []struct {
 		"Beowulf / An Anglo-Saxon Epic Poem",
 		"Unknown",
 		2005,
+		"en",
 	},
 }
 
@@ -49,6 +52,9 @@ func TestGetMetaData(t *testing.T) {
 		}
 		if e.PublicationYear != test_epub.expectedPublicationYear {
 			t.Errorf("GetMetadata(%s) returned %d, expected %d!", test_epub.filename, e.PublicationYear, test_epub.expectedPublicationYear)
+		}
+		if e.Language != test_epub.expectedLanguage {
+			t.Errorf("GetMetadata(%s) returned %d, expected %d!", test_epub.filename, e.Language, test_epub.expectedLanguage)
 		}
 		fmt.Println(e.String())
 	}
