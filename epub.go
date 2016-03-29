@@ -27,7 +27,7 @@ type Epub struct {
 	Series          []Series
 	Author          string
 	Title           string
-	Language	string
+	Language        string
 	PublicationYear int
 	ReadDate        string // month
 	Tags            []string

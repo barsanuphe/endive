@@ -12,7 +12,7 @@ var epubs = []struct {
 	expectedTitle           string
 	expectedAuthor          string
 	expectedPublicationYear int
-	expectedLanguage	string
+	expectedLanguage        string
 }{
 	{
 		"test/pg17989.epub",

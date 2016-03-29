@@ -1,6 +1,17 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"io/ioutil"
+	"log"
+
+	"encoding/json"
+
+	"strconv"
+
+	"github.com/blevesearch/bleve"
+	"github.com/blevesearch/bleve/analysis/language/en"
+)
 
 // LibraryDB manages the epub database and search
 type LibraryDB struct {
@@ -25,11 +36,111 @@ func (lbd *LibraryDB) Save() (err error) {
 	return
 }
 
+func buildIndexMapping() (*bleve.IndexMapping, error) {
+	// a generic reusable mapping for english text
+	englishTextFieldMapping := bleve.NewTextFieldMapping()
+	englishTextFieldMapping.Analyzer = en.AnalyzerName
+
+	epubMapping := bleve.NewDocumentMapping()
+
+	epubMapping.AddFieldMappingsAt("filename", englishTextFieldMapping)
+	epubMapping.AddFieldMappingsAt("description", englishTextFieldMapping)
+	epubMapping.AddFieldMappingsAt("language", englishTextFieldMapping)
+	epubMapping.AddFieldMappingsAt("test", englishTextFieldMapping)
+
+	indexMapping := bleve.NewIndexMapping()
+	indexMapping.AddDocumentMapping("epub", epubMapping)
+
+	indexMapping.TypeField = "type"
+	indexMapping.DefaultAnalyzer = "en"
+
+	return indexMapping, nil
+}
+
+func openIndex(path string) bleve.Index {
+	index, err := bleve.Open(path)
+	if err == bleve.ErrorIndexPathDoesNotExist {
+		log.Printf("Creating new index...")
+		// create a mapping
+		indexMapping, err := buildIndexMapping()
+		index, err = bleve.New(path, indexMapping)
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else if err == nil {
+		//log.Printf("Opening existing index...")
+	} else {
+		log.Fatal(err)
+	}
+	return index
+}
+
+// TODO: TEMP, replace with Epub
+type ebook struct {
+	Filename    string
+	Description string
+	Language    string
+	Tags        []string
+}
+
+// Index current DB
+func (ldb *LibraryDB) Index() (numIndexed uint64, err error) {
+	// open index
+	index := openIndex("endive.index")
+	defer index.Close()
+
+	// read the bytes
+	jsonBytes, err := ioutil.ReadFile(ldb.DatabaseFile)
+	if err != nil {
+		return
+	}
+	// TODO map directly on EPUB
+	var epubs []ebook
+	err = json.Unmarshal(jsonBytes, &epubs)
+	if err != nil {
+		fmt.Print("Error:", err)
+	}
+
+	// index by filename
+	for _, epub := range epubs {
+		index.Index(epub.Filename, epub) // jsonBytes
+	}
+
+	// 1 document has been indexed
+	numIndexed, err = index.DocCount()
+	if err != nil {
+		return
+	}
+
+	fmt.Println("Indexed: " + strconv.FormatUint(numIndexed, 10) + " epubs.")
+
+	return
+}
+
 // Search current DB
-func (lbd *LibraryDB) Search() (results []Epub, err error) {
+func (lbd *LibraryDB) Search(queryString string) (results []Epub, err error) {
 	// TODO make sure the index is up to date
-	// TODO run bleve query, return results
-	fmt.Println("Searching database...")
+
+	fmt.Println("Searching database for " + queryString + " ...")
+
+	// search for some text
+	query := bleve.NewQueryStringQuery(queryString)
+	search := bleve.NewSearchRequest(query)
+	// open index
+	index := openIndex("endive.index")
+	defer index.Close()
+	searchResults, err := index.Search(search)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	//fmt.Println(searchResults.Total)
+	if searchResults.Total != 0 {
+		for _, hit := range searchResults.Hits {
+			fmt.Println("Found " + hit.ID)
+		}
+	}
+	// TODO run bleve query, return Epub results
 	return
 }
 

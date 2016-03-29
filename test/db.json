@@ -1,0 +1,21 @@
+[
+    {
+        "filename": "test/pg17989.epub",
+        "description": "Le comte de Monte-Cristo!",
+        "language": "fr",
+        "tags": ["littérature"]
+    },
+    {
+        "filename": "test/pg1628.epub",
+        "description": "Beowulf is a very old and violent poem.",
+        "language": "en",
+        "tags": ["old", "warrior",  "poem", "littérature"]
+    },
+    {
+        "filename": "test/non-existing.epub",
+        "description": "this epub does not exist.",
+        "language": "ru",
+        "tags": ["not", "relevant", "paf", "sf"]
+    }
+]
+
