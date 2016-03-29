@@ -1,8 +1,11 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-	"github.com/meskio/epubgo"
+	"strconv"
+
+	"github.com/barsanuphe/epubgo"
 )
 
 // Series can track a series and an epub's position.
@@ -12,6 +15,7 @@ type Series struct {
 }
 
 // Epub can manipulate an epub file.
+// TODO map directly to JSON
 type Epub struct {
 	Filename        string
 	RelativePath    string
@@ -28,6 +32,11 @@ type Epub struct {
 	Tags            []string
 	Rating          int
 	Review          string
+}
+
+// String returns a string representation of Epub
+func (e *Epub) String() (desc string) {
+	return e.Filename + ":\t" + e.Author + " (" + strconv.Itoa(e.PublicationYear) + ") " + e.Title
 }
 
 // GetHash calculates an epub's current hash
@@ -95,13 +104,59 @@ func (e *Epub) GetMetadata() (err error) {
 		return
 	}
 	defer book.Close()
+
+	// book.MetadataFields()
+
 	title, err := book.Metadata("title")
 	if err != nil {
 		fmt.Println("Error parsing EPUB")
-		return
+		e.Title = "Uknown"
+	} else {
+		e.Title = title[0]
 	}
-	e.Title = title[0]
-	// TODO
+
+	author, err := book.Metadata("creator")
+	if err != nil {
+		fmt.Println("Error parsing EPUB")
+		e.Author = "Unknown"
+	} else {
+		e.Author = author[0]
+	}
+
+	dateEvents, err := book.MetadataAttr("date")
+	if err != nil {
+		fmt.Println("Error parsing EPUB")
+		e.PublicationYear = 0
+	} else {
+		dates, err := book.Metadata("date")
+		if err != nil {
+			fmt.Println("Error parsing EPUB")
+			e.PublicationYear = 0
+		} else {
+			// find publication event
+			found := false
+			for i, d := range dateEvents {
+				for _, evt := range d {
+					if evt == "publication" {
+						found = true
+						// MetadataAttr are in the same order than Metadata
+						e.PublicationYear, err = strconv.Atoi(dates[i][0:4])
+						if err != nil {
+							panic(err)
+						}
+						break
+					}
+				}
+				if found {
+					break
+				}
+			}
+			if !found {
+				fmt.Println("Error parsing EPUB, no publication year")
+				err = errors.New("No publication date")
+			}
+		}
+	}
 	return
 }
 
