@@ -1,21 +1,14 @@
 package main
 
 import (
-	"github.com/meskio/epubgo"
 	"fmt"
+	"github.com/meskio/epubgo"
 )
 
 // Series can track a series and an epub's position.
 type Series struct {
 	Name  string
 	Index int
-}
-
-// Tag an ebook.
-// TODO: at library level?
-type Tag struct {
-	Name        string
-	Description string
 }
 
 // Epub can manipulate an epub file.
@@ -32,7 +25,9 @@ type Epub struct {
 	Title           string
 	PublicationYear int
 	ReadDate        string // month
-	Tags            []Tag
+	Tags            []string
+	Rating          int
+	Review          string
 }
 
 // GetHash calculates an epub's current hash
@@ -80,8 +75,20 @@ func (e *Epub) HasTag(tagName string) (hasThisTag bool, err error) {
 	return
 }
 
+// SetReadDate sets date when finished reading
+func (e *Epub) SetReadDate(date string) (err error) {
+	return
+}
+
+// SetReadDateToday sets date when finished reading
+func (e *Epub) SetReadDateToday() (err error) {
+	// TODO find today, call SetReadDate(today)
+	return
+}
+
 // GetMetadata from the epub
 func (e *Epub) GetMetadata() (err error) {
+	fmt.Println("Reading metadata from OPF for Epub " + e.Filename)
 	book, err := epubgo.Open(e.Filename)
 	if err != nil {
 		fmt.Println("Error parsing EPUB")
@@ -98,3 +105,22 @@ func (e *Epub) GetMetadata() (err error) {
 	return
 }
 
+// Refresh filename.
+func (e *Epub) Refresh() (wasRenamed bool, newName string, err error) {
+	fmt.Println("Refreshing Epub " + e.Filename)
+	// TODO the first time (ie if author, title, year are blank), run GetMetadata
+	// TODO otherwise, just use the db
+	return
+}
+
+// FromJSON fills the Epub info from JSON text.
+func (e *Epub) FromJSON(json string) (err error) {
+	fmt.Println("Filling Epub from DB for " + e.Filename)
+	return
+}
+
+// JSON returns a JSON representation of the Epub and its metadata.
+func (e *Epub) JSON() (JSONPart string, err error) {
+	fmt.Println("Generationg JSON for " + e.Filename)
+	return
+}

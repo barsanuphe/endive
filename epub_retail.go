@@ -1,7 +1,5 @@
 package main
 
-
-
 type EpubRetail struct {
 	Epub
 }
@@ -11,4 +9,8 @@ func (e *EpubRetail) SetReadOnly() (err error) {
 	return
 }
 
-
+// Check the retail epub integrity.
+func (e *EpubRetail) Check() (hasNotChanged bool, err error) {
+	// TODO
+	return
+}
