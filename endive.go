@@ -21,6 +21,14 @@ func main() {
 		panic(err)
 	}
 
+	// get library
+	l := Library{ConfigurationFile: rc}
+	err := l.Load()
+	if err != nil {
+		panic(err)
+	}
+	defer l.Save()
+
 	app := cli.NewApp()
 	app.Name = "E N D I V E"
 	app.Usage = "Organize your epub collection."
@@ -66,7 +74,7 @@ func main() {
 		},
 		{
 			Name:    "import",
-			Aliases: []string{"c"},
+			Aliases: []string{"i"},
 			Usage:   "options for importing epubs",
 			Subcommands: []cli.Command{
 				{
@@ -74,8 +82,13 @@ func main() {
 					Aliases: []string{"r"},
 					Usage:   "import retail epubs",
 					Action: func(c *cli.Context) {
-						// TODO
+						// import
 						fmt.Println("Importing retail epubs...")
+						err := l.ImportRetail()
+						if err != nil {
+							panic(err)
+						}
+
 					},
 				},
 				{
@@ -83,8 +96,11 @@ func main() {
 					Aliases: []string{"n"},
 					Usage:   "import non-retail epubs",
 					Action: func(c *cli.Context) {
-						// TODO
 						fmt.Println("Importing non-retail epubs...")
+						err := l.ImportNonRetail()
+						if err != nil {
+							panic(err)
+						}
 					},
 				},
 			},
@@ -151,6 +167,5 @@ func main() {
 			},
 		},
 	}
-
 	app.Run(os.Args)
 }

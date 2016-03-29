@@ -4,23 +4,24 @@ import "fmt"
 
 // Library manages Epubs
 type Library struct {
-	Root              string
-	ConfigurationFile string
+	ConfigurationFile Config
 	LibraryDB         // anonymous, Library still has Epubs
 }
 
 // ImportRetail imports epubs from the Retail source.
 func (l *Library) ImportRetail() (err error) {
+	fmt.Println("Library: Importing retail epubs...")
 	return
 }
 
 // ImportNonRetail imports epubs from the Non-Retail source.
 func (l *Library) ImportNonRetail() (err error) {
+	fmt.Println("Library: Importing non-retail epubs...")
 	return
 }
 
 // ExportToEReader selected epubs.
-func (l *Library) ExportToEReader(epubs Epubs) (err error) {
+func (l *Library) ExportToEReader(epubs []Epub) (err error) {
 	return
 }
 

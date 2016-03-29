@@ -9,9 +9,16 @@ type LibraryDB struct {
 	Epubs        []Epub
 }
 
-// Refresh current DB
-func (lbd *LibraryDB) Refresh() (err error) {
-	fmt.Println("Refreshing database...")
+// Load current DB
+func (lbd *LibraryDB) Load() (err error) {
+	fmt.Println("Loading database...")
+	// TODO read JSON, recreate Epub objects
+	return
+}
+
+// Save current DB
+func (lbd *LibraryDB) Save() (err error) {
+	fmt.Println("Saving database...")
 	// TODO loop over known Epubs, make them refresh (rename from md) and generate their json
 	// TODO aggregate in a single json file, the DB
 	// TODO automatically index it with bleve
