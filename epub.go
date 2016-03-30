@@ -28,22 +28,22 @@ type Series struct {
 }
 
 // Epub can manipulate an epub file.
-// TODO map directly to JSON
 type Epub struct {
-	Filename        string   `json:"filename"`
-	RelativePath    string   `json:"relativepath"`
-	Hash            string   `json:"hash"`
-	IsRetail        bool     `json:"isretail"`
-	Progress        int      `json:"progress"`
-	Series          []Series `json:"series"`
-	Author          string   `json:"author"`
-	Title           string   `json:"title"`
-	Language        string   `json:"language"`
-	PublicationYear int      `json:"publicationyear"`
-	ReadDate        string   `json:"readdate"`
-	Tags            []string `json:"tags"`
-	Rating          int      `json:"rating"`
-	Review          string   `json:"review"`
+	Filename         string   `json:"filename"`
+	RelativePath     string   `json:"relativepath"`
+	Hash             string   `json:"hash"`
+	IsRetail         bool     `json:"isretail"`
+	Progress         int      `json:"progress"`
+	Series           []Series `json:"series"`
+	Author           string   `json:"author"`
+	Title            string   `json:"title"`
+	Language         string   `json:"language"`
+	PublicationYear  int      `json:"publicationyear"`
+	ReadDate         string   `json:"readdate"`
+	Tags             []string `json:"tags"`
+	Rating           int      `json:"rating"`
+	Review           string   `json:"review"`
+	NeedsReplacement bool     `json:"replace"`
 }
 
 // String returns a string representation of Epub
