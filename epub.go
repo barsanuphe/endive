@@ -154,72 +154,78 @@ func (e *Epub) GetMetadata() (err error) {
 	}
 	defer book.Close()
 
-	title, err := book.Metadata("title")
+	title, err := book.MetadataElement("title")
 	if err != nil {
 		fmt.Println("Error parsing EPUB")
-		e.Title = "Uknown"
+		e.Title = "Unknown"
 	} else {
-		e.Title = title[0]
+		e.Title = title[0].Content
 	}
 
-	author, err := book.Metadata("creator")
+	author, err := book.MetadataElement("creator")
 	if err != nil {
 		fmt.Println("Error parsing EPUB")
 		e.Author = "Unknown"
 	} else {
-		e.Author = author[0]
+		e.Author = author[0].Content
 	}
 
-	language, err := book.Metadata("language")
+	language, err := book.MetadataElement("language")
 	if err != nil {
 		fmt.Println("Error parsing EPUB")
 		e.Language = "Unknown"
 	} else {
-		e.Language = language[0]
+		e.Language = language[0].Content
 	}
 
-	dateEvents, err := book.MetadataAttr("date")
+	dateEvents, err := book.MetadataElement("date")
 	if err != nil {
 		fmt.Println("Error parsing EPUB")
 		e.PublicationYear = 0
 	} else {
-		dates, err := book.Metadata("date")
-		if err != nil {
-			fmt.Println("Error parsing EPUB")
-			e.PublicationYear = 0
-		} else {
-			// find publication event
-			found := false
-			for i, d := range dateEvents {
-				for _, evt := range d {
-					if evt == "publication" {
-						found = true
-						// MetadataAttr are in the same order than Metadata
-						e.PublicationYear, err = strconv.Atoi(dates[i][0:4])
-						if err != nil {
-							panic(err)
-						}
-						break
+		found := false
+		for _, el := range dateEvents {
+			for _, evt := range el.Attr {
+				if evt == "publication" {
+					e.PublicationYear, err = strconv.Atoi(el.Content[0:4])
+					if err != nil {
+						panic(err)
 					}
-				}
-				if found {
+					found = true
 					break
 				}
 			}
-			if !found {
-				fmt.Println("Error parsing EPUB, no publication year")
-				err = errors.New("No publication date")
+			if found {
+				break
 			}
+		}
+		if !found {
+			fmt.Println("Error parsing EPUB, no publication year")
+			err = errors.New("No publication date")
 		}
 	}
 	return
 }
 
+// HasMetadata checks if metadata was parsed
+func (e *Epub) HasMetadata() (hasMetadata bool) {
+	if e.Author != "" && e.Title != "" {
+		hasMetadata = true
+	}
+	return
+}
+
 // Refresh filename.
-func (e *Epub) Refresh() (wasRenamed bool, newName string, err error) {
+func (e *Epub) Refresh(c Config) (wasRenamed bool, newName string, err error) {
 	fmt.Println("Refreshing Epub " + e.Filename)
 	// TODO the first time (ie if author, title, year are blank), run GetMetadata
 	// TODO otherwise, just use the db
+
+	// TODO isolate filename
+	// TODO calculate new name from c.EpubFilenameFormat
+	// TODO move to c.LibraryRoot + new name
+
+	// TODO if old directory (c.LibraryRoot - epub filename) is empty, delete
 	return
 }
 

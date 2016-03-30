@@ -38,10 +38,17 @@ var epubs = []struct {
 	},
 }
 
-func TestEpubGetMetaData(t *testing.T) {
+// TestEpubMetaData tests GetMetadata and HasMetadata
+func TestEpubMetaData(t *testing.T) {
 	fmt.Println("+ Testing Epub.GetMetaData()...")
 	for _, test_epub := range epubs {
 		e := Epub{Filename: test_epub.filename}
+
+		hasMetadata := e.HasMetadata()
+		if hasMetadata {
+			t.Errorf("Error: %s should not have metadata yet.", e.Filename)
+		}
+
 		err := e.GetMetadata()
 		if err != nil {
 			if test_epub.expectedError == nil {
@@ -63,6 +70,12 @@ func TestEpubGetMetaData(t *testing.T) {
 		if e.Language != test_epub.expectedLanguage {
 			t.Errorf("GetMetadata(%s) returned %d, expected %d!", test_epub.filename, e.Language, test_epub.expectedLanguage)
 		}
+
+		hasMetadata = e.HasMetadata()
+		if ! hasMetadata {
+			t.Errorf("Error: %s should have metadata by now.", e.Filename)
+		}
+
 		fmt.Println(e.String())
 	}
 }
