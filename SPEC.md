@@ -26,16 +26,19 @@ defined in the configuration file.
 
 ### Epub metadata
 
-- [X] endive must read epub metadata, including: author, title, year of publication, language.
+- [x] endive must read epub metadata, including: author, title, year of publication, language.
 
 ### Database
 
 - [ ] endive can keep track of progression: unread, reading, read(book), read(ebook).
-- [ ] endive can associate one or several series with an epub.
+- [ ] one or several series can be associated with an epub.
 - [ ] epubs can be flagged as needing replacement.
 - [ ] retail epubs are identified as such.
-- [X] tags can be added to epubs.
-- [X] the database must be easily exportable (JSON).
+- [ ] the epub's current hash is stored in the database.
+- [ ] the hash of retail epubs can be checked to detect unwanted modifications.
+- [x] tags can be added to epubs.
+- [x] the database must be easily exportable (JSON).
+- [ ] the database can contain the date when the epub was read.
 
 ### Organization
 
@@ -67,3 +70,4 @@ configuration files or of epub metadata.
 - [ ] endive can synchronize selected epubs with a USB-mounted KOBO e-reader.
 - [ ] **TBC** endive can synchronize KOBO collections, especially regarding reading
 progress.
+
