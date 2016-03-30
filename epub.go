@@ -1,47 +1,74 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"os"
 	"strconv"
+	"strings"
 
 	"github.com/barsanuphe/epubgo"
 )
 
+const (
+	Unread = iota
+	Read
+	Reading
+	Shortlisted
+)
+
 // Series can track a series and an epub's position.
 type Series struct {
-	Name  string
-	Index int
+	Name  string `json:"name"`
+	Index int    `json:"index"`
 }
 
 // Epub can manipulate an epub file.
 // TODO map directly to JSON
 type Epub struct {
-	Filename        string
-	RelativePath    string
-	NewFilename     string
-	NewRelativePath string
-	Hash            string
-	IsRetail        bool
-	Progress        int
-	Series          []Series
-	Author          string
-	Title           string
-	Language        string
-	PublicationYear int
-	ReadDate        string // month
-	Tags            []string
-	Rating          int
-	Review          string
+	Filename        string   `json:"filename"`
+	RelativePath    string   `json:"relativepath"`
+	Hash            string   `json:"hash"`
+	IsRetail        bool     `json:"isretail"`
+	Progress        int      `json:"progress"`
+	Series          []Series `json:"series"`
+	Author          string   `json:"author"`
+	Title           string   `json:"title"`
+	Language        string   `json:"language"`
+	PublicationYear int      `json:"publicationyear"`
+	ReadDate        string   `json:"readdate"`
+	Tags            []string `json:"tags"`
+	Rating          int      `json:"rating"`
+	Review          string   `json:"review"`
 }
 
 // String returns a string representation of Epub
 func (e *Epub) String() (desc string) {
-	return e.Filename + ":\t" + e.Author + " (" + strconv.Itoa(e.PublicationYear) + ") " + e.Title + " [" + e.Language + "]"
+	tags := ""
+	if len(e.Tags) != 0 {
+		tags = "[ " + strings.Join(e.Tags, " ") + " ]"
+	}
+	return e.Filename + ":\t" + e.Author + " (" + strconv.Itoa(e.PublicationYear) + ") " + e.Title + " [" + e.Language + "] " + tags
 }
 
 // GetHash calculates an epub's current hash
 func (e *Epub) GetHash() (err error) {
+	var result []byte
+	file, err := os.Open(e.Filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	hash := sha256.New()
+	if _, err := io.Copy(hash, file); err != nil {
+		return err
+	}
+	e.Hash = hex.EncodeToString(hash.Sum(result))
 	return
 }
 
@@ -70,18 +97,39 @@ func (e *Epub) HasSeries(seriesName string) (isInThisSeries bool, index int, err
 	return
 }
 
+func stringInSlice(a string, list []string) (index int, isIn bool) {
+	for i, b := range list {
+		if b == a {
+			return i, true
+		}
+	}
+	return -1, false
+}
+
 // AddTag adds a tag
 func (e *Epub) AddTag(tagName string) (err error) {
+	_, isIn := stringInSlice(tagName, e.Tags)
+	if !isIn {
+		e.Tags = append(e.Tags, tagName)
+	}
 	return
 }
 
 // RemoveTag removes a series
 func (e *Epub) RemoveTag(tagName string) (err error) {
+	i, isIn := stringInSlice(tagName, e.Tags)
+	if isIn {
+		e.Tags[i] = e.Tags[len(e.Tags)-1]
+		e.Tags = e.Tags[:len(e.Tags)-1]
+	} else {
+		err = errors.New(tagName + " not in tags")
+	}
 	return
 }
 
 // HasTag checks if epub is part of a series
-func (e *Epub) HasTag(tagName string) (hasThisTag bool, err error) {
+func (e *Epub) HasTag(tagName string) (hasThisTag bool) {
+	_, hasThisTag = stringInSlice(tagName, e.Tags)
 	return
 }
 
@@ -176,13 +224,24 @@ func (e *Epub) Refresh() (wasRenamed bool, newName string, err error) {
 }
 
 // FromJSON fills the Epub info from JSON text.
-func (e *Epub) FromJSON(json string) (err error) {
+func (e *Epub) FromJSON(jsonBytes []byte) (err error) {
 	fmt.Println("Filling Epub from DB for " + e.Filename)
+	err = json.Unmarshal(jsonBytes, e)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	return
 }
 
 // JSON returns a JSON representation of the Epub and its metadata.
 func (e *Epub) JSON() (JSONPart string, err error) {
 	fmt.Println("Generationg JSON for " + e.Filename)
+	jsonEpub, err := json.Marshal(e)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	JSONPart = string(jsonEpub)
 	return
 }
