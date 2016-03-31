@@ -9,7 +9,8 @@ implemented.
 
 ## Configuration
 
-- [ ] the library layout can be defined by a configuration file.
+- [ ] the library layout can be defined by a configuration file, optionnally
+using metadata, including: author, title, year of publication, language.
 - [ ] the configuration file allows defining author aliases.
 - [ ] a directory for retail epubs source and another for non-retail epubs can be
 defined in the configuration file.
@@ -31,10 +32,10 @@ defined in the configuration file.
 ### Database
 
 - [ ] endive can keep track of progression: unread, reading, read(book), read(ebook).
-- [ ] one or several series can be associated with an epub.
+- [x] one or several series can be associated with an epub.
 - [ ] epubs can be flagged as needing replacement.
 - [ ] retail epubs are identified as such.
-- [ ] the epub's current hash is stored in the database.
+- [x] the epub's current hash is stored in the database.
 - [ ] the hash of retail epubs can be checked to detect unwanted modifications.
 - [x] tags can be added to epubs.
 - [x] the database must be easily exportable (JSON).

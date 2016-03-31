@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -10,6 +11,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"text/template"
 
 	"github.com/barsanuphe/epubgo"
 )
@@ -23,8 +25,8 @@ const (
 
 // Series can track a series and an epub's position.
 type Series struct {
-	Name  string `json:"name"`
-	Index int    `json:"index"`
+	Name  string  `json:"name"`
+	Index float32 `json:"index"`
 }
 
 // Epub can manipulate an epub file.
@@ -83,17 +85,41 @@ func (e *Epub) GetProgress() (progress int, err error) {
 }
 
 // AddSeries adds a series
-func (e *Epub) AddSeries(seriesName string, index int) (err error) {
+func (e *Epub) AddSeries(seriesName string, index float32) (seriesModified bool) {
+	hasSeries, seriesIndex, currentIndex := e.HasSeries(seriesName)
+	// if not HasSeries, create new Series and add
+	if !hasSeries {
+		s := Series{Name: seriesName, Index: index}
+		e.Series = append(e.Series, s)
+		seriesModified = true
+	} else {
+		// if hasSeries, if index is different, update index
+		if currentIndex != index {
+			e.Series[seriesIndex].Index = index
+			seriesModified = true
+		}
+	}
 	return
 }
 
 // RemoveSeries removes a series
-func (e *Epub) RemoveSeries(seriesName string) (err error) {
+func (e *Epub) RemoveSeries(seriesName string) (seriesRemoved bool) {
+	hasSeries, seriesIndex, _ := e.HasSeries(seriesName)
+	if hasSeries {
+		e.Series[seriesIndex] = e.Series[len(e.Series)-1]
+		e.Series = e.Series[:len(e.Series)-1]
+		seriesRemoved = true
+	}
 	return
 }
 
 // HasSeries checks if epub is part of a series
-func (e *Epub) HasSeries(seriesName string) (isInThisSeries bool, index int, err error) {
+func (e *Epub) HasSeries(seriesName string) (hasSeries bool, index int, seriesIndex float32) {
+	for i, series := range e.Series {
+		if series.Name == seriesName {
+			return true, i, series.Index
+		}
+	}
 	return
 }
 
@@ -135,6 +161,7 @@ func (e *Epub) HasTag(tagName string) (hasThisTag bool) {
 
 // SetReadDate sets date when finished reading
 func (e *Epub) SetReadDate(date string) (err error) {
+	// TODO
 	return
 }
 
@@ -215,15 +242,43 @@ func (e *Epub) HasMetadata() (hasMetadata bool) {
 	return
 }
 
+func (e *Epub) generateNewName(fileTemplate string) string {
+	// add all replacements
+	r := strings.NewReplacer(
+		"$a", "{{$a}}",
+		"$t", "{{$t}}",
+		"$y", "{{$y}}",
+		"$l", "{{$l}}",
+	)
+
+	// replace with all valid epub parameters
+	tmpl := fmt.Sprintf(`{{$a := "%s"}}{{$y := "%d"}}{{$t := "%s"}}{{$l := "%s"}}%s`,
+		e.Author, e.PublicationYear, e.Title, e.Language, r.Replace(fileTemplate))
+
+	var doc bytes.Buffer
+	te := template.Must(template.New("hop").Parse(tmpl))
+	err := te.Execute(&doc, nil)
+	if err != nil {
+		panic(err)
+	}
+	return doc.String()
+}
+
 // Refresh filename.
 func (e *Epub) Refresh(c Config) (wasRenamed bool, newName string, err error) {
 	fmt.Println("Refreshing Epub " + e.Filename)
 	// TODO the first time (ie if author, title, year are blank), run GetMetadata
 	// TODO otherwise, just use the db
 
-	// TODO isolate filename
+	// TODO isolate filename: filepath.Base(e.Filename)
 	// TODO calculate new name from c.EpubFilenameFormat
-	// TODO move to c.LibraryRoot + new name
+
+	if e.Filename != newName {
+		//destination := filepath.Join(c.LibraryRoot, newName)
+		// TODO move to c.LibraryRoot + new name
+		wasRenamed = true
+		e.Filename = newName
+	}
 
 	// TODO if old directory (c.LibraryRoot - epub filename) is empty, delete
 	return
