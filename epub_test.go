@@ -3,6 +3,8 @@ package main
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -26,7 +28,7 @@ var epubs = []struct {
 		2006,
 		"fr",
 		"acd2b8eba1b11456bacf11e690edf56bc57774053668644ef34f669138ebdd9a",
-		`{"filename":"test/pg17989.epub","relativepath":"","hash":"acd2b8eba1b11456bacf11e690edf56bc57774053668644ef34f669138ebdd9a","isretail":false,"progress":0,"series":null,"author":"Alexandre Dumas","title":"Le comte de Monte-Cristo, Tome I","language":"fr","publicationyear":2006,"readdate":"","tags":null,"rating":0,"review":""}`,
+		`{"filename":"test/pg17989.epub","relativepath":"","hash":"acd2b8eba1b11456bacf11e690edf56bc57774053668644ef34f669138ebdd9a","isretail":false,"progress":0,"series":null,"author":"Alexandre Dumas","title":"Le comte de Monte-Cristo, Tome I","language":"fr","publicationyear":2006,"readdate":"","tags":null,"rating":0,"review":"","replace":false}`,
 		"Alexandre Dumas 2006 Le comte de Monte-Cristo, Tome I",
 		"fr/Alexandre Dumas/2006. [Alexandre Dumas] (Le comte de Monte-Cristo, Tome I)",
 	},
@@ -38,17 +40,17 @@ var epubs = []struct {
 		2005,
 		"en",
 		"dc325b3aceb77d9f943425728c037fdcaf4af58e3abd771a8094f2424455cc03",
-		`{"filename":"test/pg16328.epub","relativepath":"","hash":"dc325b3aceb77d9f943425728c037fdcaf4af58e3abd771a8094f2424455cc03","isretail":false,"progress":0,"series":null,"author":"Unknown","title":"Beowulf / An Anglo-Saxon Epic Poem","language":"en","publicationyear":2005,"readdate":"","tags":null,"rating":0,"review":""}`,
-		"Unknown 2005 Beowulf / An Anglo-Saxon Epic Poem",
-		"en/Unknown/2005. [Unknown] (Beowulf / An Anglo-Saxon Epic Poem)",
+		`{"filename":"test/pg16328.epub","relativepath":"","hash":"dc325b3aceb77d9f943425728c037fdcaf4af58e3abd771a8094f2424455cc03","isretail":false,"progress":0,"series":null,"author":"Unknown","title":"Beowulf / An Anglo-Saxon Epic Poem","language":"en","publicationyear":2005,"readdate":"","tags":null,"rating":0,"review":"","replace":false}`,
+		"Unknown 2005 Beowulf - An Anglo-Saxon Epic Poem",
+		"en/Unknown/2005. [Unknown] (Beowulf - An Anglo-Saxon Epic Poem)",
 	},
 }
 
 // TestEpubMetaData tests GetMetadata and HasMetadata
 func TestEpubMetaData(t *testing.T) {
 	fmt.Println("+ Testing Epub.GetMetaData()...")
-	for _, test_epub := range epubs {
-		e := Epub{Filename: test_epub.filename}
+	for _, testEpub := range epubs {
+		e := Epub{Filename: testEpub.filename}
 
 		hasMetadata := e.HasMetadata()
 		if hasMetadata {
@@ -57,24 +59,24 @@ func TestEpubMetaData(t *testing.T) {
 
 		err := e.GetMetadata()
 		if err != nil {
-			if test_epub.expectedError == nil {
+			if testEpub.expectedError == nil {
 				t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.Filename, err)
 			}
-			if err.Error() != test_epub.expectedError.Error() {
-				t.Errorf("Error getting Metadata for %s, got %s, expected %s", e.Filename, err, test_epub.expectedError)
+			if err.Error() != testEpub.expectedError.Error() {
+				t.Errorf("Error getting Metadata for %s, got %s, expected %s", e.Filename, err, testEpub.expectedError)
 			}
 		}
-		if e.Title != test_epub.expectedTitle {
-			t.Errorf("GetMetadata(%s) returned %s, expected %s!", test_epub.filename, e.Title, test_epub.expectedTitle)
+		if e.Title != testEpub.expectedTitle {
+			t.Errorf("GetMetadata(%s) returned %s, expected %s!", testEpub.filename, e.Title, testEpub.expectedTitle)
 		}
-		if e.Author != test_epub.expectedAuthor {
-			t.Errorf("GetMetadata(%s) returned %s, expected %s!", test_epub.filename, e.Author, test_epub.expectedAuthor)
+		if e.Author != testEpub.expectedAuthor {
+			t.Errorf("GetMetadata(%s) returned %s, expected %s!", testEpub.filename, e.Author, testEpub.expectedAuthor)
 		}
-		if e.PublicationYear != test_epub.expectedPublicationYear {
-			t.Errorf("GetMetadata(%s) returned %d, expected %d!", test_epub.filename, e.PublicationYear, test_epub.expectedPublicationYear)
+		if e.PublicationYear != testEpub.expectedPublicationYear {
+			t.Errorf("GetMetadata(%s) returned %d, expected %d!", testEpub.filename, e.PublicationYear, testEpub.expectedPublicationYear)
 		}
-		if e.Language != test_epub.expectedLanguage {
-			t.Errorf("GetMetadata(%s) returned %d, expected %d!", test_epub.filename, e.Language, test_epub.expectedLanguage)
+		if e.Language != testEpub.expectedLanguage {
+			t.Errorf("GetMetadata(%s) returned %d, expected %d!", testEpub.filename, e.Language, testEpub.expectedLanguage)
 		}
 
 		hasMetadata = e.HasMetadata()
@@ -88,14 +90,14 @@ func TestEpubMetaData(t *testing.T) {
 
 func TestEpubGetHash(t *testing.T) {
 	fmt.Println("+ Testing Epub.GetHash()...")
-	for _, test_epub := range epubs {
-		e := Epub{Filename: test_epub.filename}
+	for _, testEpub := range epubs {
+		e := Epub{Filename: testEpub.filename}
 		err := e.GetHash()
 		if err != nil {
 			t.Errorf("Error calculating hash for %s", e.Filename)
 		}
-		if e.Hash != test_epub.expectedSha256 {
-			t.Errorf("GetHash(%s) returned %s, expected %s!", test_epub.filename, e.Hash, test_epub.expectedSha256)
+		if e.Hash != testEpub.expectedSha256 {
+			t.Errorf("GetHash(%s) returned %s, expected %s!", testEpub.filename, e.Hash, testEpub.expectedSha256)
 		}
 	}
 }
@@ -103,8 +105,8 @@ func TestEpubGetHash(t *testing.T) {
 // TestJSON tests both JSON() and FromJSON().
 func TestEpubJSON(t *testing.T) {
 	fmt.Println("+ Testing Epub.JSON()...")
-	for _, test_epub := range epubs {
-		e := Epub{Filename: test_epub.filename}
+	for _, testEpub := range epubs {
+		e := Epub{Filename: testEpub.filename}
 		err := e.GetMetadata()
 		if err != nil {
 			t.Errorf("Error getting Metadata for epub %s", e.Filename)
@@ -117,8 +119,8 @@ func TestEpubJSON(t *testing.T) {
 		if err != nil {
 			t.Errorf("Error exporting epub %s to JSON string", e.Filename)
 		}
-		if jsonString != test_epub.expectedJSONString {
-			t.Errorf("JSON(%s) returned:\n%s\nexpected:\n%s!", test_epub.filename, jsonString, test_epub.expectedJSONString)
+		if jsonString != testEpub.expectedJSONString {
+			t.Errorf("JSON(%s) returned:\n%s\nexpected:\n%s!", testEpub.filename, jsonString, testEpub.expectedJSONString)
 		}
 		// recreating new Epub object from Json string
 		f := Epub{}
@@ -141,8 +143,8 @@ func TestEpubJSON(t *testing.T) {
 // TestTag tests AddTag, RemoveTag and HasTag
 func TestEpubTag(t *testing.T) {
 	fmt.Println("+ Testing Epub.AddTag()...")
-	for _, test_epub := range epubs {
-		e := Epub{Filename: test_epub.filename}
+	for _, testEpub := range epubs {
+		e := Epub{Filename: testEpub.filename}
 		tagName := "test_é!/?*èç1"
 
 		err := e.AddTag(tagName)
@@ -171,8 +173,8 @@ func TestEpubTag(t *testing.T) {
 // TestEpubSeries tests AddSeries, RemoveSeries and HasSeries
 func TestEpubSeries(t *testing.T) {
 	fmt.Println("+ Testing Epub.AddSeries()...")
-	for i, test_epub := range epubs {
-		e := Epub{Filename: test_epub.filename}
+	for i, testEpub := range epubs {
+		e := Epub{Filename: testEpub.filename}
 		seriesName := "test_é!/?*èç1"
 		seriesName2 := "test2"
 
@@ -245,20 +247,80 @@ func TestEpubSeries(t *testing.T) {
 
 func TestEpubNewName(t *testing.T) {
 	fmt.Println("+ Testing Epub.generateNewName()...")
-	for _, test_epub := range epubs {
-		e := Epub{Filename: test_epub.filename}
+	for _, testEpub := range epubs {
+		e := Epub{Filename: testEpub.filename}
 		err := e.GetMetadata()
 		if err != nil {
 			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.Filename, err)
 		}
 
-		newName1 := e.generateNewName("$a $y $t")
-		if newName1 != test_epub.expectedFormat1 {
-			t.Errorf("Error getting new name, expected %s, got %s", test_epub.expectedFormat1, newName1)
+		newName1, err := e.generateNewName("$a $y $t")
+		if err != nil {
+			t.Errorf("Error generating new name")
 		}
-		newName2 := e.generateNewName("$l/$a/$y. [$a] ($t)")
-		if newName2 != test_epub.expectedFormat2 {
-			t.Errorf("Error getting new name, expected %s, got %s", test_epub.expectedFormat2, newName2)
+		if newName1 != testEpub.expectedFormat1 {
+			t.Errorf("Error getting new name, expected %s, got %s", testEpub.expectedFormat1, newName1)
+		}
+		newName2, err := e.generateNewName("$l/$a/$y. [$a] ($t)")
+		if err != nil {
+			t.Errorf("Error generating new name")
+		}
+		if newName2 != testEpub.expectedFormat2 {
+			t.Errorf("Error getting new name, expected %s, got %s", testEpub.expectedFormat2, newName2)
+		}
+	}
+}
+
+func TestEpubRefresh(t *testing.T) {
+	fmt.Println("+ Testing Epub.Refresh()...")
+	c := Config{EpubFilenameFormat: "$a $y $t", LibraryRoot: "."}
+	for _, testEpub := range epubs {
+
+		// copy testEpub.filename
+		epubFilename := filepath.Base(testEpub.filename)
+		epubDir := filepath.Dir(testEpub.filename)
+		tempCopy := filepath.Join(epubDir, "temp_"+epubFilename)
+
+		err := CopyFile(testEpub.filename, tempCopy)
+		if err != nil {
+			t.Errorf("Error copying %s to %s", testEpub.filename, tempCopy)
+		}
+
+		// creating Epub object
+		e := Epub{Filename: tempCopy}
+		err = e.GetMetadata()
+		if err != nil {
+			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.Filename, err)
+		}
+		fmt.Println(e.String())
+
+		// refresh
+		wasRenamed, newName, err := e.Refresh(c)
+		fmt.Println()
+		if err != nil {
+			t.Errorf("Error generating new name: " + err.Error())
+		}
+		if !wasRenamed {
+			t.Errorf("Error renaming %s", tempCopy)
+		}
+		if newName != testEpub.expectedFormat1+".epub" {
+			t.Errorf("Error renaming %s, got %s, expected %s", tempCopy, newName, testEpub.expectedFormat1+".epub")
+		}
+		if newName != e.Filename {
+			t.Errorf("Error setting new name %s, got %s, expected %s", tempCopy, newName, e.Filename)
+		}
+
+		//  cleanup
+		if err != nil || !wasRenamed {
+			err = os.Remove(tempCopy)
+			if err != nil {
+				t.Errorf("Error removing temp copy %s", tempCopy)
+			}
+		} else {
+			err = os.Remove(newName)
+			if err != nil {
+				t.Errorf("Error removing temp copy %s", newName)
+			}
 		}
 	}
 }

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"text/template"
@@ -123,15 +124,6 @@ func (e *Epub) HasSeries(seriesName string) (hasSeries bool, index int, seriesIn
 	return
 }
 
-func stringInSlice(a string, list []string) (index int, isIn bool) {
-	for i, b := range list {
-		if b == a {
-			return i, true
-		}
-	}
-	return -1, false
-}
-
 // AddTag adds a tag
 func (e *Epub) AddTag(tagName string) (err error) {
 	_, isIn := stringInSlice(tagName, e.Tags)
@@ -236,13 +228,15 @@ func (e *Epub) GetMetadata() (err error) {
 
 // HasMetadata checks if metadata was parsed
 func (e *Epub) HasMetadata() (hasMetadata bool) {
+	// TODO check if we have the metadata required for renaming
+	// TODO ie what it used in c.EpubFilenameFormat
 	if e.Author != "" && e.Title != "" {
 		hasMetadata = true
 	}
 	return
 }
 
-func (e *Epub) generateNewName(fileTemplate string) string {
+func (e *Epub) generateNewName(fileTemplate string) (newName string, err error) {
 	// add all replacements
 	r := strings.NewReplacer(
 		"$a", "{{$a}}",
@@ -253,34 +247,53 @@ func (e *Epub) generateNewName(fileTemplate string) string {
 
 	// replace with all valid epub parameters
 	tmpl := fmt.Sprintf(`{{$a := "%s"}}{{$y := "%d"}}{{$t := "%s"}}{{$l := "%s"}}%s`,
-		e.Author, e.PublicationYear, e.Title, e.Language, r.Replace(fileTemplate))
+		cleanForPath(e.Author), e.PublicationYear, cleanForPath(e.Title), e.Language, r.Replace(fileTemplate))
 
 	var doc bytes.Buffer
 	te := template.Must(template.New("hop").Parse(tmpl))
-	err := te.Execute(&doc, nil)
+	err = te.Execute(&doc, nil)
 	if err != nil {
-		panic(err)
+		return
 	}
-	return doc.String()
+
+	return doc.String(), nil
 }
 
 // Refresh filename.
 func (e *Epub) Refresh(c Config) (wasRenamed bool, newName string, err error) {
 	fmt.Println("Refreshing Epub " + e.Filename)
-	// TODO the first time (ie if author, title, year are blank), run GetMetadata
-	// TODO otherwise, just use the db
-
-	// TODO isolate filename: filepath.Base(e.Filename)
-	// TODO calculate new name from c.EpubFilenameFormat
-
-	if e.Filename != newName {
-		//destination := filepath.Join(c.LibraryRoot, newName)
-		// TODO move to c.LibraryRoot + new name
-		wasRenamed = true
-		e.Filename = newName
+	// metadata is blank, run GetMetadata
+	if hasMetadata := e.HasMetadata(); !hasMetadata {
+		err = e.GetMetadata()
+		if err != nil {
+			return
+		}
 	}
 
-	// TODO if old directory (c.LibraryRoot - epub filename) is empty, delete
+	newName, err = e.generateNewName(c.EpubFilenameFormat)
+	if err != nil {
+		return
+	}
+	// adding extension
+	// TODO test if not there already
+	newName += ".epub"
+
+	if e.Filename != newName {
+		fmt.Println("Renaming to: " + newName)
+		// move to c.LibraryRoot + new name
+		origin := filepath.Join(c.LibraryRoot, e.Filename)
+		destination := filepath.Join(c.LibraryRoot, newName)
+		err = os.Rename(origin, destination)
+		if err != nil {
+			return
+		}
+
+		wasRenamed = true
+		e.Filename = newName
+		// TODO if old directory (c.LibraryRoot - epub filename) is empty, delete
+		//
+	}
+
 	return
 }
 
