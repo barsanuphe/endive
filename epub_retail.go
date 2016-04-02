@@ -1,5 +1,6 @@
 package main
 
+// EpubRetail for retail epubs.
 type EpubRetail struct {
 	Epub
 }

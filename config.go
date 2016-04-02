@@ -17,7 +17,7 @@ type Config struct {
 	EReaderTarget      string
 }
 
-// Parse configuration file using viper.
+// Load configuration file using viper.
 func (c *Config) Load() (err error) {
 	fmt.Println("Loading Config...")
 	return

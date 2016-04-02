@@ -76,7 +76,7 @@ func TestEpubMetaData(t *testing.T) {
 			t.Errorf("GetMetadata(%s) returned %d, expected %d!", testEpub.filename, e.PublicationYear, testEpub.expectedPublicationYear)
 		}
 		if e.Language != testEpub.expectedLanguage {
-			t.Errorf("GetMetadata(%s) returned %d, expected %d!", testEpub.filename, e.Language, testEpub.expectedLanguage)
+			t.Errorf("GetMetadata(%s) returned %s, expected %s!", testEpub.filename, e.Language, testEpub.expectedLanguage)
 		}
 
 		hasMetadata = e.HasMetadata()

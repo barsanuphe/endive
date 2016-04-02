@@ -1,6 +1,6 @@
 package main
 
-// deals with non retail epubs
+// EpubNonRetail deals with non retail epubs
 type EpubNonRetail struct {
 	Epub
 }
