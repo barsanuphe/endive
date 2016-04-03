@@ -91,9 +91,10 @@ func TestEpubMetaData(t *testing.T) {
 
 func TestEpubGetHash(t *testing.T) {
 	fmt.Println("+ Testing Epub.GetHash()...")
+	c := Config{LibraryRoot: "."}
 	for _, testEpub := range epubs {
 		e := Epub{Filename: testEpub.filename}
-		err := e.SetHash()
+		err := e.SetHash(c)
 		if err != nil {
 			t.Errorf("Error calculating hash for %s", e.Filename)
 		}
@@ -106,13 +107,14 @@ func TestEpubGetHash(t *testing.T) {
 // TestJSON tests both JSON() and FromJSON().
 func TestEpubJSON(t *testing.T) {
 	fmt.Println("+ Testing Epub.JSON()...")
+	c := Config{LibraryRoot: "."}
 	for _, testEpub := range epubs {
 		e := Epub{Filename: testEpub.filename}
 		err := e.GetMetadata()
 		if err != nil {
 			t.Errorf("Error getting Metadata for epub %s", e.Filename)
 		}
-		err = e.SetHash()
+		err = e.SetHash(c)
 		if err != nil {
 			t.Errorf("Error getting Hash for epub %s", e.Filename)
 		}
@@ -363,5 +365,74 @@ func TestEpubProgress(t *testing.T) {
 	}
 	if e.Progress != "shortlisted" {
 		t.Errorf("Error setting progress, expected %s, got %s", "shortlisted", e.Progress)
+	}
+}
+
+// TestEpubRetail tests for SetRetail, SetNonRetail and Check
+func TestEpubRetail(t *testing.T) {
+	fmt.Println("+ Testing Epub.SetRetail()...")
+	c := Config{LibraryRoot: "."}
+	e := Epub{Filename: epubs[0].filename}
+	e.SetHash(c)
+
+	// testing retail
+	err := e.SetRetail(c)
+	if err != nil {
+		t.Errorf("Error setting retail")
+	}
+	if !e.IsRetail {
+		t.Errorf("Error: ebook should be retail")
+	}
+	mode, err := os.Stat(e.Filename)
+	if mode.Mode() != 0444 {
+		t.Errorf("Error: ebook should be read-only")
+	}
+	// checking retail
+	hasChanged, err := e.Check(c)
+	if err != nil {
+		t.Errorf("Error checking hash" + err.Error())
+	}
+	if hasChanged {
+		t.Errorf("Error: ebook should be not have changed")
+	}
+	oldHash := e.Hash
+	e.Hash = ""
+	hasChanged, err = e.Check(c)
+	if err == nil {
+		t.Errorf("Error checking retail hash, should have raised error")
+	}
+	if !hasChanged {
+		t.Errorf("Error: ebook has changed")
+	}
+
+	// testing non-retail
+	e.Hash = oldHash
+	err = e.SetNonRetail(c)
+	if err != nil {
+		t.Errorf("Error setting non-retail")
+	}
+	if e.IsRetail {
+		t.Errorf("Error: ebook should not be retail")
+	}
+	mode, err = os.Stat(e.Filename)
+	if mode.Mode() != 0777 {
+		t.Errorf("Error: ebook should be read-write")
+	}
+
+	// checking non retail
+	hasChanged, err = e.Check(c)
+	if err != nil {
+		t.Errorf("Error checking hash")
+	}
+	if hasChanged {
+		t.Errorf("Error: ebook should be not have changed")
+	}
+	e.Hash = ""
+	hasChanged, err = e.Check(c)
+	if err != nil {
+		t.Errorf("Error checking non retail hash, should have been ok")
+	}
+	if !hasChanged {
+		t.Errorf("Error: ebook has changed")
 	}
 }

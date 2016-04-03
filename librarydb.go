@@ -92,10 +92,11 @@ func buildIndexMapping() (*bleve.IndexMapping, error) {
 
 	epubMapping := bleve.NewDocumentMapping()
 
-	epubMapping.AddFieldMappingsAt("filename", englishTextFieldMapping)
+	epubMapping.AddFieldMappingsAt("progress", englishTextFieldMapping)
 	epubMapping.AddFieldMappingsAt("description", englishTextFieldMapping)
 	epubMapping.AddFieldMappingsAt("language", englishTextFieldMapping)
-	epubMapping.AddFieldMappingsAt("test", englishTextFieldMapping)
+	epubMapping.AddFieldMappingsAt("author", englishTextFieldMapping)
+	epubMapping.AddFieldMappingsAt("title", englishTextFieldMapping)
 
 	indexMapping := bleve.NewIndexMapping()
 	indexMapping.AddDocumentMapping("epub", epubMapping)

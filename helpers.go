@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
@@ -83,5 +85,23 @@ func copyFileContents(src, dst string) (err error) {
 		return
 	}
 	err = out.Sync()
+	return
+}
+
+// calculateSHA256 calculates an epub's current hash
+func calculateSHA256(filename string) (hash string, err error) {
+	var result []byte
+	file, err := os.Open(filename)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+
+	hashBytes := sha256.New()
+	_, err = io.Copy(hashBytes, file)
+	if err != nil {
+		return
+	}
+	hash = hex.EncodeToString(hashBytes.Sum(result))
 	return
 }

@@ -26,7 +26,7 @@ func (l *Library) ExportToEReader(epubs []Epub) (err error) {
 }
 
 // DuplicateRetailEpub copies a retail epub to make a non-retail version.
-func (l *Library) DuplicateRetailEpub(epub EpubRetail) (nonRetailEpub EpubNonRetail, err error) {
+func (l *Library) DuplicateRetailEpub(epub Epub) (nonRetailEpub Epub, err error) {
 	return
 }
 

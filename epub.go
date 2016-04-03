@@ -2,12 +2,9 @@ package main
 
 import (
 	"bytes"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -57,19 +54,12 @@ func (e *Epub) String() (desc string) {
 }
 
 // SetHash calculates an epub's current hash
-func (e *Epub) SetHash() (err error) {
-	var result []byte
-	file, err := os.Open(e.Filename)
+func (e *Epub) SetHash(c Config) (err error) {
+	hash, err := calculateSHA256(filepath.Join(c.LibraryRoot, e.Filename))
 	if err != nil {
-		return err
+		return
 	}
-	defer file.Close()
-
-	hash := sha256.New()
-	if _, err := io.Copy(hash, file); err != nil {
-		return err
-	}
-	e.Hash = hex.EncodeToString(hash.Sum(result))
+	e.Hash = hash
 	return
 }
 
@@ -296,6 +286,45 @@ func (e *Epub) Refresh(c Config) (wasRenamed bool, newName string, err error) {
 		e.Filename = newName
 	}
 
+	return
+}
+
+// SetRetail a retail epub ebook.
+func (e *Epub) SetRetail(c Config) (err error) {
+	// set read-only
+	err = os.Chmod(filepath.Join(c.LibraryRoot, e.Filename), 0444)
+	if err == nil {
+		e.IsRetail = true
+	}
+	return
+}
+
+// SetNonRetail a non retail epub ebook.
+func (e *Epub) SetNonRetail(c Config) (err error) {
+	// set read-write
+	err = os.Chmod(filepath.Join(c.LibraryRoot, e.Filename), 0777)
+	if err == nil {
+		e.IsRetail = false
+	}
+	return
+}
+
+// Check the retail epub integrity.
+func (e *Epub) Check(c Config) (hasChanged bool, err error) {
+	// get current hash
+	currentHash, err := calculateSHA256(filepath.Join(c.LibraryRoot, e.Filename))
+	if err != nil {
+		return
+	}
+	// compare with old
+	if currentHash != e.Hash {
+		hasChanged = true
+		if e.IsRetail {
+			return hasChanged, errors.New("Retail Epub hash has changed")
+		} else {
+			return hasChanged, nil
+		}
+	}
 	return
 }
 
