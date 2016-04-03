@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+	"fmt"
 )
 
 func TestLoad(t *testing.T) {
@@ -70,6 +71,10 @@ func TestSave(t *testing.T) {
 
 func TestSearch(t *testing.T) {
 	l := LibraryDB{DatabaseFile: "test/db.json"}
+	err := l.Load()
+	if err != nil {
+		t.Errorf("Error loading epubs from database: " + err.Error())
+	}
 
 	numIndexed, err := l.Index()
 	if err != nil {
@@ -79,7 +84,31 @@ func TestSearch(t *testing.T) {
 		t.Errorf("Error indexing epubs from database, expected 2, got %d.", numIndexed)
 	}
 
-	l.Search("fr")
+	res, err := l.Search("fr")
+	if err != nil {
+		t.Errorf("Error searching fr")
+	}
+	if len(res) != 1 && res[0].Filename != "test/pg17989.epub" {
+		t.Errorf("Error searching fr, unexpected results")
+	}
+	res, err = l.Search("rating:0")
+	if err != nil {
+		t.Errorf("Error searching fr")
+	}
+	if len(res) != 2 {
+		t.Errorf("Error searching rating:0, got %d hits, expected 2.", len(res))
+	}
+/*
+	res, err = l.Search("publicationyear:2005")
+	if err != nil {
+		t.Errorf("Error searching fr")
+	}
+	fmt.Println(res)
+	res, err = l.Search("2005")
+	if err != nil {
+		t.Errorf("Error searching fr")
+	}
+	fmt.Println(res)
 	l.Search("en")
 	l.Search("language:en")
 	l.Search("language:fr")
@@ -93,4 +122,5 @@ func TestSearch(t *testing.T) {
 
 	l.Search("tags:littérature")
 	l.Search("tags:sf")
+*/
 }

@@ -38,7 +38,7 @@ type Epub struct {
 	PublicationYear  int      `json:"publicationyear"`
 	ReadDate         string   `json:"readdate"`
 	Tags             []string `json:"tags"`
-	Rating           int      `json:"rating"`
+	Rating           string   `json:"rating"`
 	Review           string   `json:"review"`
 	Description      string   `json:"description"`
 	NeedsReplacement bool     `json:"replace"`

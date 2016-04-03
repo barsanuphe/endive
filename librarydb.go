@@ -14,6 +14,8 @@ import (
 
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/analysis/language/en"
+	"errors"
+	"github.com/blevesearch/bleve/analysis/analyzers/keyword_analyzer"
 )
 
 const indexName string = "endive.index"
@@ -87,16 +89,23 @@ func buildIndexMapping() (*bleve.IndexMapping, error) {
 	// TODO index everything
 
 	// a generic reusable mapping for english text
-	englishTextFieldMapping := bleve.NewTextFieldMapping()
-	englishTextFieldMapping.Analyzer = en.AnalyzerName
+	textFieldMapping := bleve.NewTextFieldMapping()
+	textFieldMapping.Analyzer = en.AnalyzerName
+	keywordFieldMapping := bleve.NewTextFieldMapping()
+	keywordFieldMapping.Analyzer = keyword_analyzer.Name
+	intFieldMapping := bleve.NewNumericFieldMapping()
 
 	epubMapping := bleve.NewDocumentMapping()
 
-	epubMapping.AddFieldMappingsAt("progress", englishTextFieldMapping)
-	epubMapping.AddFieldMappingsAt("description", englishTextFieldMapping)
-	epubMapping.AddFieldMappingsAt("language", englishTextFieldMapping)
-	epubMapping.AddFieldMappingsAt("author", englishTextFieldMapping)
-	epubMapping.AddFieldMappingsAt("title", englishTextFieldMapping)
+	epubMapping.AddFieldMappingsAt("progress", textFieldMapping)
+	epubMapping.AddFieldMappingsAt("description", textFieldMapping)
+	epubMapping.AddFieldMappingsAt("language", textFieldMapping)
+	epubMapping.AddFieldMappingsAt("author", textFieldMapping)
+	epubMapping.AddFieldMappingsAt("title", textFieldMapping)
+	epubMapping.AddFieldMappingsAt("publicationyear", textFieldMapping)
+	epubMapping.AddFieldMappingsAt("rating", intFieldMapping)
+	epubMapping.AddFieldMappingsAt("tags", keywordFieldMapping)
+
 
 	indexMapping := bleve.NewIndexMapping()
 	indexMapping.AddDocumentMapping("epub", epubMapping)
@@ -144,7 +153,7 @@ func (ldb *LibraryDB) Index() (numIndexed uint64, err error) {
 
 	// index by filename
 	for _, epub := range ldb.Epubs {
-		index.Index(epub.Filename, epub) // jsonBytes
+		index.Index(epub.Filename, epub)
 	}
 
 	// check number of indexed documents
@@ -157,6 +166,16 @@ func (ldb *LibraryDB) Index() (numIndexed uint64, err error) {
 
 	return
 }
+
+func (ldb *LibraryDB) FindByFilename(filename string) (result Epub, err error) {
+	for _, result = range ldb.Epubs {
+		if result.Filename == filename {
+			return
+		}
+	}
+	return Epub{}, errors.New("Could not find epub " + filename)
+}
+
 
 // Search current DB
 func (ldb *LibraryDB) Search(queryString string) (results []Epub, err error) {
@@ -179,9 +198,14 @@ func (ldb *LibraryDB) Search(queryString string) (results []Epub, err error) {
 	if searchResults.Total != 0 {
 		for _, hit := range searchResults.Hits {
 			fmt.Println("Found " + hit.ID)
+			var epub Epub
+			epub, err = ldb.FindByFilename(hit.ID)
+			if err != nil {
+				return
+			}
+			results = append(results, epub)
 		}
 	}
-	// TODO run bleve query, return Epub results
 	return
 }
 
