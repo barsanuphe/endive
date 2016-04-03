@@ -38,7 +38,7 @@ it from the wishlist.
 ### Epub metadata
 
 - [x] endive must read epub metadata, including: author, title, year of
-publication, language.
+publication, language, description.
 
 ### Database
 

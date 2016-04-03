@@ -14,8 +14,9 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/barsanuphe/epubgo"
 	"time"
+
+	"github.com/barsanuphe/epubgo"
 )
 
 var validProgress = []string{"unread", "read", "reading", "shortlisted"}
@@ -42,6 +43,7 @@ type Epub struct {
 	Tags             []string `json:"tags"`
 	Rating           int      `json:"rating"`
 	Review           string   `json:"review"`
+	Description      string   `json:"description"`
 	NeedsReplacement bool     `json:"replace"`
 }
 
@@ -54,7 +56,7 @@ func (e *Epub) String() (desc string) {
 	return e.Filename + ":\t" + e.Author + " (" + strconv.Itoa(e.PublicationYear) + ") " + e.Title + " [" + e.Language + "] " + tags
 }
 
-// GetHash calculates an epub's current hash
+// SetHash calculates an epub's current hash
 func (e *Epub) SetHash() (err error) {
 	var result []byte
 	file, err := os.Open(e.Filename)
@@ -184,6 +186,11 @@ func (e *Epub) GetMetadata() (err error) {
 		e.Author = "Unknown"
 	} else {
 		e.Author = author[0].Content
+	}
+
+	description, err := book.MetadataElement("description")
+	if err == nil {
+		e.Description = description[0].Content
 	}
 
 	language, err := book.MetadataElement("language")
