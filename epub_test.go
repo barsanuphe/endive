@@ -93,7 +93,7 @@ func TestEpubGetHash(t *testing.T) {
 	fmt.Println("+ Testing Epub.GetHash()...")
 	for _, testEpub := range epubs {
 		e := Epub{Filename: testEpub.filename}
-		err := e.GetHash()
+		err := e.SetHash()
 		if err != nil {
 			t.Errorf("Error calculating hash for %s", e.Filename)
 		}
@@ -112,7 +112,7 @@ func TestEpubJSON(t *testing.T) {
 		if err != nil {
 			t.Errorf("Error getting Metadata for epub %s", e.Filename)
 		}
-		err = e.GetHash()
+		err = e.SetHash()
 		if err != nil {
 			t.Errorf("Error getting Hash for epub %s", e.Filename)
 		}
@@ -341,5 +341,27 @@ func TestEpubSetReadDate(t *testing.T) {
 		if e.ReadDate != currentDate {
 			t.Errorf("Error setting read date, expected %s, got %s", currentDate, e.ReadDate)
 		}
+	}
+}
+
+// TestEpubProgress tests for SetProgress
+func TestEpubProgress(t *testing.T) {
+	fmt.Println("+ Testing Epub.TestEpubProgress()...")
+	e := Epub{Filename: epubs[0].filename}
+
+	err := e.SetProgress("Shortlisted")
+	if err != nil {
+		t.Errorf("Error setting progress Shortlisted")
+	}
+	if e.Progress != "shortlisted" {
+		t.Errorf("Error setting progress, expected %s, got %s", "shortlisted", e.Progress)
+	}
+
+	err = e.SetProgress("mhiuh")
+	if err == nil {
+		t.Errorf("Error setting progress should have failed")
+	}
+	if e.Progress != "shortlisted" {
+		t.Errorf("Error setting progress, expected %s, got %s", "shortlisted", e.Progress)
 	}
 }

@@ -18,12 +18,7 @@ import (
 	"time"
 )
 
-const (
-	Unread = iota
-	Read
-	Reading
-	Shortlisted
-)
+var validProgress = []string{"unread", "read", "reading", "shortlisted"}
 
 // Series can track a series and an epub's position.
 type Series struct {
@@ -37,7 +32,7 @@ type Epub struct {
 	RelativePath     string   `json:"relativepath"`
 	Hash             string   `json:"hash"`
 	IsRetail         bool     `json:"isretail"`
-	Progress         int      `json:"progress"`
+	Progress         string   `json:"progress"`
 	Series           []Series `json:"series"`
 	Author           string   `json:"author"`
 	Title            string   `json:"title"`
@@ -60,7 +55,7 @@ func (e *Epub) String() (desc string) {
 }
 
 // GetHash calculates an epub's current hash
-func (e *Epub) GetHash() (err error) {
+func (e *Epub) SetHash() (err error) {
 	var result []byte
 	file, err := os.Open(e.Filename)
 	if err != nil {
@@ -77,12 +72,13 @@ func (e *Epub) GetHash() (err error) {
 }
 
 // SetProgress sets reading progress
-func (e *Epub) SetProgress(progress int) (err error) {
-	return
-}
-
-// GetProgress sets reading progress
-func (e *Epub) GetProgress() (progress int, err error) {
+func (e *Epub) SetProgress(progress string) (err error) {
+	progress = strings.ToLower(progress)
+	if _, isIn := stringInSlice(progress, validProgress); isIn {
+		e.Progress = progress
+	} else {
+		err = errors.New("Unknown reading progress: " + progress)
+	}
 	return
 }
 
