@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 var epubs = []struct {
@@ -321,6 +322,24 @@ func TestEpubRefresh(t *testing.T) {
 			if err != nil {
 				t.Errorf("Error removing temp copy %s", newName)
 			}
+		}
+	}
+}
+
+// TestEpubReadDate tests for SetReadDate and SetReadDateToday
+func TestEpubSetReadDate(t *testing.T) {
+	fmt.Println("+ Testing Epub.SetReadDate()...")
+	for _, testEpub := range epubs {
+		e := Epub{Filename: testEpub.filename}
+
+		err := e.SetReadDateToday()
+		if err != nil {
+			t.Errorf("Error setting read date")
+		}
+
+		currentDate := time.Now().Local().Format("2006-01-02")
+		if e.ReadDate != currentDate {
+			t.Errorf("Error setting read date, expected %s, got %s", currentDate, e.ReadDate)
 		}
 	}
 }

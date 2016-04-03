@@ -15,6 +15,7 @@ import (
 	"text/template"
 
 	"github.com/barsanuphe/epubgo"
+	"time"
 )
 
 const (
@@ -153,14 +154,14 @@ func (e *Epub) HasTag(tagName string) (hasThisTag bool) {
 
 // SetReadDate sets date when finished reading
 func (e *Epub) SetReadDate(date string) (err error) {
-	// TODO
+	e.ReadDate = date
 	return
 }
 
 // SetReadDateToday sets date when finished reading
 func (e *Epub) SetReadDateToday() (err error) {
-	// TODO find today, call SetReadDate(today)
-	return
+	currentDate := time.Now().Local()
+	return e.SetReadDate(currentDate.Format("2006-01-02"))
 }
 
 // GetMetadata from the epub
