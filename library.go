@@ -11,6 +11,8 @@ type Library struct {
 // ImportRetail imports epubs from the Retail source.
 func (l *Library) ImportRetail() (err error) {
 	fmt.Println("Library: Importing retail epubs...")
+	// TODO walk l.ConfigurationFile.RetailSource
+
 	return
 }
 

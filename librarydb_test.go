@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
-	"fmt"
 )
 
 func TestLoad(t *testing.T) {
@@ -98,29 +97,29 @@ func TestSearch(t *testing.T) {
 	if len(res) != 2 {
 		t.Errorf("Error searching rating:0, got %d hits, expected 2.", len(res))
 	}
-/*
-	res, err = l.Search("publicationyear:2005")
-	if err != nil {
-		t.Errorf("Error searching fr")
-	}
-	fmt.Println(res)
-	res, err = l.Search("2005")
-	if err != nil {
-		t.Errorf("Error searching fr")
-	}
-	fmt.Println(res)
-	l.Search("en")
-	l.Search("language:en")
-	l.Search("language:fr")
-	l.Search("Dumas")
-	l.Search("author:Dumas")
-	l.Search("author:dumas")
-	l.Search("Author:Dumas")
+	/*
+		res, err = l.Search("publicationyear:2005")
+		if err != nil {
+			t.Errorf("Error searching fr")
+		}
+		fmt.Println(res)
+		res, err = l.Search("2005")
+		if err != nil {
+			t.Errorf("Error searching fr")
+		}
+		fmt.Println(res)
+		l.Search("en")
+		l.Search("language:en")
+		l.Search("language:fr")
+		l.Search("Dumas")
+		l.Search("author:Dumas")
+		l.Search("author:dumas")
+		l.Search("Author:Dumas")
 
-	l.Search("title:Beowulf")
-	l.Search("author:Beowulf")
+		l.Search("title:Beowulf")
+		l.Search("author:Beowulf")
 
-	l.Search("tags:littérature")
-	l.Search("tags:sf")
-*/
+		l.Search("tags:littérature")
+		l.Search("tags:sf")
+	*/
 }

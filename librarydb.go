@@ -12,10 +12,10 @@ import (
 	"bytes"
 	"os"
 
-	"github.com/blevesearch/bleve"
-	"github.com/blevesearch/bleve/analysis/language/en"
 	"errors"
+	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/analysis/analyzers/keyword_analyzer"
+	"github.com/blevesearch/bleve/analysis/language/en"
 )
 
 const indexName string = "endive.index"
@@ -106,7 +106,6 @@ func buildIndexMapping() (*bleve.IndexMapping, error) {
 	epubMapping.AddFieldMappingsAt("rating", intFieldMapping)
 	epubMapping.AddFieldMappingsAt("tags", keywordFieldMapping)
 
-
 	indexMapping := bleve.NewIndexMapping()
 	indexMapping.AddDocumentMapping("epub", epubMapping)
 
@@ -175,7 +174,6 @@ func (ldb *LibraryDB) FindByFilename(filename string) (result Epub, err error) {
 	}
 	return Epub{}, errors.New("Could not find epub " + filename)
 }
-
 
 // Search current DB
 func (ldb *LibraryDB) Search(queryString string) (results []Epub, err error) {

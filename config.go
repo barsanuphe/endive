@@ -1,8 +1,14 @@
 package main
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+	"github.com/spf13/viper"
+	"path/filepath"
+)
 
-// use https://github.com/spf13/viper to parse config
+var databaseFilename string = "endive.json"
+
 // "launchpad.net/go-xdg"
 
 // Config holds all relevant information
@@ -13,19 +19,40 @@ type Config struct {
 	RetailSource       string
 	NonRetailSource    string
 	EpubFilenameFormat string
-	AuthorAliases      map[string]string
+	AuthorAliases      map[string][]string
 	EReaderTarget      string
 }
 
 // Load configuration file using viper.
 func (c *Config) Load() (err error) {
 	fmt.Println("Loading Config...")
+	// TODO find in xdg folder
+	conf := viper.New()
+	conf.SetConfigName(filepath.Base(c.Filename))
+	conf.SetConfigType("yaml")
+	viper.AddConfigPath(filepath.Dir(c.Filename))
+
+	err = viper.ReadInConfig()
+	if err != nil {
+		return
+	}
+	c.LibraryRoot = viper.GetString("library_root")
+	c.DatabaseFile = filepath.Join(c.LibraryRoot, databaseFilename)
+	c.RetailSource = viper.GetString("retail_source")
+	c.NonRetailSource = viper.GetString("nonretail_source")
+	c.AuthorAliases = viper.GetStringMapStringSlice("author_aliases")
+	c.EpubFilenameFormat = viper.GetString("epub_filename_format")
+	c.EReaderTarget = viper.GetString("ereader_target")
 	return
 }
 
 // Check if the paths in the configuration file are valid, and if the EpubFilename Format is ok.
 func (c *Config) Check() (err error) {
 	fmt.Println("Checking Config...")
+	// TODO check all paths exist
+	if !directoryExists(c.LibraryRoot) {
+		return errors.New("Library root " + c.LibraryRoot + " does not exist")
+	}
 	return
 }
 

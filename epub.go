@@ -222,7 +222,7 @@ func (e *Epub) GetMetadata() (err error) {
 
 // HasMetadata checks if metadata was parsed
 func (e *Epub) HasMetadata() (hasMetadata bool) {
-	// TODO check if we have the metadata required for renaming
+	// check if we have the metadata required for renaming
 	// TODO ie what it used in c.EpubFilenameFormat
 	if e.Author != "" && e.Title != "" {
 		hasMetadata = true
@@ -231,7 +231,7 @@ func (e *Epub) HasMetadata() (hasMetadata bool) {
 }
 
 func (e *Epub) generateNewName(fileTemplate string) (newName string, err error) {
-	// add all replacements
+	// TODO add all replacements
 	r := strings.NewReplacer(
 		"$a", "{{$a}}",
 		"$t", "{{$t}}",

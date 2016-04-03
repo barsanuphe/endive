@@ -28,6 +28,17 @@ func cleanForPath(md string) string {
 	return r.Replace(md)
 }
 
+func directoryExists(path string) (res bool) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return
+	}
+	if info.IsDir() {
+		return true
+	}
+	return
+}
+
 // CopyFile copies a file from src to dst. If src and dst files exist, and are
 // the same, then return success. Otherise, attempt to create a hard link
 // between the two files. If that fail, copy the file contents from src to dst.
