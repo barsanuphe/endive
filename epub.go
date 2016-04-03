@@ -299,6 +299,9 @@ func (e *Epub) Refresh(c Config) (wasRenamed bool, newName string, err error) {
 	return
 }
 
+// FromJSON & JSON are used mainly for unit tests
+// TODO: see if they can be removed
+
 // FromJSON fills the Epub info from JSON text.
 func (e *Epub) FromJSON(jsonBytes []byte) (err error) {
 	fmt.Println("Filling Epub from DB for " + e.Filename)

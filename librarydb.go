@@ -38,9 +38,23 @@ func (ldb *LibraryDB) Load() (err error) {
 // Save current DB
 func (ldb *LibraryDB) Save() (err error) {
 	fmt.Println("Saving database...")
-	// TODO loop over known Epubs, make them refresh (rename from md) and generate their json
-	// TODO aggregate in a single json file, the DB
-	// TODO automatically index it with bleve
+	jsonEpub, err := json.Marshal(ldb.Epubs)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	// writing db
+	err = ioutil.WriteFile(ldb.DatabaseFile, jsonEpub, 0777)
+	if err != nil {
+		return
+	}
+	// indexing db
+	numIndexed, err := ldb.Index()
+	if err != nil {
+		return
+	}
+	// TODO see how to remove files no longer present from index
+	fmt.Println("Saved and indexed " + strconv.FormatUint(numIndexed, 10) + " epubs.")
 	return
 }
 
