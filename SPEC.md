@@ -63,6 +63,7 @@ also available.
 - [ ] the only allowed ebook format is epub.
 - [ ] library organization can be refreshed by the user, upon modification of
 the configuration files or of epub metadata.
+- [ ] the library cannot contain an empty directory after refresh.
 
 ### Modifiying epubs
 

@@ -272,8 +272,9 @@ func (e *Epub) Refresh(c Config) (wasRenamed bool, newName string, err error) {
 		return
 	}
 	// adding extension
-	// TODO test if not there already
-	newName += ".epub"
+	if filepath.Ext(newName) != ".epub" {
+		newName += ".epub"
+	}
 
 	if e.Filename != newName {
 		fmt.Println("Renaming to: " + newName)
@@ -284,11 +285,8 @@ func (e *Epub) Refresh(c Config) (wasRenamed bool, newName string, err error) {
 		if err != nil {
 			return
 		}
-
 		wasRenamed = true
 		e.Filename = newName
-		// TODO if old directory (c.LibraryRoot - epub filename) is empty, delete
-		//
 	}
 
 	return
