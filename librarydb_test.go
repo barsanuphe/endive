@@ -1,10 +1,10 @@
 package main
 
 import (
-	"testing"
-	"io/ioutil"
 	"bytes"
+	"io/ioutil"
 	"os"
+	"testing"
 )
 
 func TestLoad(t *testing.T) {
@@ -32,10 +32,24 @@ func TestSave(t *testing.T) {
 		t.Errorf("Error loading epubs from database: " + err.Error())
 	}
 
-	l.DatabaseFile = "test/db2.json"
-	err = l.Save()
+	// save unchanged
+	hasSaved, err := l.Save()
 	if err != nil {
 		t.Errorf("Error saving epubs to database: " + err.Error())
+	}
+	if hasSaved {
+		t.Errorf("Error, db should not have been saved")
+	}
+
+	// changing DatabaseFile will make Save() compare current db with an
+	// empty file, forcing save + new index
+	l.DatabaseFile = "test/db2.json"
+	hasSaved, err = l.Save()
+	if err != nil {
+		t.Errorf("Error saving epubs to database: " + err.Error())
+	}
+	if !hasSaved {
+		t.Errorf("Error saving epubs to database")
 	}
 
 	// compare both jsons
@@ -45,14 +59,13 @@ func TestSave(t *testing.T) {
 		t.Errorf("Error reading db file")
 	}
 	if !bytes.Equal(db1, db2) {
-            t.Errorf("Error: original db != saved db")
-        }
+		t.Errorf("Error: original db != saved db")
+	}
 	// remove db2
 	err = os.Remove("test/db2.json")
 	if err != nil {
 		t.Errorf("Error removing temp copy test/db2.json")
 	}
-
 }
 
 func TestSearch(t *testing.T) {

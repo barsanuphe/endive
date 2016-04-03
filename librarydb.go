@@ -9,9 +9,14 @@ import (
 
 	"strconv"
 
+	"bytes"
+	"os"
+
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/analysis/language/en"
 )
+
+const indexName string = "endive.index"
 
 // LibraryDB manages the epub database and search
 type LibraryDB struct {
@@ -25,6 +30,10 @@ func (ldb *LibraryDB) Load() (err error) {
 	fmt.Println("Loading database...")
 	bytes, err := ioutil.ReadFile(ldb.DatabaseFile)
 	if err != nil {
+		if os.IsNotExist(err) {
+			// first run
+			return nil
+		}
 		return
 	}
 	err = json.Unmarshal(bytes, &ldb.Epubs)
@@ -36,29 +45,47 @@ func (ldb *LibraryDB) Load() (err error) {
 }
 
 // Save current DB
-func (ldb *LibraryDB) Save() (err error) {
-	fmt.Println("Saving database...")
+func (ldb *LibraryDB) Save() (hasSaved bool, err error) {
 	jsonEpub, err := json.Marshal(ldb.Epubs)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	// writing db
-	err = ioutil.WriteFile(ldb.DatabaseFile, jsonEpub, 0777)
-	if err != nil {
+	// compare with input
+	jsonEpubOld, err := ioutil.ReadFile(ldb.DatabaseFile)
+	if err != nil && !os.IsNotExist(err) {
+		fmt.Println(err)
 		return
 	}
-	// indexing db
-	numIndexed, err := ldb.Index()
-	if err != nil {
-		return
+
+	if !bytes.Equal(jsonEpub, jsonEpubOld) {
+		fmt.Println("Changes detected, saving database...")
+		// writing db
+		err = ioutil.WriteFile(ldb.DatabaseFile, jsonEpub, 0777)
+		if err != nil {
+			return
+		}
+		hasSaved = true
+		// remove old index
+		err = os.RemoveAll(indexName)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		// indexing db
+		numIndexed, err := ldb.Index()
+		if err != nil {
+			return hasSaved, err
+		}
+		fmt.Println("Saved and indexed " + strconv.FormatUint(numIndexed, 10) + " epubs.")
 	}
-	// TODO see how to remove files no longer present from index
-	fmt.Println("Saved and indexed " + strconv.FormatUint(numIndexed, 10) + " epubs.")
 	return
 }
 
 func buildIndexMapping() (*bleve.IndexMapping, error) {
+	// TODO index everything
+
 	// a generic reusable mapping for english text
 	englishTextFieldMapping := bleve.NewTextFieldMapping()
 	englishTextFieldMapping.Analyzer = en.AnalyzerName
@@ -100,7 +127,7 @@ func openIndex(path string) bleve.Index {
 // Index current DB
 func (ldb *LibraryDB) Index() (numIndexed uint64, err error) {
 	// open index
-	index := openIndex("endive.index")
+	index := openIndex(indexName)
 	defer index.Close()
 
 	// read the bytes
@@ -131,7 +158,7 @@ func (ldb *LibraryDB) Index() (numIndexed uint64, err error) {
 }
 
 // Search current DB
-func (lbd *LibraryDB) Search(queryString string) (results []Epub, err error) {
+func (ldb *LibraryDB) Search(queryString string) (results []Epub, err error) {
 	// TODO make sure the index is up to date
 
 	fmt.Println("Searching database for " + queryString + " ...")
@@ -158,7 +185,7 @@ func (lbd *LibraryDB) Search(queryString string) (results []Epub, err error) {
 }
 
 // SearchJSON current DB and output as JSON
-func (lbd *LibraryDB) SearchJSON() (jsonOutput string, err error) {
+func (ldb *LibraryDB) SearchJSON() (jsonOutput string, err error) {
 	// TODO Search() then get JSON output from each result Epub
 	// TODO OR --- the opposite. bleve can return JSON, Search has to parse it and locate the relevant Epub objects
 	fmt.Println("Searching database with JSON output...")
@@ -166,33 +193,33 @@ func (lbd *LibraryDB) SearchJSON() (jsonOutput string, err error) {
 }
 
 // ListNonRetailOnly among known epubs.
-func (lbd *LibraryDB) ListNonRetailOnly() (nonretail []Epub, err error) {
+func (ldb *LibraryDB) ListNonRetailOnly() (nonretail []Epub, err error) {
 	// TODO return Search for querying non retail epubs, removing the epubs with same title/author but retail
 	return
 }
 
 // ListRetailOnly among known epubs.
-func (lbd *LibraryDB) ListRetailOnly() (retail []Epub, err error) {
+func (ldb *LibraryDB) ListRetailOnly() (retail []Epub, err error) {
 	return
 }
 
 // ListAuthors among known epubs.
-func (lbd *LibraryDB) ListAuthors() (authors []string, err error) {
+func (ldb *LibraryDB) ListAuthors() (authors []string, err error) {
 	return
 }
 
 // ListTags associated with known epubs.
-func (lbd *LibraryDB) ListTags() (tags []string, err error) {
+func (ldb *LibraryDB) ListTags() (tags []string, err error) {
 	// TODO search for tags in all epubs, remove duplicates
 	return
 }
 
 // ListUntagged among known epubs.
-func (lbd *LibraryDB) ListUntagged() (untagged []Epub, err error) {
+func (ldb *LibraryDB) ListUntagged() (untagged []Epub, err error) {
 	return
 }
 
 // ListWithTag among known epubs.
-func (lbd *LibraryDB) ListWithTag(tag string) (tagged []Epub, err error) {
+func (ldb *LibraryDB) ListWithTag(tag string) (tagged []Epub, err error) {
 	return
 }
