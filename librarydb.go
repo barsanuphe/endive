@@ -21,14 +21,22 @@ type LibraryDB struct {
 }
 
 // Load current DB
-func (lbd *LibraryDB) Load() (err error) {
+func (ldb *LibraryDB) Load() (err error) {
 	fmt.Println("Loading database...")
-	// TODO read JSON, recreate Epub objects
+	bytes, err := ioutil.ReadFile(ldb.DatabaseFile)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(bytes, &ldb.Epubs)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 	return
 }
 
 // Save current DB
-func (lbd *LibraryDB) Save() (err error) {
+func (ldb *LibraryDB) Save() (err error) {
 	fmt.Println("Saving database...")
 	// TODO loop over known Epubs, make them refresh (rename from md) and generate their json
 	// TODO aggregate in a single json file, the DB
@@ -75,14 +83,6 @@ func openIndex(path string) bleve.Index {
 	return index
 }
 
-// TODO: TEMP, replace with Epub
-type ebook struct {
-	Filename    string
-	Description string
-	Language    string
-	Tags        []string
-}
-
 // Index current DB
 func (ldb *LibraryDB) Index() (numIndexed uint64, err error) {
 	// open index
@@ -94,19 +94,18 @@ func (ldb *LibraryDB) Index() (numIndexed uint64, err error) {
 	if err != nil {
 		return
 	}
-	// TODO map directly on EPUB
-	var epubs []ebook
-	err = json.Unmarshal(jsonBytes, &epubs)
+
+	err = json.Unmarshal(jsonBytes, &ldb.Epubs)
 	if err != nil {
 		fmt.Print("Error:", err)
 	}
 
 	// index by filename
-	for _, epub := range epubs {
+	for _, epub := range ldb.Epubs {
 		index.Index(epub.Filename, epub) // jsonBytes
 	}
 
-	// 1 document has been indexed
+	// check number of indexed documents
 	numIndexed, err = index.DocCount()
 	if err != nil {
 		return
