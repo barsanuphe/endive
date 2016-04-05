@@ -14,11 +14,12 @@ var epubs = []struct {
 	expectedError           error
 	expectedTitle           string
 	expectedAuthor          string
-	expectedPublicationYear int
+	expectedPublicationYear string
 	expectedLanguage        string
 	expectedSha256          string
 	expectedJSONString      string
 	expectedFormat1         string
+	expectedFormat1Retail   string
 	expectedFormat2         string
 }{
 	{
@@ -26,24 +27,26 @@ var epubs = []struct {
 		nil,
 		"Le comte de Monte-Cristo, Tome I",
 		"Alexandre Dumas",
-		2006,
+		"2006",
 		"fr",
 		"acd2b8eba1b11456bacf11e690edf56bc57774053668644ef34f669138ebdd9a",
-		`{"filename":"test/pg17989.epub","relativepath":"","hash":"acd2b8eba1b11456bacf11e690edf56bc57774053668644ef34f669138ebdd9a","isretail":false,"progress":"","series":null,"author":"Alexandre Dumas","title":"Le comte de Monte-Cristo, Tome I","language":"fr","publicationyear":2006,"readdate":"","tags":null,"rating":0,"review":"","description":"","replace":false}`,
-		"Alexandre Dumas 2006 Le comte de Monte-Cristo, Tome I",
-		"fr/Alexandre Dumas/2006. [Alexandre Dumas] (Le comte de Monte-Cristo, Tome I)",
+		`{"filename":"test/pg17989.epub","hash":"acd2b8eba1b11456bacf11e690edf56bc57774053668644ef34f669138ebdd9a","isretail":"","progress":"","series":null,"author":"Alexandre Dumas","title":"Le comte de Monte-Cristo, Tome I","language":"fr","publicationyear":"2006","readdate":"","tags":null,"rating":"","review":"","description":"","replace":"","isbn":"http://www.gutenberg.org/files/17989/17989-h/17989-h.htm"}`,
+		"Alexandre Dumas 2006 Le comte de Monte-Cristo, Tome I.epub",
+		"Alexandre Dumas 2006 Le comte de Monte-Cristo, Tome I [retail].epub",
+		"fr/Alexandre Dumas/2006. [Alexandre Dumas] (Le comte de Monte-Cristo, Tome I).epub",
 	},
 	{
 		"test/pg16328.epub",
 		errors.New("Metadata field creator does not exist"),
 		"Beowulf / An Anglo-Saxon Epic Poem",
 		"Unknown",
-		2005,
+		"2005",
 		"en",
 		"dc325b3aceb77d9f943425728c037fdcaf4af58e3abd771a8094f2424455cc03",
-		`{"filename":"test/pg16328.epub","relativepath":"","hash":"dc325b3aceb77d9f943425728c037fdcaf4af58e3abd771a8094f2424455cc03","isretail":false,"progress":"","series":null,"author":"Unknown","title":"Beowulf / An Anglo-Saxon Epic Poem","language":"en","publicationyear":2005,"readdate":"","tags":null,"rating":0,"review":"","description":"","replace":false}`,
-		"Unknown 2005 Beowulf - An Anglo-Saxon Epic Poem",
-		"en/Unknown/2005. [Unknown] (Beowulf - An Anglo-Saxon Epic Poem)",
+		`{"filename":"test/pg16328.epub","hash":"dc325b3aceb77d9f943425728c037fdcaf4af58e3abd771a8094f2424455cc03","isretail":"","progress":"","series":null,"author":"Unknown","title":"Beowulf / An Anglo-Saxon Epic Poem","language":"en","publicationyear":"2005","readdate":"","tags":null,"rating":"","review":"","description":"","replace":"","isbn":"http://www.gutenberg.org/files/16328/16328-h/16328-h.htm"}`,
+		"Unknown 2005 Beowulf - An Anglo-Saxon Epic Poem.epub",
+		"Unknown 2005 Beowulf - An Anglo-Saxon Epic Poem [retail].epub",
+		"en/Unknown/2005. [Unknown] (Beowulf - An Anglo-Saxon Epic Poem).epub",
 	},
 }
 
@@ -93,8 +96,8 @@ func TestEpubGetHash(t *testing.T) {
 	fmt.Println("+ Testing Epub.GetHash()...")
 	c := Config{LibraryRoot: "."}
 	for _, testEpub := range epubs {
-		e := Epub{Filename: testEpub.filename}
-		err := e.SetHash(c)
+		e := Epub{Filename: testEpub.filename, Config: c}
+		err := e.GetHash()
 		if err != nil {
 			t.Errorf("Error calculating hash for %s", e.Filename)
 		}
@@ -109,12 +112,12 @@ func TestEpubJSON(t *testing.T) {
 	fmt.Println("+ Testing Epub.JSON()...")
 	c := Config{LibraryRoot: "."}
 	for _, testEpub := range epubs {
-		e := Epub{Filename: testEpub.filename}
+		e := Epub{Filename: testEpub.filename, Config: c}
 		err := e.GetMetadata()
 		if err != nil {
 			t.Errorf("Error getting Metadata for epub %s", e.Filename)
 		}
-		err = e.SetHash(c)
+		err = e.GetHash()
 		if err != nil {
 			t.Errorf("Error getting Hash for epub %s", e.Filename)
 		}
@@ -250,8 +253,9 @@ func TestEpubSeries(t *testing.T) {
 
 func TestEpubNewName(t *testing.T) {
 	fmt.Println("+ Testing Epub.generateNewName()...")
+	c := Config{LibraryRoot: "."}
 	for _, testEpub := range epubs {
-		e := Epub{Filename: testEpub.filename}
+		e := Epub{Filename: testEpub.filename, Config: c}
 		err := e.GetMetadata()
 		if err != nil {
 			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.Filename, err)
@@ -270,6 +274,18 @@ func TestEpubNewName(t *testing.T) {
 		}
 		if newName2 != testEpub.expectedFormat2 {
 			t.Errorf("Error getting new name, expected %s, got %s", testEpub.expectedFormat2, newName2)
+		}
+
+		err = e.SetRetail()
+		if err != nil {
+			t.Errorf("Error setting retail")
+		}
+		newName1, err = e.generateNewName("$a $y $t")
+		if err != nil {
+			t.Errorf("Error generating new name")
+		}
+		if newName1 != testEpub.expectedFormat1Retail {
+			t.Errorf("Error getting new name, expected %s, got %s", testEpub.expectedFormat1Retail, newName1)
 		}
 	}
 }
@@ -290,7 +306,7 @@ func TestEpubRefresh(t *testing.T) {
 		}
 
 		// creating Epub object
-		e := Epub{Filename: tempCopy}
+		e := Epub{Filename: tempCopy, Config: c}
 		err = e.GetMetadata()
 		if err != nil {
 			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.Filename, err)
@@ -298,7 +314,7 @@ func TestEpubRefresh(t *testing.T) {
 		fmt.Println(e.String())
 
 		// refresh
-		wasRenamed, newName, err := e.Refresh(c)
+		wasRenamed, newName, err := e.Refresh()
 		fmt.Println()
 		if err != nil {
 			t.Errorf("Error generating new name: " + err.Error())
@@ -306,8 +322,8 @@ func TestEpubRefresh(t *testing.T) {
 		if !wasRenamed {
 			t.Errorf("Error renaming %s", tempCopy)
 		}
-		if newName != testEpub.expectedFormat1+".epub" {
-			t.Errorf("Error renaming %s, got %s, expected %s", tempCopy, newName, testEpub.expectedFormat1+".epub")
+		if newName != testEpub.expectedFormat1 {
+			t.Errorf("Error renaming %s, got %s, expected %s", tempCopy, newName, testEpub.expectedFormat1)
 		}
 		if newName != e.Filename {
 			t.Errorf("Error setting new name %s, got %s, expected %s", tempCopy, newName, e.Filename)
@@ -372,15 +388,15 @@ func TestEpubProgress(t *testing.T) {
 func TestEpubRetail(t *testing.T) {
 	fmt.Println("+ Testing Epub.SetRetail()...")
 	c := Config{LibraryRoot: "."}
-	e := Epub{Filename: epubs[0].filename}
-	e.SetHash(c)
+	e := Epub{Filename: epubs[0].filename, Config: c}
+	e.GetHash()
 
 	// testing retail
-	err := e.SetRetail(c)
+	err := e.SetRetail()
 	if err != nil {
 		t.Errorf("Error setting retail")
 	}
-	if !e.IsRetail {
+	if e.IsRetail == "false" {
 		t.Errorf("Error: ebook should be retail")
 	}
 	mode, err := os.Stat(e.Filename)
@@ -388,7 +404,7 @@ func TestEpubRetail(t *testing.T) {
 		t.Errorf("Error: ebook should be read-only")
 	}
 	// checking retail
-	hasChanged, err := e.Check(c)
+	hasChanged, err := e.Check()
 	if err != nil {
 		t.Errorf("Error checking hash" + err.Error())
 	}
@@ -397,7 +413,7 @@ func TestEpubRetail(t *testing.T) {
 	}
 	oldHash := e.Hash
 	e.Hash = ""
-	hasChanged, err = e.Check(c)
+	hasChanged, err = e.Check()
 	if err == nil {
 		t.Errorf("Error checking retail hash, should have raised error")
 	}
@@ -407,11 +423,11 @@ func TestEpubRetail(t *testing.T) {
 
 	// testing non-retail
 	e.Hash = oldHash
-	err = e.SetNonRetail(c)
+	err = e.SetNonRetail()
 	if err != nil {
 		t.Errorf("Error setting non-retail")
 	}
-	if e.IsRetail {
+	if e.IsRetail == "true" {
 		t.Errorf("Error: ebook should not be retail")
 	}
 	mode, err = os.Stat(e.Filename)
@@ -420,7 +436,7 @@ func TestEpubRetail(t *testing.T) {
 	}
 
 	// checking non retail
-	hasChanged, err = e.Check(c)
+	hasChanged, err = e.Check()
 	if err != nil {
 		t.Errorf("Error checking hash")
 	}
@@ -428,7 +444,7 @@ func TestEpubRetail(t *testing.T) {
 		t.Errorf("Error: ebook should be not have changed")
 	}
 	e.Hash = ""
-	hasChanged, err = e.Check(c)
+	hasChanged, err = e.Check()
 	if err != nil {
 		t.Errorf("Error checking non retail hash, should have been ok")
 	}
