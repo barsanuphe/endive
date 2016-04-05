@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"testing"
 	"os"
+	"testing"
 )
 
 var hashesFile string = "test/hashes.json"

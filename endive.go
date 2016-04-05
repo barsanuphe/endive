@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/codegangsta/cli"
 	"github.com/ttacon/chalk"
@@ -119,8 +120,17 @@ func main() {
 			Aliases: []string{"c"},
 			Usage:   "search the epub collection",
 			Action: func(c *cli.Context) {
-				// TODO
-				fmt.Println("Searching...")
+				if c.NArg() == 0 {
+					fmt.Println("No query found!")
+				} else {
+					query := strings.Join(c.Args(), " ")
+					fmt.Println("Searching for '" + query + "'...")
+					results, err := l.RunQuery(query)
+					if err != nil {
+						panic(err)
+					}
+					fmt.Println(results)
+				}
 			},
 		},
 		{

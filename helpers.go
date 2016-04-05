@@ -7,7 +7,13 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 )
+
+func timeTrack(start time.Time, name string) {
+	elapsed := time.Since(start)
+	fmt.Printf("-- [%s in %s]\n", name, elapsed)
+}
 
 func stringInSlice(a string, list []string) (index int, isIn bool) {
 	for i, b := range list {
