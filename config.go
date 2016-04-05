@@ -16,8 +16,8 @@ type Config struct {
 	Filename           string
 	DatabaseFile       string
 	LibraryRoot        string
-	RetailSource       string
-	NonRetailSource    string
+	RetailSource       []string
+	NonRetailSource    []string
 	EpubFilenameFormat string
 	AuthorAliases      map[string][]string
 	EReaderTarget      string
@@ -38,8 +38,8 @@ func (c *Config) Load() (err error) {
 	}
 	c.LibraryRoot = viper.GetString("library_root")
 	c.DatabaseFile = filepath.Join(c.LibraryRoot, databaseFilename)
-	c.RetailSource = viper.GetString("retail_source")
-	c.NonRetailSource = viper.GetString("nonretail_source")
+	c.RetailSource = viper.GetStringSlice("retail_source")
+	c.NonRetailSource = viper.GetStringSlice("nonretail_source")
 	c.AuthorAliases = viper.GetStringMapStringSlice("author_aliases")
 	c.EpubFilenameFormat = viper.GetString("epub_filename_format")
 	c.EReaderTarget = viper.GetString("ereader_target")
@@ -49,9 +49,19 @@ func (c *Config) Load() (err error) {
 // Check if the paths in the configuration file are valid, and if the EpubFilename Format is ok.
 func (c *Config) Check() (err error) {
 	fmt.Println("Checking Config...")
-	// TODO check all paths exist
 	if !directoryExists(c.LibraryRoot) {
 		return errors.New("Library root " + c.LibraryRoot + " does not exist")
+	}
+	// checking for sources, warnings only.
+	for _, source := range c.RetailSource {
+		if !directoryExists(source) {
+			fmt.Println("Warning: retail source " + source + " does not exist." )
+		}
+	}
+	for _, source := range c.NonRetailSource {
+		if !directoryExists(source) {
+			fmt.Println("Warning: non-retail source " + source + " does not exist." )
+		}
 	}
 	return
 }

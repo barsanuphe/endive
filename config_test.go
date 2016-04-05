@@ -22,8 +22,14 @@ func TestConfigLoad(t *testing.T) {
 	if c.DatabaseFile != "test_library/endive.json" {
 		t.Errorf("Error loading database filename: %s instead of %s", c.DatabaseFile, "test_library/endive.json")
 	}
+	if len(c.RetailSource) != 2 {
+		t.Errorf("Error: loading retail sources, expected 2 instead of %d", len(c.RetailSource))
+	}
+	if len(c.NonRetailSource) != 1 {
+		t.Errorf("Error: loading retail sources, expected 1 instead of %d", len(c.NonRetailSource))
+	}
 	if len(c.AuthorAliases) != 2 {
-		t.Errorf("Error: loading author aliases, should have gotten 2 instead of %d", len(c.AuthorAliases))
+		t.Errorf("Error: loading author aliases, expected 2 instead of %d", len(c.AuthorAliases))
 	}
 	if len(c.AuthorAliases["China Miéville"]) != 2 {
 		t.Errorf("Error: loading author aliases for china miéville, should have gotten 2 instead of %d", len(c.AuthorAliases["China Miéville"]))
