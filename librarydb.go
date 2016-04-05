@@ -93,7 +93,6 @@ func buildIndexMapping() (*bleve.IndexMapping, error) {
 	textFieldMapping.Analyzer = en.AnalyzerName
 	keywordFieldMapping := bleve.NewTextFieldMapping()
 	keywordFieldMapping.Analyzer = keyword_analyzer.Name
-	intFieldMapping := bleve.NewNumericFieldMapping()
 
 	epubMapping := bleve.NewDocumentMapping()
 
@@ -103,7 +102,8 @@ func buildIndexMapping() (*bleve.IndexMapping, error) {
 	epubMapping.AddFieldMappingsAt("author", textFieldMapping)
 	epubMapping.AddFieldMappingsAt("title", textFieldMapping)
 	epubMapping.AddFieldMappingsAt("publicationyear", textFieldMapping)
-	epubMapping.AddFieldMappingsAt("rating", intFieldMapping)
+	epubMapping.AddFieldMappingsAt("isbn", textFieldMapping)
+	epubMapping.AddFieldMappingsAt("rating", textFieldMapping)
 	epubMapping.AddFieldMappingsAt("tags", keywordFieldMapping)
 
 	indexMapping := bleve.NewIndexMapping()
@@ -173,6 +173,20 @@ func (ldb *LibraryDB) FindByFilename(filename string) (result Epub, err error) {
 		}
 	}
 	return Epub{}, errors.New("Could not find epub " + filename)
+}
+
+func (ldb *LibraryDB) hasCopy(e Epub, isRetail bool) (result bool) {
+	// TODO tests
+
+	// TODO make sur e.IsRetail is set
+
+	// loop over ldb.Epubs,
+	for _, epub := range ldb.Epubs {
+		if e.IsDuplicate(epub, isRetail) {
+			return true
+		}
+	}
+	return
 }
 
 // Search current DB

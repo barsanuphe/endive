@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestLoad(t *testing.T) {
+func TestLdbLoad(t *testing.T) {
 	l := LibraryDB{DatabaseFile: "test/db.json"}
 
 	err := l.Load()
@@ -24,7 +24,7 @@ func TestLoad(t *testing.T) {
 	}
 }
 
-func TestSave(t *testing.T) {
+func TestLdbSave(t *testing.T) {
 	l := LibraryDB{DatabaseFile: "test/db.json"}
 
 	err := l.Load()
@@ -68,7 +68,7 @@ func TestSave(t *testing.T) {
 	}
 }
 
-func TestSearch(t *testing.T) {
+func TestLdbSearch(t *testing.T) {
 	l := LibraryDB{DatabaseFile: "test/db.json"}
 	err := l.Load()
 	if err != nil {
@@ -90,13 +90,21 @@ func TestSearch(t *testing.T) {
 	if len(res) != 1 && res[0].Filename != "test/pg17989.epub" {
 		t.Errorf("Error searching fr, unexpected results")
 	}
-	res, err = l.Search("rating:0")
+	res, err = l.Search("author:dumas")
 	if err != nil {
-		t.Errorf("Error searching fr")
+		t.Errorf("Error searching for rating: " + err.Error())
 	}
-	if len(res) != 2 {
-		t.Errorf("Error searching rating:0, got %d hits, expected 2.", len(res))
+	if len(res) != 1 {
+		t.Errorf("Error searching rating:0, got %d hits, expected 1.", len(res))
 	}
+	res, err = l.Search("publicationyear:2005")
+	if err != nil {
+		t.Errorf("Error searching for publicationyear:2005")
+	}
+	if len(res) != 1 {
+		t.Errorf("Error searching rating:0, got %d hits, expected 1.", len(res))
+	}
+
 	/*
 		res, err = l.Search("publicationyear:2005")
 		if err != nil {
