@@ -46,8 +46,7 @@ type Epub struct {
 
 // NewEpub constucts a valid new Epub
 func NewEpub(filename string, c Config) *Epub {
-	// TODO: tests + use everywhere + set default for old booleans
-	return &Epub{Filename: filename, Config: c, NeedsReplacement: "false"}
+	return &Epub{Filename: filename, Config: c, NeedsReplacement: "false", IsRetail:"false", Progress:"unread"}
 }
 
 // getPath returns the absolute file path.
