@@ -9,27 +9,32 @@ implemented.
 
 ## Configuration
 
-- [ ] the library layout and epub filename can be defined by a configuration
+- [x] the library layout and epub filename can be defined by a configuration
 file, optionnally using metadata, including: author ($a), title ($t), year of
 publication ($y), language ($l).
-- [ ] the configuration file allows defining author aliases, which are used for
+- [x] the configuration file allows defining author aliases, which are used for
 renaming the epubs and in the database.
-- [ ] a directory for retail epubs source and another for non-retail epubs can
-be defined in the configuration file.
+- [x] the configuration file can point to a list of directories to be used as 
+sources for retail epubs, and another entry can point to a similar list for 
+non-retail epubs.
 - [ ] the configuration file is located in the proper XDG configuration
 directory.
-- [ ] the database file is located in the library root.
+- [x] the database file is located in the library root.
 - [ ] the configuration file can contain a wishlist (author/title).
 
 ## Importing epubs
 
-- [ ] endive can scrape special directories for epubs to import.
-- [ ] endive must log the hash and filename of all imported files.
+- [x] endive can scrape special directories for epubs to import.
+- [ ] endive must log the hash and filename of all imported files, in a dedicated
+database in the relevant XDG data directory.
 - [ ] already imported epubs (hash already logged) must be ignored during
 import.
+- [ ] duplicates other than retail/non-retail versions of the same work are not 
+allowed. epubs are duplicates if they have the same author and title, and/or ISBN.
 - [ ] epubs must be copied into the library, which contains the epubs and the
 database.
-- [ ] retail epubs are to be given read-only permissions.
+- [x] retail epubs are to be given read-only permissions.
+- [x] retail epubs have a forced "[retail]" suffix
 - [ ] if an imported epub is on the configuration wishlist, endive must remove
 it from the wishlist.
 
@@ -42,15 +47,15 @@ publication, language, description.
 
 ### Database
 
-- [ ] endive can keep track of progression: unread, reading, read, in shortlist.
+- [x] endive can keep track of progression: unread, reading, read, in shortlist.
 - [x] one or several series can be associated with an epub.
 - [ ] epubs can be flagged as needing replacement.
-- [ ] retail epubs are identified as such.
+- [x] retail epubs are identified as such.
 - [x] endive must calculate and store the sha256 hash of every epub.
-- [ ] the hash of retail epubs can be checked to detect unwanted modifications.
+- [x] the hash of retail epubs can be checked to detect unwanted modifications.
 - [x] tags can be added to epubs.
 - [x] the database must be easily exportable (JSON).
-- [ ] the database can contain the date when the epub was read.
+- [x] the database can contain the date when the epub was read.
 - [ ] when a metadata field is defined in both the epub metadata and the
 database, endive must use the database version.
 - [ ] the user can store in the database whether a physical copy of the book is
@@ -74,7 +79,7 @@ the configuration files or of epub metadata.
 
 - [ ] epubs without retail versions can be listed.
 - [ ] the library can be searched with the following creteria:
-    author name, title, series, progress, retail, tags
+    author, title, series, progress, retail, tags, description
 - [ ] **TBC** all searches can be outputed as json.
 
 ### User interface
