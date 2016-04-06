@@ -14,8 +14,8 @@ file, optionnally using metadata, including: author ($a), title ($t), year of
 publication ($y), language ($l).
 - [x] the configuration file allows defining author aliases, which are used for
 renaming the epubs and in the database.
-- [x] the configuration file can point to a list of directories to be used as 
-sources for retail epubs, and another entry can point to a similar list for 
+- [x] the configuration file can point to a list of directories to be used as
+sources for retail epubs, and another entry can point to a similar list for
 non-retail epubs.
 - [x] the configuration file is located in the proper XDG configuration
 directory.
@@ -25,12 +25,13 @@ directory.
 ## Importing epubs
 
 - [x] endive can scrape special directories for epubs to import.
-- [x] endive must log the hash and filename of all imported files, in a dedicated
-database in the relevant XDG data directory.
+- [x] endive must log the hash and filename of all imported files, in a
+dedicated database in the relevant XDG data directory.
 - [ ] already imported epubs (hash already logged) must be ignored during
 import.
-- [ ] duplicates other than retail/non-retail versions of the same work are not 
-allowed. epubs are duplicates if they have the same author and title, and/or ISBN.
+- [ ] duplicates other than retail/non-retail versions of the same work are not
+allowed. epubs are duplicates if they have the same author and title, and/or
+ISBN.
 - [ ] epubs must be copied into the library, which contains the epubs and the
 database.
 - [x] retail epubs are to be given read-only permissions.

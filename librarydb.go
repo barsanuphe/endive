@@ -115,7 +115,7 @@ func buildIndexMapping() (*bleve.IndexMapping, error) {
 	return indexMapping, nil
 }
 
-func openIndex(path string) bleve.Index {
+func openIndex(path string) (index bleve.Index, isNew bool) {
 	index, err := bleve.Open(path)
 	if err == bleve.ErrorIndexPathDoesNotExist {
 		log.Printf("Creating new index...")
@@ -125,18 +125,19 @@ func openIndex(path string) bleve.Index {
 		if err != nil {
 			log.Fatal(err)
 		}
+		isNew = true
 	} else if err == nil {
 		//log.Printf("Opening existing index...")
 	} else {
 		log.Fatal(err)
 	}
-	return index
+	return index, isNew
 }
 
 // Index current DB
 func (ldb *LibraryDB) Index() (numIndexed uint64, err error) {
 	// open index
-	index := openIndex(indexName)
+	index, _ := openIndex(indexName)
 	defer index.Close()
 
 	// read the bytes
@@ -144,7 +145,6 @@ func (ldb *LibraryDB) Index() (numIndexed uint64, err error) {
 	if err != nil {
 		return
 	}
-
 	err = json.Unmarshal(jsonBytes, &ldb.Epubs)
 	if err != nil {
 		fmt.Print("Error:", err)
@@ -160,9 +160,7 @@ func (ldb *LibraryDB) Index() (numIndexed uint64, err error) {
 	if err != nil {
 		return
 	}
-
 	fmt.Println("Indexed: " + strconv.FormatUint(numIndexed, 10) + " epubs.")
-
 	return
 }
 
@@ -203,8 +201,21 @@ func (ldb *LibraryDB) Search(queryString string) (results []Epub, err error) {
 	query := bleve.NewQueryStringQuery(queryString)
 	search := bleve.NewSearchRequest(query)
 	// open index
-	index := openIndex("endive.index")
+	index, isNew := openIndex(indexName)
+	if isNew {
+		index.Close()
+		// indexing db
+		fmt.Println("New index, populating...")
+		numIndexed, err := ldb.Index()
+		if err != nil {
+			return nil, err
+		}
+		fmt.Println("Saved and indexed " + strconv.FormatUint(numIndexed, 10) + " epubs.")
+		// reopening
+		index, _ = openIndex(indexName)
+	}
 	defer index.Close()
+
 	searchResults, err := index.Search(search)
 	if err != nil {
 		fmt.Println(err)

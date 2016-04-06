@@ -7,9 +7,9 @@ import (
 	"testing"
 )
 
-func TestLdbLoad(t *testing.T) {
-	l := LibraryDB{DatabaseFile: "test/db.json"}
+var l = LibraryDB{DatabaseFile: "test/endive.json"}
 
+func TestLdbLoad(t *testing.T) {
 	err := l.Load()
 	if err != nil {
 		t.Errorf("Error loading epubs from database: " + err.Error())
@@ -25,8 +25,6 @@ func TestLdbLoad(t *testing.T) {
 }
 
 func TestLdbSave(t *testing.T) {
-	l := LibraryDB{DatabaseFile: "test/db.json"}
-
 	err := l.Load()
 	if err != nil {
 		t.Errorf("Error loading epubs from database: " + err.Error())
@@ -53,7 +51,7 @@ func TestLdbSave(t *testing.T) {
 	}
 
 	// compare both jsons
-	db1, err := ioutil.ReadFile("test/db.json")
+	db1, err := ioutil.ReadFile("test/endive.json")
 	db2, err2 := ioutil.ReadFile("test/db2.json")
 	if err != nil || err2 != nil {
 		t.Errorf("Error reading db file")
@@ -66,10 +64,10 @@ func TestLdbSave(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error removing temp copy test/db2.json")
 	}
+	l.DatabaseFile = "test/endive.json"
 }
 
 func TestLdbSearch(t *testing.T) {
-	l := LibraryDB{DatabaseFile: "test/db.json"}
 	err := l.Load()
 	if err != nil {
 		t.Errorf("Error loading epubs from database: " + err.Error())
@@ -77,7 +75,7 @@ func TestLdbSearch(t *testing.T) {
 
 	numIndexed, err := l.Index()
 	if err != nil {
-		t.Errorf("Error indexing epubs from database.")
+		t.Errorf("Error indexing epubs from database: %s", err.Error())
 	}
 	if numIndexed != 2 {
 		t.Errorf("Error indexing epubs from database, expected 2, got %d.", numIndexed)

@@ -27,7 +27,14 @@ type KnownHashes struct {
 func getKnownHashesPath() (hashesFile string, err error) {
 	hashesFile, err = xdg.Data.Find(xdgHashesPath)
 	if err != nil {
-		hashesFile, err = xdg.Data.Ensure(hashesFile)
+		hashesFile, err = xdg.Data.Ensure(xdgHashesPath)
+		if err != nil {
+			return
+		}
+		fmt.Println(hashesFile)
+		fmt.Println(xdgHashesPath)
+		// making sure it's a valid JSON file for next load
+		err = ioutil.WriteFile(hashesFile, []byte("{}"), 0777)
 		if err != nil {
 			return
 		}

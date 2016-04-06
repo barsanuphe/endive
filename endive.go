@@ -15,7 +15,9 @@ func main() {
 	// get library
 	l, err := OpenLibrary()
 	if err != nil {
-		panic(err)
+		fmt.Println("Error loading configuration. Check it.")
+		fmt.Println(err.Error())
+		return
 	}
 	defer l.Save()
 
