@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/bndr/gotabulate"
 	"os"
 	"path/filepath"
 	"time"
@@ -15,7 +16,7 @@ type Library struct {
 }
 
 // OpenLibrary constucts a valid new Library
-func OpenLibrary() (l *Library, err error) {
+func OpenLibrary() (l Library, err error) {
 	// config
 	configPath, err := getConfigPath()
 	if err != nil {
@@ -45,7 +46,13 @@ func OpenLibrary() (l *Library, err error) {
 		return
 	}
 
-	return &Library{ConfigurationFile: c, KnownHashesFile: h}, err
+	l = Library{ConfigurationFile: c, KnownHashesFile: h}
+	l.DatabaseFile = c.DatabaseFile
+	err = l.Load()
+	if err != nil {
+		return
+	}
+	return l, err
 }
 
 // ImportRetail imports epubs from the Retail source.
@@ -173,8 +180,16 @@ func (l *Library) RunQuery(query string) (results string, err error) {
 	if err != nil {
 		return
 	}
-	for _, res := range hits {
-		results += "FOUND: " + res.String()
+
+	if len(hits) != 0 {
+		var rows [][]string
+		for _, res := range hits {
+			rows = append(rows, []string{res.Author, res.Title, res.PublicationYear, res.Filename})
+		}
+		tabulate := gotabulate.Create(rows)
+		tabulate.SetHeaders([]string{"Author", "Title", "Year", "Filename"})
+		tabulate.SetEmptyString("N/A")
+		return tabulate.Render("simple"), err
 	}
-	return
+	return "Nothing.", err
 }
