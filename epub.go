@@ -46,7 +46,7 @@ type Epub struct {
 
 // NewEpub constucts a valid new Epub
 func NewEpub(filename string, c Config) *Epub {
-	return &Epub{Filename: filename, Config: c, NeedsReplacement: "false", IsRetail:"false", Progress:"unread"}
+	return &Epub{Filename: filename, Config: c, NeedsReplacement: "false", IsRetail: "false", Progress: "unread"}
 }
 
 // getPath returns the absolute file path.
@@ -350,18 +350,15 @@ func (e *Epub) Check() (hasChanged bool, err error) {
 }
 
 // IsDuplicate checks if current objet is duplicate of another
-func (e *Epub) IsDuplicate(o Epub, isRetail bool) (isDupe bool) {
+func (e *Epub) IsDuplicate(o Epub, isRetail bool) (isDupe bool, trumps bool) {
 	// TODO tests
 
-	// TODO
-	//if e.IsRetail && !isRetail {
-
-	//}
+	// TODO if isDuplicate but e.IsRetail == "true" and o.IsRetail == "false" => trumps!
 
 	// TODO: compare isbn if both are not empty
-	if e.ISBN != "" && e.ISBN == o.ISBN {
-		return
-	}
+	//if e.ISBN != "" && e.ISBN == o.ISBN {
+	//	return true,
+	//}
 	// TODO: else compare author/title
 	// TODO: also compare if retail or not
 	return

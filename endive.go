@@ -12,19 +12,8 @@ import (
 func main() {
 	fmt.Println(chalk.Bold.TextStyle("\n# # # E N D I V E # # #\n"))
 
-	// load config
-	rc := Config{}
-	if err := rc.Load(); err != nil {
-		panic(err)
-	}
-	// check config
-	if err := rc.Check(); err != nil {
-		panic(err)
-	}
-
 	// get library
-	l := Library{ConfigurationFile: rc}
-	err := l.Load()
+	l, err := OpenLibrary()
 	if err != nil {
 		panic(err)
 	}
@@ -47,14 +36,14 @@ func main() {
 					Usage:   "show configuration",
 					Action: func(c *cli.Context) {
 						// print config
-						fmt.Println(rc.String())
+						fmt.Println(l.ConfigurationFile.String())
 					},
 				},
 				{
 					Name:  "aliases",
 					Usage: "show aliases defined in configuration",
 					Action: func(c *cli.Context) {
-						aliases, err := rc.ListAuthorAliases()
+						aliases, err := l.ConfigurationFile.ListAuthorAliases()
 						if err != nil {
 							panic(err)
 						}

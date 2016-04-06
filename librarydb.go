@@ -182,7 +182,11 @@ func (ldb *LibraryDB) hasCopy(e Epub, isRetail bool) (result bool) {
 
 	// loop over ldb.Epubs,
 	for _, epub := range ldb.Epubs {
-		if e.IsDuplicate(epub, isRetail) {
+		isDuplicate, canTrump := e.IsDuplicate(epub, isRetail)
+		if canTrump {
+			return false
+		}
+		if isDuplicate {
 			return true
 		}
 	}

@@ -14,6 +14,40 @@ type Library struct {
 	LibraryDB         // anonymous, Library still has Epubs
 }
 
+// OpenLibrary constucts a valid new Library
+func OpenLibrary() (l *Library, err error) {
+	// config
+	configPath, err := getConfigPath()
+	if err != nil {
+		return
+	}
+	c := Config{Filename: configPath}
+	// config load
+	err = c.Load()
+	if err != nil {
+		return
+	}
+	// check config
+	err = c.Check()
+	if err != nil {
+		return
+	}
+
+	// known hashes
+	hashesPath, err := getKnownHashesPath()
+	if err != nil {
+		return
+	}
+	// load known hashes file
+	h := KnownHashes{Filename: hashesPath}
+	err = h.Load()
+	if err != nil {
+		return
+	}
+
+	return &Library{ConfigurationFile: c, KnownHashesFile: h}, err
+}
+
 // ImportRetail imports epubs from the Retail source.
 func (l *Library) ImportRetail() (err error) {
 	fmt.Println("Library: Importing retail epubs...")
