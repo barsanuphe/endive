@@ -10,13 +10,10 @@ import (
 )
 
 const (
-	endive        = "endive"
-	xdgConfigPath = endive + "/" + endive + ".yaml"
+	endive           = "endive"
+	xdgConfigPath    = endive + "/" + endive + ".yaml"
+	databaseFilename = endive + ".json"
 )
-
-var databaseFilename string = endive + ".json"
-
-// "launchpad.net/go-xdg"
 
 // Config holds all relevant information
 type Config struct {
@@ -34,35 +31,36 @@ type Config struct {
 func getConfigPath() (configFile string, err error) {
 	configFile, err = xdg.Config.Find(xdgConfigPath)
 	if err != nil {
-		configFile, err = xdg.Config.Ensure(configFile)
+		configFile, err = xdg.Config.Ensure(xdgConfigPath)
 		if err != nil {
 			return
 		}
-		fmt.Println("Configuration file", configFile, "created. Populate it.")
+		fmt.Println("Configuration file", xdgConfigPath, "created. Populate it.")
 	}
 	return
 }
 
 // Load configuration file using viper.
 func (c *Config) Load() (err error) {
-	fmt.Println("Loading Config...")
-	// TODO find in xdg folder
+	fmt.Printf("Loading Config %s...\n", c.Filename)
 	conf := viper.New()
-	conf.SetConfigName(filepath.Base(c.Filename))
 	conf.SetConfigType("yaml")
-	viper.AddConfigPath(filepath.Dir(c.Filename))
+	conf.SetConfigFile(c.Filename)
 
-	err = viper.ReadInConfig()
+	err = conf.ReadInConfig()
 	if err != nil {
 		return
 	}
-	c.LibraryRoot = viper.GetString("library_root")
-	c.DatabaseFile = filepath.Join(c.LibraryRoot, databaseFilename)
-	c.RetailSource = viper.GetStringSlice("retail_source")
-	c.NonRetailSource = viper.GetStringSlice("nonretail_source")
-	c.AuthorAliases = viper.GetStringMapStringSlice("author_aliases")
-	c.EpubFilenameFormat = viper.GetString("epub_filename_format")
-	c.EReaderTarget = viper.GetString("ereader_target")
+	c.LibraryRoot = conf.GetString("library_root")
+	c.DatabaseFile = conf.GetString("database_filename")
+	if c.DatabaseFile == "" {
+		c.DatabaseFile = filepath.Join(c.LibraryRoot, databaseFilename)
+	}
+	c.RetailSource = conf.GetStringSlice("retail_source")
+	c.NonRetailSource = conf.GetStringSlice("nonretail_source")
+	c.AuthorAliases = conf.GetStringMapStringSlice("author_aliases")
+	c.EpubFilenameFormat = conf.GetString("epub_filename_format")
+	c.EReaderTarget = conf.GetString("ereader_target")
 	return
 }
 
