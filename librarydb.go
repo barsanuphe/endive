@@ -1,24 +1,36 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
-
-	"encoding/json"
-
+	"os"
+	"path/filepath"
 	"strconv"
 
-	"bytes"
-	"os"
-
-	"errors"
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/analysis/analyzers/keyword_analyzer"
 	"github.com/blevesearch/bleve/analysis/language/en"
+	"launchpad.net/go-xdg"
 )
 
-const indexName string = "endive.index"
+const xdgIndexPath string = endive + "/" + endive + ".index"
+
+// getIndexPath gets the default index path
+func getIndexPath() (path string) {
+	path, err := xdg.Cache.Find(xdgIndexPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			path = filepath.Join(xdg.Cache.Dirs()[0], xdgIndexPath)
+		} else {
+			panic(err)
+		}
+	}
+	return
+}
 
 // LibraryDB manages the epub database and search
 type LibraryDB struct {
@@ -69,10 +81,10 @@ func (ldb *LibraryDB) Save() (hasSaved bool, err error) {
 		}
 		hasSaved = true
 		// remove old index
-		err = os.RemoveAll(indexName)
+		err = os.RemoveAll(getIndexPath())
 		if err != nil {
 			fmt.Println(err)
-			return
+			return hasSaved, err
 		}
 
 		// indexing db
@@ -115,13 +127,13 @@ func buildIndexMapping() (*bleve.IndexMapping, error) {
 	return indexMapping, nil
 }
 
-func openIndex(path string) (index bleve.Index, isNew bool) {
-	index, err := bleve.Open(path)
+func openIndex() (index bleve.Index, isNew bool) {
+	index, err := bleve.Open(getIndexPath())
 	if err == bleve.ErrorIndexPathDoesNotExist {
 		log.Printf("Creating new index...")
 		// create a mapping
 		indexMapping, err := buildIndexMapping()
-		index, err = bleve.New(path, indexMapping)
+		index, err = bleve.New(getIndexPath(), indexMapping)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -137,7 +149,7 @@ func openIndex(path string) (index bleve.Index, isNew bool) {
 // Index current DB
 func (ldb *LibraryDB) Index() (numIndexed uint64, err error) {
 	// open index
-	index, _ := openIndex(indexName)
+	index, _ := openIndex()
 	defer index.Close()
 
 	// read the bytes
@@ -196,12 +208,11 @@ func (ldb *LibraryDB) Search(queryString string) (results []Epub, err error) {
 	// TODO make sure the index is up to date
 
 	fmt.Println("Searching database for " + queryString + " ...")
-
-	// search for some text
 	query := bleve.NewQueryStringQuery(queryString)
 	search := bleve.NewSearchRequest(query)
+
 	// open index
-	index, isNew := openIndex(indexName)
+	index, isNew := openIndex()
 	if isNew {
 		index.Close()
 		// indexing db
@@ -212,7 +223,7 @@ func (ldb *LibraryDB) Search(queryString string) (results []Epub, err error) {
 		}
 		fmt.Println("Saved and indexed " + strconv.FormatUint(numIndexed, 10) + " epubs.")
 		// reopening
-		index, _ = openIndex(indexName)
+		index, _ = openIndex()
 	}
 	defer index.Close()
 
