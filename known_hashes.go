@@ -7,6 +7,13 @@ import (
 	"io/ioutil"
 	"os"
 	"strconv"
+
+	"launchpad.net/go-xdg"
+)
+
+const (
+	hashes        = "endive_hashes"
+	xdgHashesPath = endive + "/" + hashes + ".json"
 )
 
 // KnownHashes keeps track of the hashes of already imported epubs.
@@ -14,6 +21,19 @@ type KnownHashes struct {
 	Filename string   `json:"-"`
 	Hashes   []string `json:"hashes"`
 	Count    int      `json:"-"`
+}
+
+// getKnownHashesPath gets the default path for known hashes.
+func getKnownHashesPath() (hashesFile string, err error) {
+	hashesFile, err = xdg.Data.Find(xdgHashesPath)
+	if err != nil {
+		hashesFile, err = xdg.Data.Ensure(hashesFile)
+		if err != nil {
+			return
+		}
+		fmt.Println("Known hashes file", hashesFile, "created.")
+	}
+	return
 }
 
 // Load the known hashes.

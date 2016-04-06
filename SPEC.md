@@ -17,7 +17,7 @@ renaming the epubs and in the database.
 - [x] the configuration file can point to a list of directories to be used as 
 sources for retail epubs, and another entry can point to a similar list for 
 non-retail epubs.
-- [ ] the configuration file is located in the proper XDG configuration
+- [x] the configuration file is located in the proper XDG configuration
 directory.
 - [x] the database file is located in the library root.
 - [ ] the configuration file can contain a wishlist (author/title).
@@ -25,7 +25,7 @@ directory.
 ## Importing epubs
 
 - [x] endive can scrape special directories for epubs to import.
-- [ ] endive must log the hash and filename of all imported files, in a dedicated
+- [x] endive must log the hash and filename of all imported files, in a dedicated
 database in the relevant XDG data directory.
 - [ ] already imported epubs (hash already logged) must be ignored during
 import.

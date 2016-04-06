@@ -3,11 +3,18 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/spf13/viper"
 	"path/filepath"
+
+	"github.com/spf13/viper"
+	"launchpad.net/go-xdg"
 )
 
-var databaseFilename string = "endive.json"
+const (
+	endive        = "endive"
+	xdgConfigPath = endive + "/" + endive + ".yaml"
+)
+
+var databaseFilename string = endive + ".json"
 
 // "launchpad.net/go-xdg"
 
@@ -21,6 +28,19 @@ type Config struct {
 	EpubFilenameFormat string
 	AuthorAliases      map[string][]string
 	EReaderTarget      string
+}
+
+// getConfigPath gets the default path for configuration.
+func getConfigPath() (configFile string, err error) {
+	configFile, err = xdg.Config.Find(xdgConfigPath)
+	if err != nil {
+		configFile, err = xdg.Config.Ensure(configFile)
+		if err != nil {
+			return
+		}
+		fmt.Println("Configuration file", configFile, "created. Populate it.")
+	}
+	return
 }
 
 // Load configuration file using viper.
@@ -55,12 +75,12 @@ func (c *Config) Check() (err error) {
 	// checking for sources, warnings only.
 	for _, source := range c.RetailSource {
 		if !directoryExists(source) {
-			fmt.Println("Warning: retail source " + source + " does not exist." )
+			fmt.Println("Warning: retail source " + source + " does not exist.")
 		}
 	}
 	for _, source := range c.NonRetailSource {
 		if !directoryExists(source) {
-			fmt.Println("Warning: non-retail source " + source + " does not exist." )
+			fmt.Println("Warning: non-retail source " + source + " does not exist.")
 		}
 	}
 	return
