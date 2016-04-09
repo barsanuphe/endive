@@ -97,24 +97,6 @@ func (ldb *LibraryDB) Save() (hasSaved bool, err error) {
 	return
 }
 
-// Refresh current DB
-func (ldb *LibraryDB) Refresh() (renamed int, err error) {
-	fmt.Println("Refreshing database...")
-	for _, epub := range ldb.Epubs {
-		// TODO
-		oldName := epub.Filename
-		wasRenamed, _, err := epub.Refresh()
-		if err != nil {
-			return renamed, err
-		}
-		if wasRenamed {
-			fmt.Println("Moved " + oldName + " to " + epub.Filename)
-			renamed++
-		}
-	}
-	return
-}
-
 func buildIndexMapping() (*bleve.IndexMapping, error) {
 	// TODO index everything
 

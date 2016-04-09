@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
-
 	"time"
 
 	"github.com/barsanuphe/epubgo"
@@ -414,7 +413,7 @@ func (e *Epub) Import(isRetail bool) (err error) {
 	}
 	// TODO if e trumps another ebook (is retail and trumps non-retail, or trumps an ebook needing replacement)
 	// TOOD remove the other version, set NeedsReplacement back to "false" if necessary
-	
+
 	return
 }
 

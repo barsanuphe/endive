@@ -106,6 +106,15 @@ func main() {
 			},
 		},
 		{
+			Name:    "check",
+			Aliases: []string{"fsck"},
+			Usage:   "check library",
+			Action: func(c *cli.Context) {
+				fmt.Println("Checking...")
+				// TODO check all retail epubs for changes
+			},
+		},
+		{
 			Name:    "refresh",
 			Aliases: []string{"r"},
 			Usage:   "refresh library",

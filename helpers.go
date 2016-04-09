@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -13,6 +14,25 @@ import (
 func timeTrack(start time.Time, name string) {
 	elapsed := time.Since(start)
 	fmt.Printf("-- [%s in %s]\n", name, elapsed)
+}
+
+func listEpubsInDirectory(root string) (epubPaths []string, hashes []string, err error) {
+	filepath.Walk(root, func(path string, f os.FileInfo, err error) (outErr error) {
+		// only consider epub files
+		if f.Mode().IsRegular() && filepath.Ext(path) == ".epub" {
+			// check if already imported
+			// calculate hash
+			hash, err := calculateSHA256(path)
+			if err != nil {
+				return
+			}
+			epubPaths = append(epubPaths, path)
+			hashes = append(hashes, hash)
+		}
+		return
+	})
+
+	return
 }
 
 func stringInSlice(a string, list []string) (index int, isIn bool) {
