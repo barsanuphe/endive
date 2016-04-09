@@ -36,6 +36,11 @@ ISBN.
 database.
 - [x] retail epubs are to be given read-only permissions.
 - [x] retail epubs have a forced "[retail]" suffix
+- [ ] if a newly imported retail version of an ebook had a non-retail
+counterpart already in the library, it trumps and replaces it, ie the non-retail
+version is deleted.
+- [ ] if a newly imported epub (retail or not) has a duplicate in the library
+that was tagged as needing replacement, it trumps and replaces it.
 - [ ] if an imported epub is on the configuration wishlist, endive must remove
 it from the wishlist.
 
@@ -65,8 +70,10 @@ also available.
 ### Organization
 
 - [ ] a given book can have retail and non-retail versions side by side.
+- [ ] if an epub has a retail version, the non-retail version is assumed to be
+derived from the retail, ie their metadata are the same.
 - [ ] other duplicates are not allowed.
-- [ ] the only allowed ebook format is epub.
+- [x] the only allowed ebook format is epub.
 - [ ] library organization can be refreshed by the user, upon modification of
 the configuration files or of epub metadata.
 - [ ] the library cannot contain an empty directory after refresh.
