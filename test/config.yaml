@@ -1,0 +1,14 @@
+library_root: test_library
+retail_source:
+    - test_retail
+    - test2_retail
+nonretail_source:
+    - test
+epub_filename_format: $a [$y] $t
+author_aliases:
+    China Miéville:
+        - China Mieville
+        - China Mievile
+    Richard K. Morgan:
+        - Richard Morgan
+ereader_target: /tmp
