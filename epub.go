@@ -91,6 +91,12 @@ func (e *Epub) SetProgress(progress string) (err error) {
 	return
 }
 
+// FlagForReplacement an epub of insufficient quality
+func (e *Epub) FlagForReplacement() (err error) {
+	e.NeedsReplacement = "true"
+	return
+}
+
 // AddSeries adds a series
 func (e *Epub) AddSeries(seriesName string, index float32) (seriesModified bool) {
 	hasSeries, seriesIndex, currentIndex := e.HasSeries(seriesName)
@@ -406,6 +412,9 @@ func (e *Epub) Import(isRetail bool) (err error) {
 			return
 		}
 	}
+	// TODO if e trumps another ebook (is retail and trumps non-retail, or trumps an ebook needing replacement)
+	// TOOD remove the other version, set NeedsReplacement back to "false" if necessary
+	
 	return
 }
 

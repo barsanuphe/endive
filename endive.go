@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/codegangsta/cli"
@@ -45,10 +46,8 @@ func main() {
 					Name:  "aliases",
 					Usage: "show aliases defined in configuration",
 					Action: func(c *cli.Context) {
-						aliases, err := l.ConfigurationFile.ListAuthorAliases()
-						if err != nil {
-							panic(err)
-						}
+						// print aliases
+						aliases := l.ConfigurationFile.ListAuthorAliases()
 						fmt.Println(aliases)
 					},
 				},
@@ -104,6 +103,19 @@ func main() {
 			Action: func(c *cli.Context) {
 				// TODO
 				fmt.Println("Exporting...")
+			},
+		},
+		{
+			Name:    "refresh",
+			Aliases: []string{"r"},
+			Usage:   "refresh library",
+			Action: func(c *cli.Context) {
+				fmt.Println("Refreshing library...")
+				renamed, err := l.Refresh()
+				if err != nil {
+					panic(err)
+				}
+				fmt.Println("Refresh done, renamed " + strconv.Itoa(renamed) + " epubs.")
 			},
 		},
 		{
