@@ -19,6 +19,9 @@ metadata, such as:
 example if a retail epub is missing the publication date, it can be stored in
 the database instead).
 
+Endive is designed to make sure retail epubs are untouched.
+Non-retail epubs can be trumped by importing retail versions.
+
 ## How to install
 
 If you have a working Go installation, just run:
@@ -29,9 +32,12 @@ If you have a working Go installation, just run:
 
 Endive uses:
 
-|               | Library       |
-| ------------- |:-------------:|
-| Epub parsing  | [github.com/barsanuphe/epubgo](https://github.com/barsanuphe/epubgo), forked from [github.com/meskio/epubgo](https://github.com/meskio/epubgo) |
-| JSON search   | [github.com/blevesearch/bleve](https://github.com/blevesearch/bleve) |
-| CLI           | [github.com/codegangsta/cli](https://github.com/codegangsta/cli)     |
-| Color output  | [github.com/ttacon/chalk](https://github.com/ttacon/chalk)           |
+|                 | Library       |
+| --------------- |:-------------:|
+| Epub parser     | [github.com/barsanuphe/epubgo](https://github.com/barsanuphe/epubgo), forked from [github.com/meskio/epubgo](https://github.com/meskio/epubgo) |
+| JSON search     | [github.com/blevesearch/bleve](https://github.com/blevesearch/bleve) |
+| CLI             | [github.com/codegangsta/cli](https://github.com/codegangsta/cli)     |
+| Color output    | [github.com/ttacon/chalk](https://github.com/ttacon/chalk)           |
+| Tables output   | [github.com/bndr/gotabulate](https://github.com/bndr/gotabulate)     |
+| XDG directories | [launchpad.net/go-xdg](https://launchpad.net/go-xdg)                 |
+| YAML Parser     | [github.com/spf13/viper](https://github.com/spf13/viper)             |
