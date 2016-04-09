@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/viper"
 	"launchpad.net/go-xdg"
@@ -52,9 +53,11 @@ func (c *Config) Load() (err error) {
 		return
 	}
 	c.LibraryRoot = conf.GetString("library_root")
-	c.DatabaseFile = conf.GetString("database_filename")
-	if c.DatabaseFile == "" {
+	db := conf.GetString("database_filename")
+	if db == "" {
 		c.DatabaseFile = filepath.Join(c.LibraryRoot, databaseFilename)
+	} else {
+		c.DatabaseFile = filepath.Join(c.LibraryRoot, db)
 	}
 	c.RetailSource = conf.GetStringSlice("retail_source")
 	c.NonRetailSource = conf.GetStringSlice("nonretail_source")
@@ -85,8 +88,11 @@ func (c *Config) Check() (err error) {
 }
 
 // ListAuthorAliases from the configuration file.
-func (c *Config) ListAuthorAliases() (aliases string, err error) {
+func (c *Config) ListAuthorAliases() (allAliases string) {
 	fmt.Println("Listing Author aliases...")
+	for mainalias, aliases := range c.AuthorAliases {
+		allAliases += mainalias + " => " + strings.Join(aliases, ", ") + "\n"
+	}
 	return
 }
 
