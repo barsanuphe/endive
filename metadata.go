@@ -8,7 +8,7 @@ import (
 )
 
 type Metadata struct {
-	Fields map[string][]string
+	Fields map[string][]string `json:"fields"`
 }
 
 func NewMetadata() *Metadata {
@@ -68,13 +68,22 @@ func (m *Metadata) Read(path string) (err error) {
 
 // HasField checks if a type of metadata is known
 func (m *Metadata) HasField(field string) (hasField bool) {
+	for f, _ := range m.Fields {
+		if f == field {
+			return true
+		}
+	}
 	return
 }
 
 // Get field values
 func (m *Metadata) Get(field string) (values []string) {
-	// TODO test field
-	return m.Fields[field]
+	// test field
+	if m.HasField(field) {
+		return m.Fields[field]
+	} else {
+		return []string{}
+	}
 }
 
 // HasAny checks if metadata was parsed

@@ -238,7 +238,7 @@ func (l *Library) Refresh() (renamed int, err error) {
 	// compare allEpubs with l.Epubs
 	for _, epub := range allEpubs {
 		_, err = l.FindByFilename(epub)
-		if err != nil {  // no error == found Epub
+		if err != nil { // no error == found Epub
 			fmt.Println("NEW EPUB " + epub)
 			// TODO: import
 			// TODO: as non-retail? look for retail suffix?
@@ -250,7 +250,10 @@ func (l *Library) Refresh() (renamed int, err error) {
 		if err != nil {
 			return renamed, err
 		}
-		if wasRenamed {
+		if wasRenamed[0] {
+			renamed++
+		}
+		if wasRenamed[1] {
 			renamed++
 		}
 	}

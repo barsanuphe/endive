@@ -30,7 +30,7 @@ var epubs = []struct {
 		"2005",
 		"en",
 		"dc325b3aceb77d9f943425728c037fdcaf4af58e3abd771a8094f2424455cc03",
-		`{"retail":{"filename":"test/pg16328.epub","hash":"dc325b3aceb77d9f943425728c037fdcaf4af58e3abd771a8094f2424455cc03","isretail":"true","replace":"false"},"nonretail":{"filename":"","hash":"","isretail":"","replace":""},"metadata":{"Fields":{"creator":["N/A"],"description":["N/A"],"language":["en"],"source":["http://www.gutenberg.org/files/16328/16328-h/16328-h.htm"],"title":["Beowulf / An Anglo-Saxon Epic Poem"],"year":["2005"]}},"series":null,"tags":null,"progress":"unread","readdate":"","rating":"","review":"","description":""}`,
+		`{"retail":{"filename":"test/pg16328.epub","hash":"dc325b3aceb77d9f943425728c037fdcaf4af58e3abd771a8094f2424455cc03","isretail":"true","replace":"false"},"nonretail":{"filename":"","hash":"","isretail":"","replace":""},"metadata":{"fields":{"creator":["Unknown"],"description":["Unknown"],"language":["en"],"source":["http://www.gutenberg.org/files/16328/16328-h/16328-h.htm"],"title":["Beowulf / An Anglo-Saxon Epic Poem"],"year":["2005"]}},"series":null,"tags":null,"progress":"unread","readdate":"","rating":"","review":"","description":""}`,
 		"Unknown 2005 Beowulf - An Anglo-Saxon Epic Poem.epub",
 		"Unknown 2005 Beowulf - An Anglo-Saxon Epic Poem [retail].epub",
 		"en/Unknown/2005. [Unknown] (Beowulf - An Anglo-Saxon Epic Poem).epub",
@@ -43,16 +43,14 @@ var epubs = []struct {
 		"2006",
 		"fr",
 		"acd2b8eba1b11456bacf11e690edf56bc57774053668644ef34f669138ebdd9a",
-		`{"retail":{"filename":"test/pg17989.epub","hash":"acd2b8eba1b11456bacf11e690edf56bc57774053668644ef34f669138ebdd9a","isretail":"true","replace":"false"},"nonretail":{"filename":"","hash":"","isretail":"","replace":""},"metadata":{"Fields":{"creator":["Alexandre Dumas"],"description":["N/A"],"language":["fr"],"source":["http://www.gutenberg.org/files/17989/17989-h/17989-h.htm"],"title":["Le comte de Monte-Cristo, Tome I"],"year":["2006"]}},"series":null,"tags":null,"progress":"unread","readdate":"","rating":"","review":"","description":""}`,
+		`{"retail":{"filename":"test/pg17989.epub","hash":"acd2b8eba1b11456bacf11e690edf56bc57774053668644ef34f669138ebdd9a","isretail":"true","replace":"false"},"nonretail":{"filename":"","hash":"","isretail":"","replace":""},"metadata":{"fields":{"creator":["Alexandre Dumas"],"description":["Unknown"],"language":["fr"],"source":["http://www.gutenberg.org/files/17989/17989-h/17989-h.htm"],"title":["Le comte de Monte-Cristo, Tome I"],"year":["2006"]}},"series":null,"tags":null,"progress":"unread","readdate":"","rating":"","review":"","description":""}`,
 		"Alexandre Dumas 2006 Le comte de Monte-Cristo, Tome I.epub",
 		"Alexandre Dumas 2006 Le comte de Monte-Cristo, Tome I [retail].epub",
 		"fr/Alexandre Dumas/2006. [Alexandre Dumas] (Le comte de Monte-Cristo, Tome I).epub",
 	},
 }
-
 var standardTestConfig = Config{LibraryRoot: "."}
 var isRetail = true
-
 
 // TestJSON tests both JSON() and FromJSON().
 func TestEpubJSON(t *testing.T) {
@@ -182,34 +180,35 @@ func TestEpubRefresh(t *testing.T) {
 		if err != nil {
 			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.getMainFilename(), err)
 		}
-		fmt.Println(e.String())
 
 		// refresh
 		wasRenamed, newName, err := e.Refresh()
-		fmt.Println()
 		if err != nil {
 			t.Errorf("Error generating new name: " + err.Error())
 		}
-		if !wasRenamed {
+		if !wasRenamed[0] {
 			t.Errorf("Error renaming %s", tempCopy)
 		}
-		if newName != testEpub.expectedFormat1 {
-			t.Errorf("Error renaming %s, got %s, expected %s", tempCopy, newName, testEpub.expectedFormat1)
+		if wasRenamed[1] {
+			t.Errorf("Error: should not have rename non-existant non-retail epub.")
 		}
-		if newName != e.getMainFilename() {
-			t.Errorf("Error setting new name %s, got %s, expected %s", tempCopy, newName, e.getMainFilename())
+		if newName[0] != testEpub.expectedFormat1Retail {
+			t.Errorf("Error renaming %s, got %s, expected %s", tempCopy, newName[0], testEpub.expectedFormat1Retail)
+		}
+		if newName[0] != e.getMainFilename() {
+			t.Errorf("Error setting new name %s, got %s, expected %s", tempCopy, newName[0], e.getMainFilename())
 		}
 
 		//  cleanup
-		if err != nil || !wasRenamed {
+		if err != nil || !wasRenamed[0] {
 			err = os.Remove(tempCopy)
 			if err != nil {
 				t.Errorf("Error removing temp copy %s", tempCopy)
 			}
 		} else {
-			err = os.Remove(newName)
+			err = os.Remove(newName[0])
 			if err != nil {
-				t.Errorf("Error removing temp copy %s", newName)
+				t.Errorf("Error removing temp copy %s", newName[0])
 			}
 		}
 	}

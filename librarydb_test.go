@@ -88,19 +88,19 @@ func TestLdbSearch(t *testing.T) {
 	if len(res) != 1 && res[0].getMainFilename() != "test/pg17989.epub" {
 		t.Errorf("Error searching fr, unexpected results")
 	}
-	res, err = l.Search("author:dumas")
+	res, err = l.Search("metadata.fields.creator:dumas")
 	if err != nil {
-		t.Errorf("Error searching for rating: " + err.Error())
+		t.Errorf("Error searching for metadata.fields.creator:dumas " + err.Error())
 	}
 	if len(res) != 1 {
-		t.Errorf("Error searching rating:0, got %d hits, expected 1.", len(res))
+		t.Errorf("Error searching metadata.fields.creator:dumas, got %d hits, expected 1.", len(res))
 	}
-	res, err = l.Search("publicationyear:2005")
+	res, err = l.Search("metadata.fields.year:2005")
 	if err != nil {
-		t.Errorf("Error searching for publicationyear:2005")
+		t.Errorf("Error searching for metadata.fields.year:2005")
 	}
 	if len(res) != 1 {
-		t.Errorf("Error searching rating:0, got %d hits, expected 1.", len(res))
+		t.Errorf("Error searching metadata.fields.year:2005, got %d hits, expected 1.", len(res))
 	}
 
 	/*

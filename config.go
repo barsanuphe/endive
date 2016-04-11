@@ -8,7 +8,6 @@ import (
 
 	"github.com/spf13/viper"
 	"launchpad.net/go-xdg"
-
 )
 
 const (
