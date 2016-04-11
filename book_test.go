@@ -30,7 +30,7 @@ var epubs = []struct {
 		"2005",
 		"en",
 		"dc325b3aceb77d9f943425728c037fdcaf4af58e3abd771a8094f2424455cc03",
-		`{"filename":"test/pg16328.epub","hash":"dc325b3aceb77d9f943425728c037fdcaf4af58e3abd771a8094f2424455cc03","isretail":"false","progress":"unread","series":null,"author":"Unknown","title":"Beowulf / An Anglo-Saxon Epic Poem","language":"en","publicationyear":"2005","readdate":"","tags":null,"rating":"","review":"","description":"","replace":"false","isbn":"http://www.gutenberg.org/files/16328/16328-h/16328-h.htm"}`,
+		`{"retail":{"filename":"test/pg16328.epub","hash":"dc325b3aceb77d9f943425728c037fdcaf4af58e3abd771a8094f2424455cc03","isretail":"true","replace":"false"},"nonretail":{"filename":"","hash":"","isretail":"","replace":""},"metadata":{"Fields":{"creator":["N/A"],"description":["N/A"],"language":["en"],"source":["http://www.gutenberg.org/files/16328/16328-h/16328-h.htm"],"title":["Beowulf / An Anglo-Saxon Epic Poem"],"year":["2005"]}},"series":null,"tags":null,"progress":"unread","readdate":"","rating":"","review":"","description":""}`,
 		"Unknown 2005 Beowulf - An Anglo-Saxon Epic Poem.epub",
 		"Unknown 2005 Beowulf - An Anglo-Saxon Epic Poem [retail].epub",
 		"en/Unknown/2005. [Unknown] (Beowulf - An Anglo-Saxon Epic Poem).epub",
@@ -43,7 +43,7 @@ var epubs = []struct {
 		"2006",
 		"fr",
 		"acd2b8eba1b11456bacf11e690edf56bc57774053668644ef34f669138ebdd9a",
-		`{"filename":"test/pg17989.epub","hash":"acd2b8eba1b11456bacf11e690edf56bc57774053668644ef34f669138ebdd9a","isretail":"false","progress":"unread","series":null,"author":"Alexandre Dumas","title":"Le comte de Monte-Cristo, Tome I","language":"fr","publicationyear":"2006","readdate":"","tags":null,"rating":"","review":"","description":"","replace":"false","isbn":"http://www.gutenberg.org/files/17989/17989-h/17989-h.htm"}`,
+		`{"retail":{"filename":"test/pg17989.epub","hash":"acd2b8eba1b11456bacf11e690edf56bc57774053668644ef34f669138ebdd9a","isretail":"true","replace":"false"},"nonretail":{"filename":"","hash":"","isretail":"","replace":""},"metadata":{"Fields":{"creator":["Alexandre Dumas"],"description":["N/A"],"language":["fr"],"source":["http://www.gutenberg.org/files/17989/17989-h/17989-h.htm"],"title":["Le comte de Monte-Cristo, Tome I"],"year":["2006"]}},"series":null,"tags":null,"progress":"unread","readdate":"","rating":"","review":"","description":""}`,
 		"Alexandre Dumas 2006 Le comte de Monte-Cristo, Tome I.epub",
 		"Alexandre Dumas 2006 Le comte de Monte-Cristo, Tome I [retail].epub",
 		"fr/Alexandre Dumas/2006. [Alexandre Dumas] (Le comte de Monte-Cristo, Tome I).epub",
@@ -125,20 +125,20 @@ func TestEpubTag(t *testing.T) {
 func TestEpubNewName(t *testing.T) {
 	fmt.Println("+ Testing Epub.generateNewName()...")
 	for _, testEpub := range epubs {
-		e := NewBook(testEpub.filename, standardTestConfig, isRetail)
-		err := e.Metadata.Read(e.RetailEpub.Filename)
+		e := NewBook(testEpub.filename, standardTestConfig, !isRetail)
+		err := e.Metadata.Read(e.NonRetailEpub.Filename)
 		if err != nil {
 			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.getMainFilename(), err)
 		}
 
-		newName1, err := e.generateNewName("$a $y $t", isRetail)
+		newName1, err := e.generateNewName("$a $y $t", !isRetail)
 		if err != nil {
 			t.Errorf("Error generating new name")
 		}
 		if newName1 != testEpub.expectedFormat1 {
 			t.Errorf("Error getting new name, expected %s, got %s", testEpub.expectedFormat1, newName1)
 		}
-		newName2, err := e.generateNewName("$l/$a/$y. [$a] ($t)", isRetail)
+		newName2, err := e.generateNewName("$l/$a/$y. [$a] ($t)", !isRetail)
 		if err != nil {
 			t.Errorf("Error generating new name")
 		}
@@ -146,9 +146,10 @@ func TestEpubNewName(t *testing.T) {
 			t.Errorf("Error getting new name, expected %s, got %s", testEpub.expectedFormat2, newName2)
 		}
 
-		err = e.RetailEpub.SetRetail()
+		e = NewBook(testEpub.filename, standardTestConfig, isRetail)
+		err = e.Metadata.Read(e.RetailEpub.Filename)
 		if err != nil {
-			t.Errorf("Error setting retail")
+			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.getMainFilename(), err)
 		}
 		newName1, err = e.generateNewName("$a $y $t", isRetail)
 		if err != nil {

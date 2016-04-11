@@ -27,7 +27,7 @@ func (m *Metadata) Read(path string) (err error) {
 
 	// TODO map alias creator -- author
 	for _, field := range []string{"title", "creator", "description", "source", "language"} {
-		m.Fields[field] = []string{"N/A"}
+		m.Fields[field] = []string{"Unknown"}
 		results, err := book.MetadataElement(field)
 		if err == nil {
 			m.Fields[field] = []string{}

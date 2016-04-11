@@ -46,7 +46,7 @@ func NewBook(filename string, c Config, isRetail bool) *Book {
 
 // ShortString returns a short string representation of Epub
 func (e *Book) ShortString() (desc string) {
-	return e.Metadata.Get("author")[0] + " (" + e.Metadata.Get("year")[0] + ") " + e.Metadata.Get("title")[0]
+	return e.Metadata.Get("creator")[0] + " (" + e.Metadata.Get("year")[0] + ") " + e.Metadata.Get("title")[0]
 }
 
 func (e *Book) getMainFilename() (filename string ) {
@@ -131,7 +131,7 @@ func (e *Book) generateNewName(fileTemplate string, isRetail bool) (newName stri
 
 	// replace with all valid epub parameters
 	tmpl := fmt.Sprintf(`{{$a := "%s"}}{{$y := "%s"}}{{$t := "%s"}}{{$l := "%s"}}%s`,
-		cleanForPath(e.Metadata.Get("author")[0]),
+		cleanForPath(e.Metadata.Get("creator")[0]),
 		             e.Metadata.Get("year")[0],
 		cleanForPath(e.Metadata.Get("title")[0]), e.Metadata.Get("language")[0], r.Replace(fileTemplate))
 
@@ -263,12 +263,13 @@ func (e *Book) IsDuplicate(o Book, isRetail bool) (isDupe bool, trumps bool) {
 
 // FromJSON fills the Epub info from JSON text.
 func (e *Book) FromJSON(jsonBytes []byte) (err error) {
-	fmt.Println("Filling Epub from DB for " + e.ShortString())
+	fmt.Println("Filling Epub from DB...")
 	err = json.Unmarshal(jsonBytes, e)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+	fmt.Println("Loaded " + e.ShortString())
 	return
 }
 
