@@ -14,12 +14,12 @@ func TestLdbLoad(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error loading epubs from database: " + err.Error())
 	}
-	if len(l.Epubs) != 2 {
-		t.Errorf("Error loading epubs, expected 2 epubs, got %d: ", len(l.Epubs))
+	if len(l.Books) != 2 {
+		t.Errorf("Error loading epubs, expected 2 epubs, got %d: ", len(l.Books))
 	}
-	for _, epub := range l.Epubs {
-		if hasMetadata := epub.HasMetadata(); !hasMetadata {
-			t.Errorf("Error loading epubs, epub %s does not have metadata in db", epub.Filename)
+	for _, epub := range l.Books {
+		if hasMetadata := epub.Metadata.HasAny(); !hasMetadata {
+			t.Errorf("Error loading epubs, epub %s does not have metadata in db", epub.getMainFilename())
 		}
 	}
 }
@@ -85,7 +85,7 @@ func TestLdbSearch(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error searching fr")
 	}
-	if len(res) != 1 && res[0].Filename != "test/pg17989.epub" {
+	if len(res) != 1 && res[0].getMainFilename() != "test/pg17989.epub" {
 		t.Errorf("Error searching fr, unexpected results")
 	}
 	res, err = l.Search("author:dumas")

@@ -16,6 +16,7 @@ func TestHelpersListEpubs(t *testing.T) {
 
 	epubsPaths, hashes, err := listEpubsInDirectory(currentDir)
 	if err != nil {
+
 		t.Errorf("Error listing epubs: ", err.Error())
 	}
 

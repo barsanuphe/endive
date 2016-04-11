@@ -85,15 +85,15 @@ func (l *Library) ImportRetail() (err error) {
 
 			// TODO: check if duplicate!!!!
 			// make Epub, get metadata
-			e := Epub{Filename: path}
-			e.Hash = hash
-			err = e.GetMetadata()
+			e := NewBook(path, l.ConfigurationFile, isRetail)
+			e.RetailEpub.Hash = hash
+			err = e.Metadata.Read(path)
 			if err != nil {
 				return
 			}
 
 			// see if we have duplicates
-			if l.hasCopy(e, isRetail) {
+			if l.hasCopy(*e, isRetail) {
 				fmt.Println("Skipping duplicate " + e.String())
 				return
 			}
@@ -192,12 +192,12 @@ func (l *Library) ImportNonRetail() (err error) {
 }
 
 // ExportToEReader selected epubs.
-func (l *Library) ExportToEReader(epubs []Epub) (err error) {
+func (l *Library) ExportToEReader(epubs []Book) (err error) {
 	return
 }
 
 // DuplicateRetailEpub copies a retail epub to make a non-retail version.
-func (l *Library) DuplicateRetailEpub(epub Epub) (nonRetailEpub Epub, err error) {
+func (l *Library) DuplicateRetailEpub(epub Book) (nonRetailEpub Book, err error) {
 	// TODO find epub
 	// TODO copy file
 	return
@@ -216,7 +216,7 @@ func (l *Library) RunQuery(query string) (results string, err error) {
 	if len(hits) != 0 {
 		var rows [][]string
 		for _, res := range hits {
-			rows = append(rows, []string{res.Author, res.Title, res.PublicationYear, res.Filename})
+			rows = append(rows, []string{res.Metadata.Get("author")[0], res.Metadata.Get("title")[0], res.Metadata.Get("year")[0], res.getMainFilename()})
 		}
 		tabulate := gotabulate.Create(rows)
 		tabulate.SetHeaders([]string{"Author", "Title", "Year", "Filename"})
@@ -245,15 +245,12 @@ func (l *Library) Refresh() (renamed int, err error) {
 		}
 	}
 
-	for _, epub := range l.Epubs {
-		// TODO
-		oldName := epub.Filename
+	for _, epub := range l.Books {
 		wasRenamed, _, err := epub.Refresh()
 		if err != nil {
 			return renamed, err
 		}
 		if wasRenamed {
-			fmt.Println("Moved " + oldName + " to " + epub.Filename)
 			renamed++
 		}
 	}

@@ -36,7 +36,7 @@ func getIndexPath() (path string) {
 type LibraryDB struct {
 	DatabaseFile string
 	IndexFile    string // can be in XDG data path
-	Epubs        []Epub
+	Books        []Book
 }
 
 // Load current DB
@@ -50,7 +50,7 @@ func (ldb *LibraryDB) Load() (err error) {
 		}
 		return
 	}
-	err = json.Unmarshal(bytes, &ldb.Epubs)
+	err = json.Unmarshal(bytes, &ldb.Books)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -60,7 +60,7 @@ func (ldb *LibraryDB) Load() (err error) {
 
 // Save current DB
 func (ldb *LibraryDB) Save() (hasSaved bool, err error) {
-	jsonEpub, err := json.Marshal(ldb.Epubs)
+	jsonEpub, err := json.Marshal(ldb.Books)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -157,14 +157,15 @@ func (ldb *LibraryDB) Index() (numIndexed uint64, err error) {
 	if err != nil {
 		return
 	}
-	err = json.Unmarshal(jsonBytes, &ldb.Epubs)
+	err = json.Unmarshal(jsonBytes, &ldb.Books)
 	if err != nil {
 		fmt.Print("Error:", err)
 	}
 
 	// index by filename
-	for _, epub := range ldb.Epubs {
-		index.Index(epub.Filename, epub)
+	for _, epub := range ldb.Books {
+		// TODO: index epub.ShortString() instead?
+		index.Index(epub.getMainFilename(), epub)
 	}
 
 	// check number of indexed documents
@@ -176,22 +177,22 @@ func (ldb *LibraryDB) Index() (numIndexed uint64, err error) {
 	return
 }
 
-func (ldb *LibraryDB) FindByFilename(filename string) (result Epub, err error) {
-	for _, result = range ldb.Epubs {
-		if result.Filename == filename {
+func (ldb *LibraryDB) FindByFilename(filename string) (result Book, err error) {
+	for _, result = range ldb.Books {
+		if result.RetailEpub.Filename == filename || result.NonRetailEpub.Filename == filename {
 			return
 		}
 	}
-	return Epub{}, errors.New("Could not find epub " + filename)
+	return Book{}, errors.New("Could not find epub " + filename)
 }
 
-func (ldb *LibraryDB) hasCopy(e Epub, isRetail bool) (result bool) {
+func (ldb *LibraryDB) hasCopy(e Book, isRetail bool) (result bool) {
 	// TODO tests
 
 	// TODO make sur e.IsRetail is set
 
 	// loop over ldb.Epubs,
-	for _, epub := range ldb.Epubs {
+	for _, epub := range ldb.Books {
 		isDuplicate, canTrump := e.IsDuplicate(epub, isRetail)
 		if canTrump {
 			return false
@@ -204,7 +205,7 @@ func (ldb *LibraryDB) hasCopy(e Epub, isRetail bool) (result bool) {
 }
 
 // Search current DB
-func (ldb *LibraryDB) Search(queryString string) (results []Epub, err error) {
+func (ldb *LibraryDB) Search(queryString string) (results []Book, err error) {
 	// TODO make sure the index is up to date
 
 	fmt.Println("Searching database for " + queryString + " ...")
@@ -236,7 +237,7 @@ func (ldb *LibraryDB) Search(queryString string) (results []Epub, err error) {
 	if searchResults.Total != 0 {
 		for _, hit := range searchResults.Hits {
 			fmt.Println("Found " + hit.ID)
-			var epub Epub
+			var epub Book
 			epub, err = ldb.FindByFilename(hit.ID)
 			if err != nil {
 				return
@@ -256,13 +257,13 @@ func (ldb *LibraryDB) SearchJSON() (jsonOutput string, err error) {
 }
 
 // ListNonRetailOnly among known epubs.
-func (ldb *LibraryDB) ListNonRetailOnly() (nonretail []Epub, err error) {
+func (ldb *LibraryDB) ListNonRetailOnly() (nonretail []Book, err error) {
 	// TODO return Search for querying non retail epubs, removing the epubs with same title/author but retail
 	return
 }
 
 // ListRetailOnly among known epubs.
-func (ldb *LibraryDB) ListRetailOnly() (retail []Epub, err error) {
+func (ldb *LibraryDB) ListRetailOnly() (retail []Book, err error) {
 	return
 }
 
@@ -278,11 +279,11 @@ func (ldb *LibraryDB) ListTags() (tags []string, err error) {
 }
 
 // ListUntagged among known epubs.
-func (ldb *LibraryDB) ListUntagged() (untagged []Epub, err error) {
+func (ldb *LibraryDB) ListUntagged() (untagged []Book, err error) {
 	return
 }
 
 // ListWithTag among known epubs.
-func (ldb *LibraryDB) ListWithTag(tag string) (tagged []Epub, err error) {
+func (ldb *LibraryDB) ListWithTag(tag string) (tagged []Book, err error) {
 	return
 }
