@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"os"
 	"path/filepath"
 )
@@ -11,7 +10,6 @@ type Epub struct {
 	Filename         string `json:"filename"` // relative to LibraryRoot
 	Config           Config `json:"-"`
 	Hash             string `json:"hash"`
-	Retail           string `json:"isretail"`
 	NeedsReplacement string `json:"replace"`
 }
 
@@ -37,11 +35,6 @@ func (e *Epub) GetHash() (err error) {
 	return
 }
 
-// IsRetail returns if file is retail.
-func (e *Epub) IsRetail() (isRetail bool) {
-	return e.Retail == "true"
-}
-
 // FlagForReplacement an epub of insufficient quality
 func (e *Epub) FlagForReplacement() (err error) {
 	e.NeedsReplacement = "true"
@@ -52,9 +45,6 @@ func (e *Epub) FlagForReplacement() (err error) {
 func (e *Epub) SetRetail() (err error) {
 	// set read-only
 	err = os.Chmod(e.getPath(), 0444)
-	if err == nil {
-		e.Retail = "true"
-	}
 	return
 }
 
@@ -62,9 +52,6 @@ func (e *Epub) SetRetail() (err error) {
 func (e *Epub) SetNonRetail() (err error) {
 	// set read-write
 	err = os.Chmod(e.getPath(), 0777)
-	if err == nil {
-		e.Retail = "false"
-	}
 	return
 }
 
@@ -78,11 +65,6 @@ func (e *Epub) Check() (hasChanged bool, err error) {
 	// compare with old
 	if currentHash != e.Hash {
 		hasChanged = true
-		if e.Retail == "true" {
-			return hasChanged, errors.New("Retail Epub hash has changed")
-		} else {
-			return hasChanged, nil
-		}
 	}
 	return
 }
