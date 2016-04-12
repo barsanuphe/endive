@@ -27,19 +27,19 @@ directory.
 - [x] endive can scrape special directories for epubs to import.
 - [x] endive must log the hash and filename of all imported files, in a
 dedicated database in the relevant XDG data directory.
-- [ ] already imported epubs (hash already logged) must be ignored during
+- [x] already imported epubs (hash already logged) must be ignored during
 import.
 - [ ] duplicates other than retail/non-retail versions of the same work are not
 allowed. epubs are duplicates if they have the same author and title, and/or
 ISBN.
-- [ ] epubs must be copied into the library, which contains the epubs and the
+- [x] epubs must be copied into the library, which contains the epubs and the
 database.
 - [x] retail epubs are to be given read-only permissions.
 - [x] retail epubs have a forced "[retail]" suffix
-- [ ] if a newly imported retail version of an ebook had a non-retail
+- [x] if a newly imported retail version of an ebook had a non-retail
 counterpart already in the library, it trumps and replaces it, ie the non-retail
 version is deleted.
-- [ ] if a newly imported epub (retail or not) has a duplicate in the library
+- [x] if a newly imported epub (retail or not) has a duplicate in the library
 that was tagged as needing replacement, it trumps and replaces it.
 - [ ] if an imported epub is on the configuration wishlist, endive must remove
 it from the wishlist.
@@ -55,7 +55,7 @@ publication, language, description.
 
 - [x] endive can keep track of progression: unread, reading, read, in shortlist.
 - [x] one or several series can be associated with an epub.
-- [ ] epubs can be flagged as needing replacement.
+- [x] epubs can be flagged as needing replacement.
 - [x] retail epubs are identified as such.
 - [x] endive must calculate and store the sha256 hash of every epub.
 - [x] the hash of retail epubs can be checked to detect unwanted modifications.
@@ -69,8 +69,8 @@ also available.
 
 ### Organization
 
-- [ ] a given book can have retail and non-retail versions side by side.
-- [ ] if an epub has a retail version, the non-retail version is assumed to be
+- [x] a given book can have retail and non-retail versions side by side.
+- [x] if an epub has a retail version, the non-retail version is assumed to be
 derived from the retail, ie their metadata are the same.
 - [ ] other duplicates are not allowed.
 - [x] the only allowed ebook format is epub.

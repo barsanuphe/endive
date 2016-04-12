@@ -1,6 +1,7 @@
 # Endive
 
-In early development.
+In very early development.
+Right now, it will probably just delete your books and insult you.
 
 ## What it is
 
@@ -19,7 +20,7 @@ metadata, such as:
 example if a retail epub is missing the publication date, it can be stored in
 the database instead).
 
-Endive is designed to make sure retail epubs are untouched.
+Endive is designed to make sure the contents of retail epubs are untouched.
 Non-retail epubs can be trumped by importing retail versions.
 
 ## How to install
@@ -27,6 +28,13 @@ Non-retail epubs can be trumped by importing retail versions.
 If you have a working Go installation, just run:
 
     $ go get -u github.com/barsanuphe/endive
+
+## How to run
+
+You probably should not run it for now, if you value your files.
+
+    $ endive help
+
 
 ## Third party libraries
 
