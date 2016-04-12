@@ -6,13 +6,11 @@ import (
 	"testing"
 )
 
-var seriesTestEpubs = []string{"test/pg16328.epub", "test/pg17989.epub"}
-
 // TestSeries tests Add, Remove, Has and HasAny
 func TestSeries(t *testing.T) {
 	fmt.Println("+ Testing Series...")
-	for i, testEpub := range seriesTestEpubs {
-		e := NewBook(testEpub, standardTestConfig, isRetail)
+	for i, epub := range epubs {
+		e := NewBook(epub.filename, standardTestConfig, isRetail)
 		seriesName := "test_é!/?*èç1"
 		seriesName2 := "test2"
 
