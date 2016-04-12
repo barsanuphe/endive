@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"testing"
 )
 
@@ -26,15 +25,6 @@ func TestEpubRetail(t *testing.T) {
 	e := NewBook(epubs[0].filename, standardTestConfig, isRetail)
 	e.RetailEpub.GetHash()
 
-	// testing retail
-	err := e.RetailEpub.SetRetail()
-	if err != nil {
-		t.Errorf("Error setting retail")
-	}
-	mode, err := os.Stat(e.getMainFilename())
-	if mode.Mode() != 0444 {
-		t.Errorf("Error: ebook should be read-only")
-	}
 	// checking retail
 	hasChanged, err := e.RetailEpub.Check()
 	if err != nil {
@@ -55,14 +45,6 @@ func TestEpubRetail(t *testing.T) {
 
 	// testing non-retail
 	e.RetailEpub.Hash = oldHash
-	err = e.RetailEpub.SetNonRetail()
-	if err != nil {
-		t.Errorf("Error setting non-retail")
-	}
-	mode, err = os.Stat(e.getMainFilename())
-	if mode.Mode() != 0777 {
-		t.Errorf("Error: ebook should be read-write")
-	}
 
 	// checking non retail
 	hasChanged, err = e.RetailEpub.Check()

@@ -1,9 +1,6 @@
 package main
 
-import (
-	"os"
-	"path/filepath"
-)
+import "path/filepath"
 
 // EpubFile can manipulate an epub file.
 type Epub struct {
@@ -38,20 +35,6 @@ func (e *Epub) GetHash() (err error) {
 // FlagForReplacement an epub of insufficient quality
 func (e *Epub) FlagForReplacement() (err error) {
 	e.NeedsReplacement = "true"
-	return
-}
-
-// SetRetail a retail epub ebook.
-func (e *Epub) SetRetail() (err error) {
-	// set read-only
-	err = os.Chmod(e.getPath(), 0444)
-	return
-}
-
-// SetNonRetail a non retail epub ebook.
-func (e *Epub) SetNonRetail() (err error) {
-	// set read-write
-	err = os.Chmod(e.getPath(), 0777)
 	return
 }
 
