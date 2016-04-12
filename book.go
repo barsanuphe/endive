@@ -34,12 +34,15 @@ type Book struct {
 
 // NewBook constucts a valid new Epub
 func NewBook(filename string, c Config, isRetail bool) *Book {
-	m := NewMetadata()
+	return NewBookWithMetadata(filename, c, isRetail, NewMetadata())
+}
+
+// NewBookWithMetadata constucts a valid new Epub
+func NewBookWithMetadata(filename string, c Config, isRetail bool, m *Metadata) *Book {
+	f := Epub{Filename: filename, Config: c, NeedsReplacement: "false"}
 	if isRetail {
-		f := Epub{Filename: filename, Config: c, NeedsReplacement: "false", Retail: "true"}
 		return &Book{RetailEpub: f, Config: c, Metadata: *m, Progress: "unread"}
 	} else {
-		f := Epub{Filename: filename, Config: c, NeedsReplacement: "false", Retail: "false"}
 		return &Book{NonRetailEpub: f, Config: c, Metadata: *m, Progress: "unread"}
 	}
 }
@@ -47,6 +50,15 @@ func NewBook(filename string, c Config, isRetail bool) *Book {
 // ShortString returns a short string representation of Epub
 func (e *Book) ShortString() (desc string) {
 	return e.Metadata.Get("creator")[0] + " (" + e.Metadata.Get("year")[0] + ") " + e.Metadata.Get("title")[0]
+}
+
+// String returns a string representation of Epub
+func (e *Book) String() (desc string) {
+	tags := ""
+	if len(e.Tags) != 0 {
+		tags = "[ " + strings.Join(e.Tags, " ") + " ]"
+	}
+	return e.getMainFilename() + ":\t" + e.Metadata.Get("creator")[0] + " (" + e.Metadata.Get("year")[0] + ") " + e.Metadata.Get("title")[0] + " [" + e.Metadata.Get("language")[0] + "] " + tags
 }
 
 func (e *Book) getMainFilename() (filename string) {
@@ -59,15 +71,6 @@ func (e *Book) getMainFilename() (filename string) {
 	}
 	// TODO return err
 	return "ERROR"
-}
-
-// String returns a string representation of Epub
-func (e *Book) String() (desc string) {
-	tags := ""
-	if len(e.Tags) != 0 {
-		tags = "[ " + strings.Join(e.Tags, " ") + " ]"
-	}
-	return e.getMainFilename() + ":\t" + e.Metadata.Get("creator")[0] + " (" + e.Metadata.Get("year")[0] + ") " + e.Metadata.Get("title")[0] + " [" + e.Metadata.Get("language")[0] + "] " + tags
 }
 
 // SetProgress sets reading progress
@@ -152,41 +155,14 @@ func (e *Book) generateNewName(fileTemplate string, isRetail bool) (newName stri
 	return
 }
 
-// Refresh filename.
-func (e *Book) Refresh() (wasRenamed []bool, newName []string, err error) {
-	fmt.Println("Refreshing Epub " + e.ShortString())
-	// metadata is blank, run GetMetadata
-	if hasMetadata := e.Metadata.HasAny(); !hasMetadata {
-		err = e.Metadata.Read(e.getMainFilename())
-		if err != nil {
-			return
-		}
-	}
-	// refresh both epubs
-	wasRenamedR, newNameR, errR := e.refreshEpub(e.RetailEpub)
-	if wasRenamedR {
-		e.RetailEpub.Filename = newNameR
-	}
-	wasRenamedNR, newNameNR, errNR := e.refreshEpub(e.NonRetailEpub)
-	if wasRenamedNR {
-		e.NonRetailEpub.Filename = newNameNR
-	}
-	wasRenamed = []bool{wasRenamedR, wasRenamedNR}
-	newName = []string{newNameR, newNameNR}
-	// TODO do better
-	if errR != nil && errNR != nil {
-		err = errors.New(errR.Error() + errNR.Error())
-	}
-	return
-}
-
-func (e *Book) refreshEpub(epub Epub) (wasRenamed bool, newName string, err error) {
+// refreshEpub one specific epub associated with this Book
+func (e *Book) refreshEpub(epub Epub, isRetail bool) (wasRenamed bool, newName string, err error) {
 	// do nothing if file does not exist
 	if epub.Filename == "" {
 		err = errors.New("Does not exist")
 		return
 	}
-	newName, err = e.generateNewName(e.Config.EpubFilenameFormat, epub.IsRetail())
+	newName, err = e.generateNewName(e.Config.EpubFilenameFormat, isRetail)
 	if err != nil {
 		return
 	}
@@ -205,75 +181,166 @@ func (e *Book) refreshEpub(epub Epub) (wasRenamed bool, newName string, err erro
 	return
 }
 
+// Refresh the filenames of the Epubs associated with this Book.
+func (e *Book) Refresh() (wasRenamed []bool, newName []string, err error) {
+	fmt.Println("Refreshing Epub " + e.ShortString())
+	// metadata is blank, run GetMetadata
+	if hasMetadata := e.Metadata.HasAny(); !hasMetadata {
+		err = e.Metadata.Read(e.getMainFilename())
+		if err != nil {
+			return
+		}
+	}
+	// refresh both epubs
+	wasRenamedR, newNameR, errR := e.refreshEpub(e.RetailEpub, true)
+	if wasRenamedR {
+		e.RetailEpub.Filename = newNameR
+	}
+	wasRenamedNR, newNameNR, errNR := e.refreshEpub(e.NonRetailEpub, false)
+	if wasRenamedNR {
+		e.NonRetailEpub.Filename = newNameNR
+	}
+	wasRenamed = []bool{wasRenamedR, wasRenamedNR}
+	newName = []string{newNameR, newNameNR}
+	// TODO do better
+	if errR != nil && errNR != nil {
+		err = errors.New(errR.Error() + errNR.Error())
+	}
+	return
+}
+
+func (e *Book) hasRetail() (hasRetail bool) {
+	return e.RetailEpub.Filename != ""
+}
+
+func (e *Book) hasNonRetail() (hasNonRetail bool) {
+	return e.NonRetailEpub.Filename != ""
+}
+
 // Import an Epub to the Library
-func (e *Book) Import(isRetail bool) (err error) {
-	// TODO try to find similar book in library
-	// if found, see if duplicate or not
-	// if it trumps, replace old one
-	// if not, merge both Books (keep retail Book, add non-retail Epub)
-
+func (e *Book) Import(path string, isRetail bool, hash string) (imported bool, err error) {
 	// TODO tests
-	/*
-		if e.Hash == "" {
-			err = e.GetHash()
-			if err != nil {
-				return
-			}
-		}
-		// TODO check
-		if !e.HasMetadata() {
-			err = e.GetMetadata()
-			if err != nil {
-				return
-			}
-		}
-		// get newName
-		newName, err := e.generateNewName(e.Config.EpubFilenameFormat, isRetail)
-		if err != nil {
-			return
-		}
-		// copy
-		err = CopyFile(e.Filename, filepath.Join(e.Config.LibraryRoot, newName))
-		if err != nil {
-			return
-		}
-
-		// update Filename with path relative to LibraryRoot
-		e.Filename = newName
-
-		// set retail
-		if isRetail {
-			err = e.SetRetail()
-			if err != nil {
-				return
+	// TODO allow replacing epubs (retail or non retail) flagged for replacement
+	if isRetail {
+		if e.hasRetail() {
+			fmt.Println("Trying to import retail epub although retail version already exists.")
+			if e.RetailEpub.NeedsReplacement == "true" {
+				// replace retail
+				err = e.removeEpub(isRetail)
+				if err != nil {
+					return
+				}
+				imported, err = e.importEpub(path, isRetail, hash)
 			}
 		} else {
-			err = e.SetNonRetail()
+			// if no retail version exists, import
+			imported, err = e.importEpub(path, isRetail, hash)
+		}
+
+		if imported && e.hasNonRetail() {
+			// if a non-retail version existed, it is now trumped. Removing epub.
+			fmt.Println("Non-retail version trumped, removing.")
+			// replace ,nonretail
+			err = e.removeEpub(!isRetail)
 			if err != nil {
 				return
 			}
 		}
-		// TODO if e trumps another ebook (is retail and trumps non-retail, or trumps an ebook needing replacement)
-		// TOOD remove the other version, set NeedsReplacement back to "false" if necessary
-	*/
+	} else {
+		if e.hasRetail() {
+			fmt.Println("Trying to import non-retail epub although retail version exists, ignoring.")
+		} else {
+			if e.hasNonRetail() {
+				fmt.Println("Trying to import non-retail epub although a non-retail version already exists.")
+				if e.NonRetailEpub.NeedsReplacement == "true" {
+					// replace ,nonretail
+					fmt.Println("Replacing non-retail version, flagged for replacement.")
+					err = e.removeEpub(isRetail)
+					if err != nil {
+						return
+					}
+					imported, err = e.importEpub(path, isRetail, hash)
+				}
+			} else {
+				// import non retail if no version exists
+				imported, err = e.importEpub(path, isRetail, hash)
+			}
+		}
+	}
 	return
 }
 
-// IsDuplicate checks if current objet is duplicate of another
-func (e *Book) IsDuplicate(o Book, isRetail bool) (isDupe bool, trumps bool) {
-	// TODO tests
-
-	// TODO if isDuplicate but e.IsRetail == "true" and o.IsRetail == "false" => trumps!
-
-	// TODO: compare isbn if both are not empty
-	//if e.ISBN != "" && e.ISBN == o.ISBN {
-	//	return true,
-	//}
-	// TODO: else compare author/title
-	// TODO: also compare if retail or not
+// Import an Epub to the Library
+func (e *Book) importEpub(path string, isRetail bool, hash string) (imported bool, err error) {
+	fmt.Println("Importing " + path)
+	// copy
+	dest := filepath.Join(e.Config.LibraryRoot, path)
+	err = CopyFile(path, dest)
+	if err != nil {
+		return
+	}
+	// make epub
+	ep := Epub{Filename: dest, Hash: hash, Config: e.Config}
+	if isRetail {
+		e.RetailEpub = ep
+	} else {
+		e.NonRetailEpub = ep
+	}
+	// rename
+	_, _, err = e.Refresh()
+	if err != nil {
+		return
+	}
+	// set permissions
+	if isRetail {
+		e.RetailEpub.SetRetail()
+	} else {
+		e.NonRetailEpub.SetNonRetail()
+	}
 	return
 }
 
+// Remove an Epub from the library
+func (e *Book) removeEpub(isRetail bool) (err error) {
+	if isRetail {
+		// remove
+		err = os.Remove(e.RetailEpub.Filename)
+		if err != nil {
+			return
+		}
+		e.RetailEpub = Epub{}
+	} else {
+		// remove
+		err = os.Remove(e.NonRetailEpub.Filename)
+		if err != nil {
+			return
+		}
+		e.NonRetailEpub = Epub{}
+	}
+	return
+}
+
+// Check epubs integrity.
+func (e *Book) Check() (retailHasChanged bool, nonRetailHasChanged bool, err error) {
+	if e.hasNonRetail() {
+		nonRetailHasChanged, err = e.RetailEpub.Check()
+		if err != nil {
+			return
+		}
+	}
+	if e.hasRetail() {
+		retailHasChanged, err = e.RetailEpub.Check()
+		if err != nil {
+			return
+		}
+		if retailHasChanged {
+			err = errors.New("Retail Epub hash has changed")
+		}
+	}
+	return
+}
+
+// ----------------------------------------------
 // FromJSON & JSON are used mainly for unit tests
 
 // FromJSON fills the Epub info from JSON text.
