@@ -94,5 +94,16 @@ func (m *Metadata) HasAny() (hasMetadata bool) {
 			return true
 		}
 	}
+
+	return
+}
+
+// IsSimilar checks if metadata is similar to known Metadata
+func (m *Metadata) IsSimilar(o *Metadata) (isSimilar bool) {
+	// TODO do much better, try with isbn if available on both sides
+	// similar == same author/title, for now
+	if m.Get("creator")[0] == o.Get("creator")[0] && m.Get("title")[0] == o.Get("title")[0] {
+		return true
+	}
 	return
 }
