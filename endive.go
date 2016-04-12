@@ -75,11 +75,14 @@ func main() {
 					Action: func(c *cli.Context) {
 						// import
 						fmt.Println("Importing retail epubs...")
-						err := l.ImportRetail()
-						if err != nil {
-							panic(err)
+						if len(l.ConfigurationFile.RetailSource) == 0 {
+							fmt.Println("No retail source found in configuration file!")
+						} else {
+							err := l.ImportRetail()
+							if err != nil {
+								panic(err)
+							}
 						}
-
 					},
 				},
 				{
@@ -88,9 +91,13 @@ func main() {
 					Usage:   "import non-retail epubs",
 					Action: func(c *cli.Context) {
 						fmt.Println("Importing non-retail epubs...")
-						err := l.ImportNonRetail()
-						if err != nil {
-							panic(err)
+						if len(l.ConfigurationFile.NonRetailSource) == 0 {
+							fmt.Println("No non-retail source found in configuration file!")
+						} else {
+							err := l.ImportNonRetail()
+							if err != nil {
+								panic(err)
+							}
 						}
 					},
 				},
