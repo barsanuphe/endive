@@ -31,7 +31,6 @@ func listEpubsInDirectory(root string) (epubPaths []string, hashes []string, err
 		}
 		return
 	})
-
 	return
 }
 

@@ -186,24 +186,6 @@ func (ldb *LibraryDB) FindByFilename(filename string) (result Book, err error) {
 	return Book{}, errors.New("Could not find epub " + filename)
 }
 
-func (ldb *LibraryDB) hasCopy(e Book, isRetail bool) (result bool) {
-	// TODO tests
-
-	// TODO make sur e.IsRetail is set
-
-	// loop over ldb.Epubs,
-	for _, epub := range ldb.Books {
-		isDuplicate, canTrump := e.IsDuplicate(epub, isRetail)
-		if canTrump {
-			return false
-		}
-		if isDuplicate {
-			return true
-		}
-	}
-	return
-}
-
 // Search current DB
 func (ldb *LibraryDB) Search(queryString string) (results []Book, err error) {
 	// TODO make sure the index is up to date

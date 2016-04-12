@@ -57,12 +57,7 @@ func OpenLibrary() (l Library, err error) {
 // ImportRetail imports epubs from the Retail source.
 func (l *Library) ImportRetail() (err error) {
 	fmt.Println("Library: Importing retail epubs...")
-	defer timeTrack(time.Now(), "Scanned")
-
-	err = l.KnownHashesFile.Load()
-	if err != nil {
-		return
-	}
+	defer timeTrack(time.Now(), "Imported")
 
 	// checking all defined sources
 	var allEpubs, allHashes []string
@@ -74,62 +69,13 @@ func (l *Library) ImportRetail() (err error) {
 		allEpubs = append(allEpubs, epubs...)
 		allHashes = append(allHashes, hashes...)
 	}
-
-	newEpubs := 0
-	isRetail := true
-	// importing what is necessary
-	for i, path := range allEpubs {
-		hash := allHashes[i]
-		// compare with known hashes
-		if !l.KnownHashesFile.IsIn(hash) {
-
-			// TODO: check if duplicate!!!!
-			// make Epub, get metadata
-			e := NewBook(path, l.ConfigurationFile, isRetail)
-			e.RetailEpub.Hash = hash
-			err = e.Metadata.Read(path)
-			if err != nil {
-				return
-			}
-
-			// see if we have duplicates
-			if l.hasCopy(*e, isRetail) {
-				fmt.Println("Skipping duplicate " + e.String())
-				return
-			}
-
-			// if not duplicate
-			fmt.Println("Importing " + path)
-			err = e.Import(true)
-			if err != nil {
-				return
-			}
-
-			// add hash to known hashes
-			added, err := l.KnownHashesFile.Add(hash)
-			if !added || err != nil {
-				return err
-			}
-
-			// set to retail, get metadata, hash, refresh
-			// TODO: make e.New(retail bool)
-			// TODO: append to l.Epubs
-			newEpubs++
-		} else {
-			fmt.Println("Ignoring already imported epub " + path)
-		}
-
-	}
-	fmt.Printf("Found %d retail epubs.\n", newEpubs)
-
-	_, err = l.KnownHashesFile.Save()
-	return
+	return l.importEpubs(allEpubs, allHashes, true)
 }
 
 // ImportNonRetail imports epubs from the Non-Retail source.
 func (l *Library) ImportNonRetail() (err error) {
 	fmt.Println("Library: Importing non-retail epubs...")
-	defer timeTrack(time.Now(), "Scanned")
+	defer timeTrack(time.Now(), "Imported")
 
 	// checking all defined sources
 	var allEpubs, allHashes []string
@@ -141,6 +87,17 @@ func (l *Library) ImportNonRetail() (err error) {
 		allEpubs = append(allEpubs, epubs...)
 		allHashes = append(allHashes, hashes...)
 	}
+	return l.importEpubs(allEpubs, allHashes, false)
+}
+
+// importEpubs, retail or not.
+func (l *Library) importEpubs(allEpubs []string, allHashes []string, isRetail bool) (err error) {
+	// force reload if it has changed
+	err = l.KnownHashesFile.Load()
+	if err != nil {
+		return
+	}
+	defer l.KnownHashesFile.Save()
 
 	newEpubs := 0
 	// importing what is necessary
@@ -148,46 +105,98 @@ func (l *Library) ImportNonRetail() (err error) {
 		hash := allHashes[i]
 		// compare with known hashes
 		if !l.KnownHashesFile.IsIn(hash) {
-			/*
-				// TODO: check if duplicate!!!!
-				// make Epub, get metadata
-				e := Epub{Filename: path}
-				e.Hash = hash
-				err = e.GetMetadata()
+			// get Metadata from new epub
+			m := NewMetadata()
+			err = m.Read(path)
+			if err != nil {
+				return
+			}
+			// loop over Books to find similar Metadata
+			var found, imported bool
+			var knownBook *Book
+			for _, book := range l.Books {
+				if book.Metadata.IsSimilar(m) {
+					found = true
+					knownBook = &book
+					break
+				}
+			}
+			if !found {
+				// new Book
+				b := NewBookWithMetadata(path, l.ConfigurationFile, isRetail, m)
+				imported, err = b.Import(path, isRetail, hash)
 				if err != nil {
 					return
 				}
-
-				// see if we have duplicates
-				if l.hasCopy(e, isRetail) {
-					fmt.Println("Skipping duplicate " + e.String())
-					return
-				}
-
-				// if not duplicate
-				fmt.Println("Importing " + path)
-				err = e.Import(true)
+				l.Books = append(l.Books, *b)
+			} else {
+				// add to existing book
+				imported, err = knownBook.Import(path, isRetail, hash)
 				if err != nil {
 					return
 				}
+			}
 
+			if imported {
 				// add hash to known hashes
+				// TODO otherwise it'll pop up every other time
 				added, err := l.KnownHashesFile.Add(hash)
 				if !added || err != nil {
-					return
+					return err
 				}
-
-				// set to retail, get metadata, hash, refresh
-				// TODO: make e.New(retail bool)
-				// TODO: append to l.Epubs
-			*/
-			newEpubs++
+				newEpubs++
+			}
 		} else {
 			fmt.Println("Ignoring already imported epub " + path)
 		}
-
 	}
-	fmt.Printf("Found %d non-retail epubs.\n", newEpubs)
+	if isRetail {
+		fmt.Printf("Found %d retail epubs.\n", newEpubs)
+	} else {
+		fmt.Printf("Found %d non-retail epubs.\n", newEpubs)
+	}
+	return
+}
+
+// Refresh current DB
+func (l *Library) Refresh() (renamed int, err error) {
+	fmt.Println("Refreshing database...")
+
+	// scan for new epubs
+	allEpubs, allHashes, err := listEpubsInDirectory(l.ConfigurationFile.LibraryRoot)
+	if err != nil {
+		return
+	}
+
+	// compare allEpubs with l.Epubs
+	newEpubs := []string{}
+	newHashes := []string{}
+	for i, epub := range allEpubs {
+		_, err = l.FindByFilename(epub)
+		if err != nil { // no error == found Epub
+			fmt.Println("NEW EPUB " + epub + " , will be imported as non-retail.")
+			newEpubs = append(newEpubs, epub)
+			newHashes = append(newHashes, allHashes[i])
+		}
+	}
+	// import as non-retail
+	err = l.importEpubs(allEpubs, allHashes, false)
+	if err != nil {
+		return
+	}
+
+	for _, book := range l.Books {
+		wasRenamed, _, err := book.Refresh()
+		if err != nil {
+			return renamed, err
+		}
+		if wasRenamed[0] {
+			renamed++
+		}
+		if wasRenamed[1] {
+			renamed++
+		}
+	}
 	return
 }
 
@@ -224,38 +233,4 @@ func (l *Library) RunQuery(query string) (results string, err error) {
 		return tabulate.Render("simple"), err
 	}
 	return "Nothing.", err
-}
-
-// Refresh current DB
-func (l *Library) Refresh() (renamed int, err error) {
-	fmt.Println("Refreshing database...")
-
-	// scan for new epubs
-	allEpubs, _, err := listEpubsInDirectory(l.ConfigurationFile.LibraryRoot)
-	if err != nil {
-		return
-	}
-	// compare allEpubs with l.Epubs
-	for _, epub := range allEpubs {
-		_, err = l.FindByFilename(epub)
-		if err != nil { // no error == found Epub
-			fmt.Println("NEW EPUB " + epub)
-			// TODO: import
-			// TODO: as non-retail? look for retail suffix?
-		}
-	}
-
-	for _, epub := range l.Books {
-		wasRenamed, _, err := epub.Refresh()
-		if err != nil {
-			return renamed, err
-		}
-		if wasRenamed[0] {
-			renamed++
-		}
-		if wasRenamed[1] {
-			renamed++
-		}
-	}
-	return
 }
