@@ -51,6 +51,12 @@ func OpenLibrary() (l Library, err error) {
 	if err != nil {
 		return
 	}
+	// make each Book aware of current Config file
+	for i, _ := range l.Books {
+		l.Books[i].Config = l.ConfigurationFile
+		l.Books[i].NonRetailEpub.Config = l.ConfigurationFile
+		l.Books[i].RetailEpub.Config = l.ConfigurationFile
+	}
 	return l, err
 }
 
@@ -117,10 +123,10 @@ func (l *Library) importEpubs(allEpubs []string, allHashes []string, isRetail bo
 			// loop over Books to find similar Metadata
 			var found, imported bool
 			var knownBook *Book
-			for _, book := range l.Books {
+			for i, book := range l.Books {
 				if book.Metadata.IsSimilar(m) {
 					found = true
-					knownBook = &book
+					knownBook = &l.Books[i]
 					break
 				}
 			}
@@ -134,6 +140,7 @@ func (l *Library) importEpubs(allEpubs []string, allHashes []string, isRetail bo
 				l.Books = append(l.Books, *b)
 			} else {
 				// add to existing book
+				fmt.Println("Adding epub to " + knownBook.ShortString())
 				imported, err = knownBook.AddEpub(path, isRetail, hash)
 				if err != nil {
 					return
@@ -228,11 +235,13 @@ func (l *Library) RunQuery(query string) (results string, err error) {
 	if len(hits) != 0 {
 		var rows [][]string
 		for _, res := range hits {
-			rows = append(rows, []string{res.Metadata.Get("author")[0], res.Metadata.Get("title")[0], res.Metadata.Get("year")[0], res.getMainFilename()})
+			rows = append(rows, []string{res.Metadata.Get("creator")[0], res.Metadata.Get("title")[0], res.Metadata.Get("year")[0], res.getMainFilename()})
 		}
 		tabulate := gotabulate.Create(rows)
 		tabulate.SetHeaders([]string{"Author", "Title", "Year", "Filename"})
 		tabulate.SetEmptyString("N/A")
+		//tabulate.SetMaxCellSize(64)
+		//tabulate.SetWrapStrings(true)
 		return tabulate.Render("simple"), err
 	}
 	return "Nothing.", err

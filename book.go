@@ -125,6 +125,10 @@ func (e *Book) SetReadDateToday() (err error) {
 
 func (e *Book) generateNewName(fileTemplate string, isRetail bool) (newName string, err error) {
 	// TODO add all replacements
+	if fileTemplate == "" {
+		return "", errors.New("Empty filename template")
+	}
+
 	r := strings.NewReplacer(
 		"$a", "{{$a}}",
 		"$t", "{{$t}}",
@@ -296,27 +300,21 @@ func (e *Book) Import(path string, isRetail bool, hash string) (imported bool, e
 	if err != nil {
 		return
 	}
-	// set permissions
-	if isRetail {
-		e.RetailEpub.SetRetail()
-	} else {
-		e.NonRetailEpub.SetNonRetail()
-	}
-	return
+	return true, nil
 }
 
 // Remove an Epub from the library
 func (e *Book) removeEpub(isRetail bool) (err error) {
 	if isRetail {
 		// remove
-		err = os.Remove(e.RetailEpub.Filename)
+		err = os.Remove(e.RetailEpub.getPath())
 		if err != nil {
 			return
 		}
 		e.RetailEpub = Epub{}
 	} else {
 		// remove
-		err = os.Remove(e.NonRetailEpub.Filename)
+		err = os.Remove(e.NonRetailEpub.getPath())
 		if err != nil {
 			return
 		}
