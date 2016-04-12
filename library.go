@@ -62,6 +62,7 @@ func (l *Library) ImportRetail() (err error) {
 	// checking all defined sources
 	var allEpubs, allHashes []string
 	for _, source := range l.ConfigurationFile.RetailSource {
+		fmt.Println("Searching for retail epubs in " + source)
 		epubs, hashes, err := listEpubsInDirectory(source)
 		if err != nil {
 			return err
@@ -80,6 +81,7 @@ func (l *Library) ImportNonRetail() (err error) {
 	// checking all defined sources
 	var allEpubs, allHashes []string
 	for _, source := range l.ConfigurationFile.RetailSource {
+		fmt.Println("Searching for non-retail epubs in " + source)
 		epubs, hashes, err := listEpubsInDirectory(source)
 		if err != nil {
 			return err
@@ -111,6 +113,7 @@ func (l *Library) importEpubs(allEpubs []string, allHashes []string, isRetail bo
 			if err != nil {
 				return
 			}
+
 			// loop over Books to find similar Metadata
 			var found, imported bool
 			var knownBook *Book
@@ -131,7 +134,7 @@ func (l *Library) importEpubs(allEpubs []string, allHashes []string, isRetail bo
 				l.Books = append(l.Books, *b)
 			} else {
 				// add to existing book
-				imported, err = knownBook.Import(path, isRetail, hash)
+				imported, err = knownBook.AddEpub(path, isRetail, hash)
 				if err != nil {
 					return
 				}

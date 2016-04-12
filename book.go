@@ -168,10 +168,16 @@ func (e *Book) refreshEpub(epub Epub, isRetail bool) (wasRenamed bool, newName s
 	}
 
 	if epub.Filename != newName {
-		fmt.Println("Renaming " + epub.Filename + " to: " + newName)
-		// move to c.LibraryRoot + new name
 		origin := epub.getPath()
+		fmt.Println("Renaming " + origin + " to: " + newName)
+		// move to c.LibraryRoot + new name
+
 		destination := filepath.Join(e.Config.LibraryRoot, newName)
+		// if parent directory does not exist, create
+		err = os.MkdirAll(filepath.Dir(destination), os.ModePerm)
+		if err != nil {
+			return
+		}
 		err = os.Rename(origin, destination)
 		if err != nil {
 			return
@@ -217,10 +223,9 @@ func (e *Book) hasNonRetail() (hasNonRetail bool) {
 	return e.NonRetailEpub.Filename != ""
 }
 
-// Import an Epub to the Library
-func (e *Book) Import(path string, isRetail bool, hash string) (imported bool, err error) {
+// AddEpub to the Library
+func (e *Book) AddEpub(path string, isRetail bool, hash string) (imported bool, err error) {
 	// TODO tests
-	// TODO allow replacing epubs (retail or non retail) flagged for replacement
 	if isRetail {
 		if e.hasRetail() {
 			fmt.Println("Trying to import retail epub although retail version already exists.")
@@ -230,11 +235,11 @@ func (e *Book) Import(path string, isRetail bool, hash string) (imported bool, e
 				if err != nil {
 					return
 				}
-				imported, err = e.importEpub(path, isRetail, hash)
+				imported, err = e.Import(path, isRetail, hash)
 			}
 		} else {
 			// if no retail version exists, import
-			imported, err = e.importEpub(path, isRetail, hash)
+			imported, err = e.Import(path, isRetail, hash)
 		}
 
 		if imported && e.hasNonRetail() {
@@ -259,11 +264,11 @@ func (e *Book) Import(path string, isRetail bool, hash string) (imported bool, e
 					if err != nil {
 						return
 					}
-					imported, err = e.importEpub(path, isRetail, hash)
+					imported, err = e.Import(path, isRetail, hash)
 				}
 			} else {
 				// import non retail if no version exists
-				imported, err = e.importEpub(path, isRetail, hash)
+				imported, err = e.Import(path, isRetail, hash)
 			}
 		}
 	}
@@ -271,10 +276,10 @@ func (e *Book) Import(path string, isRetail bool, hash string) (imported bool, e
 }
 
 // Import an Epub to the Library
-func (e *Book) importEpub(path string, isRetail bool, hash string) (imported bool, err error) {
+func (e *Book) Import(path string, isRetail bool, hash string) (imported bool, err error) {
 	fmt.Println("Importing " + path)
 	// copy
-	dest := filepath.Join(e.Config.LibraryRoot, path)
+	dest := filepath.Join(e.Config.LibraryRoot, filepath.Base(path))
 	err = CopyFile(path, dest)
 	if err != nil {
 		return

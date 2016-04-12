@@ -63,6 +63,9 @@ func (c *Config) Load() (err error) {
 	c.NonRetailSource = conf.GetStringSlice("nonretail_source")
 	c.AuthorAliases = conf.GetStringMapStringSlice("author_aliases")
 	c.EpubFilenameFormat = conf.GetString("epub_filename_format")
+	if c.EpubFilenameFormat == "" {
+		c.EpubFilenameFormat = "$a [$y] $t"
+	}
 	c.EReaderTarget = conf.GetString("ereader_target")
 	return
 }

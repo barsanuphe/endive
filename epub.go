@@ -18,7 +18,7 @@ type Epub struct {
 // if it is outside, return Filename directly.
 func (e *Epub) getPath() (path string) {
 	// TODO: tests
-	if filepath.IsAbs(path) {
+	if filepath.IsAbs(e.Filename) {
 		return e.Filename
 	} else {
 		return filepath.Join(e.Config.LibraryRoot, e.Filename)
