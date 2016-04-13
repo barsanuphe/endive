@@ -27,8 +27,13 @@ func (m *Metadata) Read(path string) (err error) {
 	}
 	defer book.Close()
 
-	// TODO map alias creator -- author
-	for _, field := range []string{"title", "creator", "description", "source", "language"} {
+	// get all possible fields except for date
+	knownFields := []string{
+		"title", "language", "identifier", "creator", "subject",
+		"description", "publisher", "contributor", "type", "format",
+		"source", "relation", "coverage", "rights", "meta",
+	}
+	for _, field := range knownFields {
 		m.Fields[field] = []string{"Unknown"}
 		results, err := book.MetadataElement(field)
 		if err == nil {
