@@ -11,13 +11,13 @@ func TestHelpersListEpubs(t *testing.T) {
 	fmt.Println("+ Testing Helpers/ListEpubs()...")
 	currentDir, err := os.Getwd()
 	if err != nil {
-		t.Errorf("Error getting current directory: ", err.Error())
+		t.Errorf("Error getting current directory: %s", err.Error())
 	}
 
 	epubsPaths, hashes, err := listEpubsInDirectory(currentDir)
 	if err != nil {
 
-		t.Errorf("Error listing epubs: ", err.Error())
+		t.Errorf("Error listing epubs: %s", err.Error())
 	}
 
 	// using epubs as defined in epub_test
@@ -31,7 +31,7 @@ func TestHelpersListEpubs(t *testing.T) {
 	for i, path := range epubsPaths {
 		relativePath, err := filepath.Rel(currentDir, path)
 		if err != nil {
-			t.Errorf("Error: ", err.Error())
+			t.Errorf("Error: %s", err.Error())
 		}
 		if epubs[i].filename != relativePath {
 			t.Errorf("Error:  expected %s, got %s.", epubs[i].filename, relativePath)

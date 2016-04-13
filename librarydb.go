@@ -109,7 +109,7 @@ func (ldb *LibraryDB) generateID() (id int) {
 			id = book.ID
 		}
 	}
-	id ++
+	id++
 	return
 }
 

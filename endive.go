@@ -64,10 +64,10 @@ func main() {
 			},
 		},
 		{
-			Name:    "import",
+			Name:     "import",
 			Category: "importing",
-			Aliases: []string{"i"},
-			Usage:   "options for importing epubs",
+			Aliases:  []string{"i"},
+			Usage:    "options for importing epubs",
 			Subcommands: []cli.Command{
 				{
 					Name:    "retail",
@@ -136,10 +136,10 @@ func main() {
 			},
 		},
 		{
-			Name:    "search",
+			Name:     "search",
 			Category: "searching",
-			Aliases: []string{"c"},
-			Usage:   "search the epub collection",
+			Aliases:  []string{"c"},
+			Usage:    "search the epub collection",
 			Action: func(c *cli.Context) {
 				if c.NArg() == 0 {
 					fmt.Println("No query found!")
@@ -155,10 +155,10 @@ func main() {
 			},
 		},
 		{
-			Name:    "list",
+			Name:     "list",
 			Category: "searching",
-			Aliases: []string{"ls"},
-			Usage:   "list epubs in the collection",
+			Aliases:  []string{"ls"},
+			Usage:    "list epubs in the collection",
 			Subcommands: []cli.Command{
 				{
 					Name:    "untagged",
@@ -199,9 +199,9 @@ func main() {
 			},
 		},
 		{
-			Name:    "tag",
+			Name:     "tag",
 			Category: "tags",
-			Usage:   "manage tags in the collection",
+			Usage:    "manage tags in the collection",
 			Subcommands: []cli.Command{
 				{
 					Name:    "add",
@@ -234,9 +234,9 @@ func main() {
 			},
 		},
 		{
-			Name:    "series",
+			Name:     "series",
 			Category: "series",
-			Usage:   "manage series in the collection",
+			Usage:    "manage series in the collection",
 			Subcommands: []cli.Command{
 				{
 					Name:    "add",

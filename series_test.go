@@ -43,7 +43,7 @@ func TestSeries(t *testing.T) {
 			t.Errorf("Error:  expected epub %s to have series %s at index 0", e.getMainFilename(), seriesName)
 		}
 		if seriesIndex != strconv.Itoa(i) {
-			t.Errorf("Error:  expected epub %s to have series %s, book %f and not %f", e.getMainFilename(), seriesName, float32(i), seriesIndex)
+			t.Errorf("Error:  expected epub %s to have series %s, book %f and not %s", e.getMainFilename(), seriesName, float32(i), seriesIndex)
 		}
 		hasSeries, index, seriesIndex = e.Series.Has(seriesName2)
 		if !hasSeries {
@@ -53,7 +53,7 @@ func TestSeries(t *testing.T) {
 			t.Errorf("Error:  expected epub %s to have series %s at index 1", e.getMainFilename(), seriesName2)
 		}
 		if seriesIndex != strconv.Itoa(i) {
-			t.Errorf("Error:  expected epub %s to have series %s, book %f and not %f", e.getMainFilename(), seriesName2, float32(i), seriesIndex)
+			t.Errorf("Error:  expected epub %s to have series %s, book %f and not %s", e.getMainFilename(), seriesName2, float32(i), seriesIndex)
 		}
 
 		hasSeries, _, _ = e.Series.Has(seriesName + "ç")
@@ -75,7 +75,7 @@ func TestSeries(t *testing.T) {
 			t.Errorf("Error:  expected epub %s to have series %s at index 0", e.getMainFilename(), seriesName)
 		}
 		if seriesIndex != strconv.FormatFloat(float64(i)+0.5, 'f', -1, 32) {
-			t.Errorf("Error:  expected epub %s to have series %s, book %f and not %f", e.getMainFilename(), seriesName, float32(i)+0.5, seriesIndex)
+			t.Errorf("Error:  expected epub %s to have series %s, book %f and not %s", e.getMainFilename(), seriesName, float32(i)+0.5, seriesIndex)
 		}
 
 		// testing removing series

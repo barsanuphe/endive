@@ -7,10 +7,12 @@ import (
 	"github.com/barsanuphe/epubgo"
 )
 
+// Metadata holds all of the recognized metadata fiels in the OPF file of an Epub.
 type Metadata struct {
 	Fields map[string][]string `json:"fields"`
 }
 
+// NewMetadata returns a properly initialized Metadata.
 func NewMetadata() *Metadata {
 	return &Metadata{Fields: make(map[string][]string)}
 }
@@ -68,7 +70,7 @@ func (m *Metadata) Read(path string) (err error) {
 
 // HasField checks if a type of metadata is known
 func (m *Metadata) HasField(field string) (hasField bool) {
-	for f, _ := range m.Fields {
+	for f := range m.Fields {
 		if f == field {
 			return true
 		}
@@ -81,9 +83,8 @@ func (m *Metadata) Get(field string) (values []string) {
 	// test field
 	if m.HasField(field) {
 		return m.Fields[field]
-	} else {
-		return []string{}
 	}
+	return []string{}
 }
 
 // HasAny checks if metadata was parsed

@@ -18,7 +18,7 @@ var validProgress = []string{"unread", "read", "reading", "shortlisted"}
 // A Book can have multiple epub files.
 type Book struct {
 	Config Config `json:"-"`
-	ID	int `json:"id"`
+	ID     int    `json:"id"`
 
 	RetailEpub    Epub     `json:"retail"`
 	NonRetailEpub Epub     `json:"nonretail"`
@@ -43,9 +43,8 @@ func NewBookWithMetadata(id int, filename string, c Config, isRetail bool, m *Me
 	f := Epub{Filename: filename, Config: c, NeedsReplacement: "false"}
 	if isRetail {
 		return &Book{ID: id, RetailEpub: f, Config: c, Metadata: *m, Progress: "unread"}
-	} else {
-		return &Book{ID: id, NonRetailEpub: f, Config: c, Metadata: *m, Progress: "unread"}
 	}
+	return &Book{ID: id, NonRetailEpub: f, Config: c, Metadata: *m, Progress: "unread"}
 }
 
 // ShortString returns a short string representation of Epub

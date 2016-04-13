@@ -54,7 +54,7 @@ func OpenLibrary() (l Library, err error) {
 		return
 	}
 	// make each Book aware of current Config file
-	for i, _ := range l.Books {
+	for i := range l.Books {
 		l.Books[i].Config = l.ConfigurationFile
 		l.Books[i].NonRetailEpub.Config = l.ConfigurationFile
 		l.Books[i].RetailEpub.Config = l.ConfigurationFile
@@ -209,7 +209,7 @@ func (l *Library) Refresh() (renamed int, err error) {
 			renamed++
 		}
 	}
-	
+
 	// remove all empty dirs
 	err = DeleteEmptyFolders(l.ConfigurationFile.LibraryRoot)
 	return
@@ -230,7 +230,7 @@ func (l *Library) DuplicateRetailEpub(epub Book) (nonRetailEpub Book, err error)
 // RunQuery and print the results
 func (l *Library) RunQuery(query string) (results string, err error) {
 	fmt.Println("Running query...")
-	
+
 	// remplace fields for simpler queries
 	r := strings.NewReplacer(
 		"author:", "metadata.fields.creator:",

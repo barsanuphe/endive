@@ -16,19 +16,20 @@ func timeTrack(start time.Time, name string) {
 	fmt.Printf("-- [%s in %s]\n", name, elapsed)
 }
 
+// IsDirectoryEmpty checks if files are present in directory.
 func IsDirectoryEmpty(path string) (bool, error) {
-    f, err := os.Open(path)
-    if err != nil {
-        return false, err
-    }
-    defer f.Close()
+	f, err := os.Open(path)
+	if err != nil {
+		return false, err
+	}
+	defer f.Close()
 
 	// check if at least one file inside
-    _, err = f.Readdirnames(1)
-    if err == io.EOF {
-        return true, nil
-    }
-    return false, err
+	_, err = f.Readdirnames(1)
+	if err == io.EOF {
+		return true, nil
+	}
+	return false, err
 }
 
 // DeleteEmptyFolders deletes empty folders that may appear after sorting albums.
@@ -73,7 +74,6 @@ func DeleteEmptyFolders(path string) (err error) {
 	fmt.Printf("\n### Removed %d albums.\n", deletedDirectories)
 	return
 }
-
 
 func listEpubsInDirectory(root string) (epubPaths []string, hashes []string, err error) {
 	filepath.Walk(root, func(path string, f os.FileInfo, err error) (outErr error) {

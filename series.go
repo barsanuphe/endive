@@ -2,6 +2,7 @@ package main
 
 import "strconv"
 
+// SingleSeries holds the name and index of a series a Book is part of.
 type SingleSeries struct {
 	Name  string `json:"seriesname"`
 	Index string `json:"seriesindex"`

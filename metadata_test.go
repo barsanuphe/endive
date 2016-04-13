@@ -32,7 +32,7 @@ func TestMetaData(t *testing.T) {
 			t.Errorf("GetMetadata(%s) returned %s, expected %s!", testEpub.filename, e.Metadata.Get("creator")[0], testEpub.expectedAuthor)
 		}
 		if e.Metadata.Get("year")[0] != testEpub.expectedPublicationYear {
-			t.Errorf("GetMetadata(%s) returned %d, expected %d!", testEpub.filename, e.Metadata.Get("year")[0], testEpub.expectedPublicationYear)
+			t.Errorf("GetMetadata(%s) returned %s, expected %s!", testEpub.filename, e.Metadata.Get("year")[0], testEpub.expectedPublicationYear)
 		}
 		if e.Metadata.Get("language")[0] != testEpub.expectedLanguage {
 			t.Errorf("GetMetadata(%s) returned %s, expected %s!", testEpub.filename, e.Metadata.Get("language")[0], testEpub.expectedLanguage)

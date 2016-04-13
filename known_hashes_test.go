@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-var hashesFile string = "test/hashes.json"
+var hashesFile = "test/hashes.json"
 
 // TestKnownHashes tests for all KnownHashes functions
 func TestKnownHashes(t *testing.T) {
