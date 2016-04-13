@@ -1,3 +1,13 @@
+/*
+Endive is a tool to keep your epub library in great shape.
+
+It can rename and organize your library from the epub metadata, and can keep
+track of retail and non-retail versions.
+
+It is in a very early development, with basically nothing actually working,
+and chances of files disappearing if invoked.
+
+*/
 package main
 
 import (
