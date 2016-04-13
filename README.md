@@ -1,5 +1,10 @@
 # Endive
 
+[![GoDoc](https://godoc.org/github.com/barsanuphe/endive?status.svg)](https://godoc.org/github.com/barsanuphe/endive)
+[![Build Status](https://travis-ci.org/barsanuphe/endive.svg?branch=master)](https://travis-ci.org/barsanuphe/endive)
+[![Report Card](http://goreportcard.com/badge/barsanuphe/endive)](http://goreportcard.com/report/barsanuphe/endive)
+[![Coverage Status](https://coveralls.io/repos/github/barsanuphe/endive/badge.svg?branch=master)](https://coveralls.io/github/barsanuphe/endive?branch=master)
+
 In very early development.
 Right now, it will probably just delete your books and insult you.
 
