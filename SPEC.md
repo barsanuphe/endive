@@ -62,7 +62,7 @@ publication, language, description.
 - [x] tags can be added to epubs.
 - [x] the database must be easily exportable (JSON).
 - [x] the database can contain the date when the epub was read.
-- [ ] when a metadata field is defined in both the epub metadata and the
+- [x] when a metadata field is defined in both the epub metadata and the
 database, endive must use the database version.
 - [ ] the user can store in the database whether a physical copy of the book is
 also available.
@@ -72,7 +72,7 @@ also available.
 - [x] a given book can have retail and non-retail versions side by side.
 - [x] if an epub has a retail version, the non-retail version is assumed to be
 derived from the retail, ie their metadata are the same.
-- [ ] other duplicates are not allowed.
+- [x] other duplicates are not allowed.
 - [x] the only allowed ebook format is epub.
 - [ ] library organization can be refreshed by the user, upon modification of
 the configuration files or of epub metadata.

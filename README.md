@@ -35,7 +35,6 @@ You probably should not run it for now, if you value your files.
 
     $ endive help
 
-
 ## Third party libraries
 
 Endive uses:

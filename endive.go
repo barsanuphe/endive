@@ -65,6 +65,7 @@ func main() {
 		},
 		{
 			Name:    "import",
+			Category: "importing",
 			Aliases: []string{"i"},
 			Usage:   "options for importing epubs",
 			Subcommands: []cli.Command{
@@ -136,6 +137,7 @@ func main() {
 		},
 		{
 			Name:    "search",
+			Category: "searching",
 			Aliases: []string{"c"},
 			Usage:   "search the epub collection",
 			Action: func(c *cli.Context) {
@@ -154,6 +156,7 @@ func main() {
 		},
 		{
 			Name:    "list",
+			Category: "searching",
 			Aliases: []string{"ls"},
 			Usage:   "list epubs in the collection",
 			Subcommands: []cli.Command{
@@ -191,6 +194,76 @@ func main() {
 					Action: func(c *cli.Context) {
 						// TODO
 						fmt.Println("Listing authors...")
+					},
+				},
+			},
+		},
+		{
+			Name:    "tag",
+			Category: "tags",
+			Usage:   "manage tags in the collection",
+			Subcommands: []cli.Command{
+				{
+					Name:    "add",
+					Aliases: []string{"a"},
+					Usage:   "add tag(s) to book.",
+					Action: func(c *cli.Context) {
+						// TODO
+						// params: ID, tag list
+						fmt.Println("Adding tag to book ID#...")
+					},
+				},
+				{
+					Name:    "remove",
+					Aliases: []string{"r"},
+					Usage:   "remove tag(s) from book.",
+					Action: func(c *cli.Context) {
+						// TODO
+						fmt.Println("Removing tag from book ID#...")
+					},
+				},
+				{
+					Name:    "list",
+					Aliases: []string{"c"},
+					Usage:   "list tags for a book.",
+					Action: func(c *cli.Context) {
+						// TODO
+						fmt.Println("Listing tags for book ID#...")
+					},
+				},
+			},
+		},
+		{
+			Name:    "series",
+			Category: "series",
+			Usage:   "manage series in the collection",
+			Subcommands: []cli.Command{
+				{
+					Name:    "add",
+					Aliases: []string{"a"},
+					Usage:   "add series to book.",
+					Action: func(c *cli.Context) {
+						// TODO
+						// params: ID, series:index
+						fmt.Println("Adding series to book ID#...")
+					},
+				},
+				{
+					Name:    "remove",
+					Aliases: []string{"r"},
+					Usage:   "remove series from book.",
+					Action: func(c *cli.Context) {
+						// TODO
+						fmt.Println("Removing series from book ID#...")
+					},
+				},
+				{
+					Name:    "list",
+					Aliases: []string{"c"},
+					Usage:   "list series for a book.",
+					Action: func(c *cli.Context) {
+						// TODO
+						fmt.Println("Listing series for book ID#...")
 					},
 				},
 			},
