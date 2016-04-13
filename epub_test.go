@@ -7,8 +7,8 @@ import (
 
 func TestEpubGetHash(t *testing.T) {
 	fmt.Println("+ Testing Epub.GetHash()...")
-	for _, testEpub := range epubs {
-		e := NewBook(testEpub.filename, standardTestConfig, true)
+	for i, testEpub := range epubs {
+		e := NewBook(i, testEpub.filename, standardTestConfig, true)
 		err := e.RetailEpub.GetHash()
 		if err != nil {
 			t.Errorf("Error calculating hash for %s", e.getMainFilename())
@@ -22,7 +22,7 @@ func TestEpubGetHash(t *testing.T) {
 // TestEpubRetail tests for SetRetail, SetNonRetail and Check
 func TestEpubRetail(t *testing.T) {
 	fmt.Println("+ Testing Epub.SetRetail()...")
-	e := NewBook(epubs[0].filename, standardTestConfig, isRetail)
+	e := NewBook(0, epubs[0].filename, standardTestConfig, isRetail)
 	e.RetailEpub.GetHash()
 
 	// checking retail

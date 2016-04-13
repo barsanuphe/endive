@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/bndr/gotabulate"
@@ -132,7 +134,7 @@ func (l *Library) importEpubs(allEpubs []string, allHashes []string, isRetail bo
 			}
 			if !found {
 				// new Book
-				b := NewBookWithMetadata(path, l.ConfigurationFile, isRetail, m)
+				b := NewBookWithMetadata(l.generateID(), path, l.ConfigurationFile, isRetail, m)
 				imported, err = b.Import(path, isRetail, hash)
 				if err != nil {
 					return
@@ -207,6 +209,9 @@ func (l *Library) Refresh() (renamed int, err error) {
 			renamed++
 		}
 	}
+	
+	// remove all empty dirs
+	err = DeleteEmptyFolders(l.ConfigurationFile.LibraryRoot)
 	return
 }
 
@@ -225,7 +230,15 @@ func (l *Library) DuplicateRetailEpub(epub Book) (nonRetailEpub Book, err error)
 // RunQuery and print the results
 func (l *Library) RunQuery(query string) (results string, err error) {
 	fmt.Println("Running query...")
-	// TODO check query?
+	
+	// remplace fields for simpler queries
+	r := strings.NewReplacer(
+		"author:", "metadata.fields.creator:",
+		"title:", "metadata.fields.title:",
+		"year:", "metadata.fields.year:",
+		"language:", "metadata.fields.language:",
+	)
+	query = r.Replace(query)
 
 	hits, err := l.Search(query)
 	if err != nil {
@@ -235,10 +248,10 @@ func (l *Library) RunQuery(query string) (results string, err error) {
 	if len(hits) != 0 {
 		var rows [][]string
 		for _, res := range hits {
-			rows = append(rows, []string{res.Metadata.Get("creator")[0], res.Metadata.Get("title")[0], res.Metadata.Get("year")[0], res.getMainFilename()})
+			rows = append(rows, []string{strconv.Itoa(res.ID), res.Metadata.Get("creator")[0], res.Metadata.Get("title")[0], res.Metadata.Get("year")[0], res.getMainFilename()})
 		}
 		tabulate := gotabulate.Create(rows)
-		tabulate.SetHeaders([]string{"Author", "Title", "Year", "Filename"})
+		tabulate.SetHeaders([]string{"ID", "Author", "Title", "Year", "Filename"})
 		tabulate.SetEmptyString("N/A")
 		//tabulate.SetMaxCellSize(64)
 		//tabulate.SetWrapStrings(true)

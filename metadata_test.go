@@ -8,8 +8,8 @@ import (
 // TestEpubMetaData tests GetMetadata and HasMetadata
 func TestMetaData(t *testing.T) {
 	fmt.Println("+ Testing Epub.GetMetaData()...")
-	for _, testEpub := range epubs {
-		e := NewBook(testEpub.filename, standardTestConfig, true)
+	for i, testEpub := range epubs {
+		e := NewBook(i, testEpub.filename, standardTestConfig, true)
 
 		hasMetadata := e.Metadata.HasAny()
 		if hasMetadata {

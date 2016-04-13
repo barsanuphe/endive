@@ -30,7 +30,7 @@ var epubs = []struct {
 		"2005",
 		"en",
 		"dc325b3aceb77d9f943425728c037fdcaf4af58e3abd771a8094f2424455cc03",
-		`{"retail":{"filename":"test/pg16328.epub","hash":"dc325b3aceb77d9f943425728c037fdcaf4af58e3abd771a8094f2424455cc03","replace":"false"},"nonretail":{"filename":"","hash":"","replace":""},"metadata":{"fields":{"creator":["Unknown"],"description":["Unknown"],"language":["en"],"source":["http://www.gutenberg.org/files/16328/16328-h/16328-h.htm"],"title":["Beowulf / An Anglo-Saxon Epic Poem"],"year":["2005"]}},"series":null,"tags":null,"progress":"unread","readdate":"","rating":"","review":"","description":""}`,
+		`{"id":0,"retail":{"filename":"test/pg16328.epub","hash":"dc325b3aceb77d9f943425728c037fdcaf4af58e3abd771a8094f2424455cc03","replace":"false"},"nonretail":{"filename":"","hash":"","replace":""},"metadata":{"fields":{"creator":["Unknown"],"description":["Unknown"],"language":["en"],"source":["http://www.gutenberg.org/files/16328/16328-h/16328-h.htm"],"title":["Beowulf / An Anglo-Saxon Epic Poem"],"year":["2005"]}},"series":null,"tags":null,"progress":"unread","readdate":"","rating":"","review":"","description":""}`,
 		"Unknown 2005 Beowulf - An Anglo-Saxon Epic Poem.epub",
 		"Unknown 2005 Beowulf - An Anglo-Saxon Epic Poem [retail].epub",
 		"en/Unknown/2005. [Unknown] (Beowulf - An Anglo-Saxon Epic Poem).epub",
@@ -43,7 +43,7 @@ var epubs = []struct {
 		"2006",
 		"fr",
 		"acd2b8eba1b11456bacf11e690edf56bc57774053668644ef34f669138ebdd9a",
-		`{"retail":{"filename":"test/pg17989.epub","hash":"acd2b8eba1b11456bacf11e690edf56bc57774053668644ef34f669138ebdd9a","replace":"false"},"nonretail":{"filename":"","hash":"","replace":""},"metadata":{"fields":{"creator":["Alexandre Dumas"],"description":["Unknown"],"language":["fr"],"source":["http://www.gutenberg.org/files/17989/17989-h/17989-h.htm"],"title":["Le comte de Monte-Cristo, Tome I"],"year":["2006"]}},"series":null,"tags":null,"progress":"unread","readdate":"","rating":"","review":"","description":""}`,
+		`{"id":1,"retail":{"filename":"test/pg17989.epub","hash":"acd2b8eba1b11456bacf11e690edf56bc57774053668644ef34f669138ebdd9a","replace":"false"},"nonretail":{"filename":"","hash":"","replace":""},"metadata":{"fields":{"creator":["Alexandre Dumas"],"description":["Unknown"],"language":["fr"],"source":["http://www.gutenberg.org/files/17989/17989-h/17989-h.htm"],"title":["Le comte de Monte-Cristo, Tome I"],"year":["2006"]}},"series":null,"tags":null,"progress":"unread","readdate":"","rating":"","review":"","description":""}`,
 		"Alexandre Dumas 2006 Le comte de Monte-Cristo, Tome I.epub",
 		"Alexandre Dumas 2006 Le comte de Monte-Cristo, Tome I [retail].epub",
 		"fr/Alexandre Dumas/2006. [Alexandre Dumas] (Le comte de Monte-Cristo, Tome I).epub",
@@ -55,8 +55,8 @@ var isRetail = true
 // TestBookJSON tests both JSON() and FromJSON().
 func TestBookJSON(t *testing.T) {
 	fmt.Println("+ Testing Epub.JSON()...")
-	for _, testEpub := range epubs {
-		e := NewBook(testEpub.filename, standardTestConfig, isRetail)
+	for i, testEpub := range epubs {
+		e := NewBook(i, testEpub.filename, standardTestConfig, isRetail)
 		err := e.Metadata.Read(e.RetailEpub.Filename)
 		if err != nil {
 			t.Errorf("Error getting Metadata for epub %s", e.getMainFilename())
@@ -93,8 +93,8 @@ func TestBookJSON(t *testing.T) {
 // TestBookTag tests AddTag, RemoveTag and HasTag
 func TestBookTag(t *testing.T) {
 	fmt.Println("+ Testing Epub.AddTag()...")
-	for _, testEpub := range epubs {
-		e := NewBook(testEpub.filename, standardTestConfig, isRetail)
+	for i, testEpub := range epubs {
+		e := NewBook(i, testEpub.filename, standardTestConfig, isRetail)
 		tagName := "test_é!/?*èç1"
 
 		err := e.AddTag(tagName)
@@ -122,8 +122,8 @@ func TestBookTag(t *testing.T) {
 
 func TestBookNewName(t *testing.T) {
 	fmt.Println("+ Testing Epub.generateNewName()...")
-	for _, testEpub := range epubs {
-		e := NewBook(testEpub.filename, standardTestConfig, !isRetail)
+	for i, testEpub := range epubs {
+		e := NewBook(i, testEpub.filename, standardTestConfig, !isRetail)
 		err := e.Metadata.Read(e.NonRetailEpub.Filename)
 		if err != nil {
 			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.getMainFilename(), err)
@@ -144,7 +144,7 @@ func TestBookNewName(t *testing.T) {
 			t.Errorf("Error getting new name, expected %s, got %s", testEpub.expectedFormat2, newName2)
 		}
 
-		e = NewBook(testEpub.filename, standardTestConfig, isRetail)
+		e = NewBook(10+i, testEpub.filename, standardTestConfig, isRetail)
 		err = e.Metadata.Read(e.RetailEpub.Filename)
 		if err != nil {
 			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.getMainFilename(), err)
@@ -162,8 +162,7 @@ func TestBookNewName(t *testing.T) {
 func TestBookRefresh(t *testing.T) {
 	fmt.Println("+ Testing Epub.Refresh()...")
 	c := Config{EpubFilenameFormat: "$a $y $t", LibraryRoot: "."}
-	for _, testEpub := range epubs {
-
+	for i, testEpub := range epubs {
 		// copy testEpub.filename
 		epubFilename := filepath.Base(testEpub.filename)
 		epubDir := filepath.Dir(testEpub.filename)
@@ -175,7 +174,7 @@ func TestBookRefresh(t *testing.T) {
 		}
 
 		// creating Epub object
-		e := NewBook(tempCopy, c, isRetail)
+		e := NewBook(i, tempCopy, c, isRetail)
 		err = e.Metadata.Read(e.RetailEpub.Filename)
 		if err != nil {
 			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.getMainFilename(), err)
@@ -217,8 +216,8 @@ func TestBookRefresh(t *testing.T) {
 // TestBookSetReadDate tests for SetReadDate and SetReadDateToday
 func TestBookSetReadDate(t *testing.T) {
 	fmt.Println("+ Testing Epub.SetReadDate()...")
-	for _, testEpub := range epubs {
-		e := NewBook(testEpub.filename, standardTestConfig, isRetail)
+	for i, testEpub := range epubs {
+		e := NewBook(i, testEpub.filename, standardTestConfig, isRetail)
 
 		err := e.SetReadDateToday()
 		if err != nil {
@@ -235,7 +234,7 @@ func TestBookSetReadDate(t *testing.T) {
 // TestBookProgress tests for SetProgress
 func TestBookProgress(t *testing.T) {
 	fmt.Println("+ Testing Epub.TestEpubProgress()...")
-	e := NewBook(epubs[0].filename, standardTestConfig, isRetail)
+	e := NewBook(0, epubs[0].filename, standardTestConfig, isRetail)
 
 	err := e.SetProgress("Shortlisted")
 	if err != nil {

@@ -16,6 +16,65 @@ func timeTrack(start time.Time, name string) {
 	fmt.Printf("-- [%s in %s]\n", name, elapsed)
 }
 
+func IsDirectoryEmpty(path string) (bool, error) {
+    f, err := os.Open(path)
+    if err != nil {
+        return false, err
+    }
+    defer f.Close()
+
+	// check if at least one file inside
+    _, err = f.Readdirnames(1)
+    if err == io.EOF {
+        return true, nil
+    }
+    return false, err
+}
+
+// DeleteEmptyFolders deletes empty folders that may appear after sorting albums.
+func DeleteEmptyFolders(path string) (err error) {
+	defer timeTrack(time.Now(), "Scanning files")
+
+	fmt.Printf("Scanning for empty directories.\n\n")
+	deletedDirectories := 0
+	deletedDirectoriesThisTime := 0
+	atLeastOnce := false
+
+	// loops until all levels of empty directories are deleted
+	for !atLeastOnce || deletedDirectoriesThisTime != 0 {
+		atLeastOnce = true
+		deletedDirectoriesThisTime = 0
+		err = filepath.Walk(path, func(path string, fileInfo os.FileInfo, walkError error) (err error) {
+			// when an directory has just been removed, Walk goes through it a second
+			// time with an "file does not exist" error
+			if os.IsNotExist(walkError) {
+				return
+			}
+			if fileInfo.IsDir() {
+				isEmpty, err := IsDirectoryEmpty(path)
+				if err != nil {
+					panic(err)
+				}
+				if isEmpty {
+					fmt.Println("Removing empty directory ", path)
+					if err := os.Remove(path); err == nil {
+						deletedDirectories++
+						deletedDirectoriesThisTime++
+					}
+				}
+			}
+			return
+		})
+		if err != nil {
+			fmt.Printf("Error!")
+		}
+	}
+
+	fmt.Printf("\n### Removed %d albums.\n", deletedDirectories)
+	return
+}
+
+
 func listEpubsInDirectory(root string) (epubPaths []string, hashes []string, err error) {
 	filepath.Walk(root, func(path string, f os.FileInfo, err error) (outErr error) {
 		// only consider epub files

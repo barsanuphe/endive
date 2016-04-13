@@ -97,6 +97,42 @@ func (ldb *LibraryDB) Save() (hasSaved bool, err error) {
 	return
 }
 
+// generateID for a new Book
+func (ldb *LibraryDB) generateID() (id int) {
+	// id 0 for first Book
+	if len(ldb.Books) == 0 {
+		return
+	}
+	// find max ID of ldb.Books
+	for _, book := range ldb.Books {
+		if book.ID > id {
+			id = book.ID
+		}
+	}
+	id ++
+	return
+}
+
+// FindByID among known Books
+func (ldb *LibraryDB) FindByID(id int) (result *Book, err error) {
+	for i, bk := range ldb.Books {
+		if bk.ID == id {
+			return &ldb.Books[i], nil
+		}
+	}
+	return &Book{}, errors.New("Could not find book with ID " + strconv.Itoa(id))
+}
+
+//FindByFilename among known Books
+func (ldb *LibraryDB) FindByFilename(filename string) (result *Book, err error) {
+	for i, bk := range ldb.Books {
+		if bk.RetailEpub.Filename == filename || bk.NonRetailEpub.Filename == filename {
+			return &ldb.Books[i], nil
+		}
+	}
+	return &Book{}, errors.New("Could not find book with epub " + filename)
+}
+
 func buildIndexMapping() (*bleve.IndexMapping, error) {
 	// TODO index everything
 
@@ -177,15 +213,6 @@ func (ldb *LibraryDB) Index() (numIndexed uint64, err error) {
 	return
 }
 
-func (ldb *LibraryDB) FindByFilename(filename string) (result Book, err error) {
-	for _, result = range ldb.Books {
-		if result.RetailEpub.Filename == filename || result.NonRetailEpub.Filename == filename {
-			return
-		}
-	}
-	return Book{}, errors.New("Could not find epub " + filename)
-}
-
 // Search current DB
 func (ldb *LibraryDB) Search(queryString string) (results []Book, err error) {
 	// TODO make sure the index is up to date
@@ -219,12 +246,12 @@ func (ldb *LibraryDB) Search(queryString string) (results []Book, err error) {
 	if searchResults.Total != 0 {
 		for _, hit := range searchResults.Hits {
 			fmt.Println("Found " + hit.ID)
-			var epub Book
+			var epub *Book
 			epub, err = ldb.FindByFilename(hit.ID)
 			if err != nil {
 				return
 			}
-			results = append(results, epub)
+			results = append(results, *epub)
 		}
 	}
 	return
