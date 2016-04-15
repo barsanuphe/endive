@@ -1,9 +1,8 @@
 package book
 
 import (
-	"strconv"
 	"fmt"
-	"strings"
+	"strconv"
 )
 
 // SingleSeries holds the name and index of a series a Book is part of.
@@ -13,17 +12,16 @@ type SingleSeries struct {
 }
 
 // String outputs a single series info.
-func (s *SingleSeries) String()  string {
+func (s *SingleSeries) String() string {
 	return fmt.Sprintf("%s: (#%s)\n", s.Name, s.Index)
 }
 
 // Series can track a series and an epub's position.
 type Series []SingleSeries
 
-
 // String outputs a series info.
-func (s *Series) String() (description string) {
-	for _, ss := range s{
+func (s Series) String() (description string) {
+	for _, ss := range s {
 		description += ss.String()
 	}
 	return
@@ -53,8 +51,8 @@ func (s *Series) Remove(seriesName ...string) (seriesRemoved bool) {
 	for _, series := range seriesName {
 		hasSeries, seriesIndex, _ := s.Has(series)
 		if hasSeries {
-			(*s)[seriesIndex] = (*s)[len(*s) - 1]
-			(*s) = (*s)[:len(*s) - 1]
+			(*s)[seriesIndex] = (*s)[len(*s)-1]
+			(*s) = (*s)[:len(*s)-1]
 			seriesRemoved = true
 		}
 	}

@@ -1,4 +1,4 @@
-package main
+package helpers
 
 import (
 	"crypto/sha256"
@@ -11,7 +11,8 @@ import (
 	"time"
 )
 
-func timeTrack(start time.Time, name string) {
+// TimeTrack helps track the time taken by a function.
+func TimeTrack(start time.Time, name string) {
 	elapsed := time.Since(start)
 	fmt.Printf("-- [%s in %s]\n", name, elapsed)
 }
@@ -34,7 +35,7 @@ func IsDirectoryEmpty(path string) (bool, error) {
 
 // DeleteEmptyFolders deletes empty folders that may appear after sorting albums.
 func DeleteEmptyFolders(path string) (err error) {
-	defer timeTrack(time.Now(), "Scanning files")
+	defer TimeTrack(time.Now(), "Scanning files")
 
 	fmt.Printf("Scanning for empty directories.\n\n")
 	deletedDirectories := 0
@@ -75,13 +76,14 @@ func DeleteEmptyFolders(path string) (err error) {
 	return
 }
 
-func listEpubsInDirectory(root string) (epubPaths []string, hashes []string, err error) {
+// ListEpubsInDirectory recursively.
+func ListEpubsInDirectory(root string) (epubPaths []string, hashes []string, err error) {
 	filepath.Walk(root, func(path string, f os.FileInfo, err error) (outErr error) {
 		// only consider epub files
 		if f.Mode().IsRegular() && filepath.Ext(path) == ".epub" {
 			// check if already imported
 			// calculate hash
-			hash, err := calculateSHA256(path)
+			hash, err := CalculateSHA256(path)
 			if err != nil {
 				return
 			}
@@ -93,7 +95,8 @@ func listEpubsInDirectory(root string) (epubPaths []string, hashes []string, err
 	return
 }
 
-func stringInSlice(a string, list []string) (index int, isIn bool) {
+// StringInSlice checks if a string is in a []string.
+func StringInSlice(a string, list []string) (index int, isIn bool) {
 	for i, b := range list {
 		if b == a {
 			return i, true
@@ -102,7 +105,8 @@ func stringInSlice(a string, list []string) (index int, isIn bool) {
 	return -1, false
 }
 
-func cleanForPath(md string) string {
+// CleanForPath makes sure a string can be used as part of a path
+func CleanForPath(md string) string {
 	// clean characters which would be problematic in a filename
 	// TODO: check if other characters need to be added
 	r := strings.NewReplacer(
@@ -112,7 +116,8 @@ func cleanForPath(md string) string {
 	return r.Replace(md)
 }
 
-func directoryExists(path string) (res bool) {
+// DirectoryExists checks if a directory exists.
+func DirectoryExists(path string) (res bool) {
 	info, err := os.Stat(path)
 	if err != nil {
 		return
@@ -183,8 +188,8 @@ func copyFileContents(src, dst string) (err error) {
 	return
 }
 
-// calculateSHA256 calculates an epub's current hash
-func calculateSHA256(filename string) (hash string, err error) {
+// CalculateSHA256 calculates an epub's current hash
+func CalculateSHA256(filename string) (hash string, err error) {
 	var result []byte
 	file, err := os.Open(filename)
 	if err != nil {

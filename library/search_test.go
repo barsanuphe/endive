@@ -2,6 +2,7 @@ package library
 
 import (
 	"testing"
+
 	_ "github.com/barsanuphe/endive/book"
 )
 
@@ -23,7 +24,7 @@ func TestLdbSearch(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error searching fr")
 	}
-	if len(res) != 1 && res[0].getMainFilename() != "test/pg17989.epub" {
+	if len(res) != 1 && res[0].GetMainFilename() != "test/pg17989.epub" {
 		t.Errorf("Error searching fr, unexpected results")
 	}
 	res, err = l.Search("metadata.fields.creator:dumas")

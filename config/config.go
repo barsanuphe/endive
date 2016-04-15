@@ -6,14 +6,15 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/barsanuphe/endive/helpers"
 	"github.com/spf13/viper"
 	"launchpad.net/go-xdg"
 )
 
 const (
-	endive           = "endive"
-	xdgConfigPath    = endive + "/" + endive + ".yaml"
-	databaseFilename = endive + ".json"
+	Endive           = "endive"
+	xdgConfigPath    = Endive + "/" + Endive + ".yaml"
+	databaseFilename = Endive + ".json"
 )
 
 // Config holds all relevant information
@@ -28,8 +29,8 @@ type Config struct {
 	EReaderTarget      string
 }
 
-// getConfigPath gets the default path for configuration.
-func getConfigPath() (configFile string, err error) {
+// GetConfigPath gets the default path for configuration.
+func GetConfigPath() (configFile string, err error) {
 	configFile, err = xdg.Config.Find(xdgConfigPath)
 	if err != nil {
 		configFile, err = xdg.Config.Ensure(xdgConfigPath)
@@ -73,17 +74,17 @@ func (c *Config) Load() (err error) {
 // Check if the paths in the configuration file are valid, and if the EpubFilename Format is ok.
 func (c *Config) Check() (err error) {
 	fmt.Println("Checking Config...")
-	if !directoryExists(c.LibraryRoot) {
+	if !helpers.DirectoryExists(c.LibraryRoot) {
 		return errors.New("Library root " + c.LibraryRoot + " does not exist")
 	}
 	// checking for sources, warnings only.
 	for _, source := range c.RetailSource {
-		if !directoryExists(source) {
+		if !helpers.DirectoryExists(source) {
 			fmt.Println("Warning: retail source " + source + " does not exist.")
 		}
 	}
 	for _, source := range c.NonRetailSource {
-		if !directoryExists(source) {
+		if !helpers.DirectoryExists(source) {
 			fmt.Println("Warning: non-retail source " + source + " does not exist.")
 		}
 	}

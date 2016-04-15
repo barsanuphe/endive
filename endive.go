@@ -16,19 +16,20 @@ import (
 	"strconv"
 	"strings"
 
+	"errors"
+
+	b "github.com/barsanuphe/endive/book"
+	l "github.com/barsanuphe/endive/library"
 	"github.com/codegangsta/cli"
 	"github.com/ttacon/chalk"
-	_ "github.com/barsanuphe/endive/book"
-	_ "github.com/barsanuphe/endive/library"
-	"errors"
 )
 
-func checkArgsWithID(l Library, args []string) (book *Book, other []string, err error){
+func checkArgsWithID(l l.Library, args []string) (book *b.Book, other []string, err error) {
 	if len(args) < 1 {
 		err = errors.New("Not enough arguments")
 		return
 	}
-	id, err = strconv.Atoi(args[0])
+	id, err := strconv.Atoi(args[0])
 	if err != nil {
 		return
 	}
@@ -45,13 +46,13 @@ func main() {
 	fmt.Println(chalk.Bold.TextStyle("\n# # # E N D I V E # # #\n"))
 
 	// get library
-	l, err := OpenLibrary()
+	lb, err := l.OpenLibrary()
 	if err != nil {
 		fmt.Println("Error loading configuration. Check it.")
 		fmt.Println(err.Error())
 		return
 	}
-	defer l.Save()
+	defer lb.Save()
 
 	app := cli.NewApp()
 	app.Name = "E N D I V E"
@@ -70,7 +71,7 @@ func main() {
 					Usage:   "show configuration",
 					Action: func(c *cli.Context) {
 						// print config
-						fmt.Println(l.ConfigurationFile.String())
+						fmt.Println(lb.ConfigurationFile.String())
 					},
 				},
 				{
@@ -78,7 +79,7 @@ func main() {
 					Usage: "show aliases defined in configuration",
 					Action: func(c *cli.Context) {
 						// print aliases
-						aliases := l.ConfigurationFile.ListAuthorAliases()
+						aliases := lb.ConfigurationFile.ListAuthorAliases()
 						fmt.Println(aliases)
 					},
 				},
@@ -107,10 +108,10 @@ func main() {
 					Action: func(c *cli.Context) {
 						// import
 						fmt.Println("Importing retail epubs...")
-						if len(l.ConfigurationFile.RetailSource) == 0 {
+						if len(lb.ConfigurationFile.RetailSource) == 0 {
 							fmt.Println("No retail source found in configuration file!")
 						} else {
-							err := l.ImportRetail()
+							err := lb.ImportRetail()
 							if err != nil {
 								panic(err)
 							}
@@ -123,10 +124,10 @@ func main() {
 					Usage:   "import non-retail epubs",
 					Action: func(c *cli.Context) {
 						fmt.Println("Importing non-retail epubs...")
-						if len(l.ConfigurationFile.NonRetailSource) == 0 {
+						if len(lb.ConfigurationFile.NonRetailSource) == 0 {
 							fmt.Println("No non-retail source found in configuration file!")
 						} else {
-							err := l.ImportNonRetail()
+							err := lb.ImportNonRetail()
 							if err != nil {
 								panic(err)
 							}
@@ -159,7 +160,7 @@ func main() {
 			Usage:   "refresh library",
 			Action: func(c *cli.Context) {
 				fmt.Println("Refreshing library...")
-				renamed, err := l.Refresh()
+				renamed, err := lb.Refresh()
 				if err != nil {
 					panic(err)
 				}
@@ -177,7 +178,7 @@ func main() {
 				} else {
 					query := strings.Join(c.Args(), " ")
 					fmt.Println("Searching for '" + query + "'...")
-					results, err := l.RunQuery(query)
+					results, err := lb.RunQuery(query)
 					if err != nil {
 						panic(err)
 					}
@@ -274,7 +275,7 @@ func main() {
 					Aliases: []string{"a"},
 					Usage:   "add series to book with: ID seriesname seriesindex",
 					Action: func(c *cli.Context) {
-						book, seriesInfo, err := checkArgsWithID(l, c.Args())
+						book, seriesInfo, err := checkArgsWithID(lb, c.Args())
 						if err != nil || len(seriesInfo) != 2 {
 							fmt.Println("Error parsing arguments: " + err.Error())
 							return
@@ -286,7 +287,7 @@ func main() {
 						}
 						fmt.Printf("Adding single series to book %s...\n", book.ShortString())
 						// add series
-						if book.Series.Add(seriesInfo[0], seriesIndex) {
+						if book.Series.Add(seriesInfo[0], float32(seriesIndex)) {
 							fmt.Printf("Series %s #%f added to %s\n", seriesInfo[0], seriesIndex, book.ShortString())
 						}
 					},
@@ -296,7 +297,7 @@ func main() {
 					Aliases: []string{"r"},
 					Usage:   "remove series from book.",
 					Action: func(c *cli.Context) {
-						book, series, err := checkArgsWithID(l, c.Args())
+						book, series, err := checkArgsWithID(lb, c.Args())
 						if err != nil {
 							fmt.Println("Error parsing arguments: " + err.Error())
 							return
@@ -313,7 +314,7 @@ func main() {
 					Aliases: []string{"c"},
 					Usage:   "list series for a book.",
 					Action: func(c *cli.Context) {
-						book, _, err := checkArgsWithID(l, c.Args())
+						book, _, err := checkArgsWithID(lb, c.Args())
 						if err != nil {
 							fmt.Println("Error parsing arguments: " + err.Error())
 							return

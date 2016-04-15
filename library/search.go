@@ -1,8 +1,13 @@
 package library
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"log"
+	"strconv"
 
+	b "github.com/barsanuphe/endive/book"
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/analysis/analyzers/keyword_analyzer"
 	"github.com/blevesearch/bleve/analysis/language/en"
@@ -76,7 +81,7 @@ func (ldb *LibraryDB) Index() (numIndexed uint64, err error) {
 	// index by filename
 	for _, epub := range ldb.Books {
 		// TODO: index epub.ShortString() instead?
-		index.Index(epub.getMainFilename(), epub)
+		index.Index(epub.GetMainFilename(), epub)
 	}
 
 	// check number of indexed documents
@@ -89,7 +94,7 @@ func (ldb *LibraryDB) Index() (numIndexed uint64, err error) {
 }
 
 // Search current DB
-func (ldb *LibraryDB) Search(queryString string) (results []Book, err error) {
+func (ldb *LibraryDB) Search(queryString string) (results []b.Book, err error) {
 	// TODO make sure the index is up to date
 
 	fmt.Println("Searching database for " + queryString + " ...")
@@ -121,7 +126,7 @@ func (ldb *LibraryDB) Search(queryString string) (results []Book, err error) {
 	if searchResults.Total != 0 {
 		for _, hit := range searchResults.Hits {
 			fmt.Println("Found " + hit.ID)
-			var epub *Book
+			var epub *b.Book
 			epub, err = ldb.FindByFilename(hit.ID)
 			if err != nil {
 				return
@@ -131,4 +136,3 @@ func (ldb *LibraryDB) Search(queryString string) (results []Book, err error) {
 	}
 	return
 }
-

@@ -8,7 +8,8 @@ import (
 	"testing"
 	"time"
 
-	_ "github.com/barsanuphe/endive/config"
+	c "github.com/barsanuphe/endive/config"
+	"github.com/barsanuphe/endive/helpers"
 )
 
 var epubs = []struct {
@@ -51,7 +52,7 @@ var epubs = []struct {
 		"fr/Alexandre Dumas/2006. [Alexandre Dumas] (Le comte de Monte-Cristo, Tome I).epub",
 	},
 }
-var standardTestConfig = Config{LibraryRoot: ".."}
+var standardTestConfig = c.Config{LibraryRoot: ".."}
 var isRetail = true
 
 // TestBookJSON tests both JSON() and FromJSON().
@@ -61,15 +62,15 @@ func TestBookJSON(t *testing.T) {
 		e := NewBook(i, testEpub.filename, standardTestConfig, isRetail)
 		err := e.Metadata.Read(e.RetailEpub.Filename)
 		if err != nil {
-			t.Errorf("Error getting Metadata for epub %s", e.getMainFilename())
+			t.Errorf("Error getting Metadata for epub %s", e.GetMainFilename())
 		}
 		err = e.RetailEpub.GetHash()
 		if err != nil {
-			t.Errorf("Error getting Hash for epub %s", e.getMainFilename())
+			t.Errorf("Error getting Hash for epub %s", e.GetMainFilename())
 		}
 		jsonString, err := e.JSON()
 		if err != nil {
-			t.Errorf("Error exporting epub %s to JSON string", e.getMainFilename())
+			t.Errorf("Error exporting epub %s to JSON string", e.GetMainFilename())
 		}
 		if jsonString != testEpub.expectedJSONString {
 			t.Errorf("JSON(%s) returned:\n%s\nexpected:\n%s!", testEpub.filename, jsonString, testEpub.expectedJSONString)
@@ -101,23 +102,23 @@ func TestBookTag(t *testing.T) {
 
 		err := e.AddTag(tagName)
 		if err != nil {
-			t.Errorf("Error adding Tag %s for epub %s", tagName, e.getMainFilename())
+			t.Errorf("Error adding Tag %s for epub %s", tagName, e.GetMainFilename())
 		}
 		hasTag := e.HasTag(tagName)
 		if !hasTag {
-			t.Errorf("Error:  expected epub %s to have tag %s", e.getMainFilename(), tagName)
+			t.Errorf("Error:  expected epub %s to have tag %s", e.GetMainFilename(), tagName)
 		}
 		hasTag = e.HasTag(tagName + "A")
 		if hasTag {
-			t.Errorf("Error: did not expect epub %s to have tag %s", e.getMainFilename(), tagName+"A")
+			t.Errorf("Error: did not expect epub %s to have tag %s", e.GetMainFilename(), tagName+"A")
 		}
 		err = e.RemoveTag(tagName)
 		if err != nil {
-			t.Errorf("Error removing Tag %s for epub %s", tagName, e.getMainFilename())
+			t.Errorf("Error removing Tag %s for epub %s", tagName, e.GetMainFilename())
 		}
 		hasTag = e.HasTag(tagName)
 		if hasTag {
-			t.Errorf("Error: did not expect epub %s to have tag %s", e.getMainFilename(), tagName)
+			t.Errorf("Error: did not expect epub %s to have tag %s", e.GetMainFilename(), tagName)
 		}
 	}
 }
@@ -128,7 +129,7 @@ func TestBookNewName(t *testing.T) {
 		e := NewBook(i, testEpub.filename, standardTestConfig, !isRetail)
 		err := e.Metadata.Read(e.NonRetailEpub.Filename)
 		if err != nil {
-			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.getMainFilename(), err)
+			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.GetMainFilename(), err)
 		}
 
 		newName1, err := e.generateNewName("$a $y $t", !isRetail)
@@ -149,7 +150,7 @@ func TestBookNewName(t *testing.T) {
 		e = NewBook(10+i, testEpub.filename, standardTestConfig, isRetail)
 		err = e.Metadata.Read(e.RetailEpub.Filename)
 		if err != nil {
-			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.getMainFilename(), err)
+			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.GetMainFilename(), err)
 		}
 		newName1, err = e.generateNewName("$a $y $t", isRetail)
 		if err != nil {
@@ -163,23 +164,23 @@ func TestBookNewName(t *testing.T) {
 
 func TestBookRefresh(t *testing.T) {
 	fmt.Println("+ Testing Epub.Refresh()...")
-	c := Config{EpubFilenameFormat: "$a $y $t", LibraryRoot: "."}
+	cfg := c.Config{EpubFilenameFormat: "$a $y $t", LibraryRoot: "."}
 	for i, testEpub := range epubs {
 		// copy testEpub.filename
 		epubFilename := filepath.Base(testEpub.filename)
 		epubDir := filepath.Dir(testEpub.filename)
 		tempCopy := filepath.Join(epubDir, "temp_"+epubFilename)
 
-		err := CopyFile(testEpub.filename, tempCopy)
+		err := helpers.CopyFile(testEpub.filename, tempCopy)
 		if err != nil {
 			t.Errorf("Error copying %s to %s", testEpub.filename, tempCopy)
 		}
 
 		// creating Epub object
-		e := NewBook(i, tempCopy, c, isRetail)
+		e := NewBook(i, tempCopy, cfg, isRetail)
 		err = e.Metadata.Read(e.RetailEpub.Filename)
 		if err != nil {
-			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.getMainFilename(), err)
+			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.GetMainFilename(), err)
 		}
 
 		// refresh
@@ -196,8 +197,8 @@ func TestBookRefresh(t *testing.T) {
 		if newName[0] != testEpub.expectedFormat1Retail {
 			t.Errorf("Error renaming %s, got %s, expected %s", tempCopy, newName[0], testEpub.expectedFormat1Retail)
 		}
-		if newName[0] != e.getMainFilename() {
-			t.Errorf("Error setting new name %s, got %s, expected %s", tempCopy, newName[0], e.getMainFilename())
+		if newName[0] != e.GetMainFilename() {
+			t.Errorf("Error setting new name %s, got %s, expected %s", tempCopy, newName[0], e.GetMainFilename())
 		}
 
 		//  cleanup

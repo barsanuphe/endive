@@ -10,12 +10,12 @@ import (
 	"path/filepath"
 	"strconv"
 
+	b "github.com/barsanuphe/endive/book"
+	cfg "github.com/barsanuphe/endive/config"
 	"launchpad.net/go-xdg"
-	_ "github.com/barsanuphe/endive/book"
-	_ "github.com/barsanuphe/endive/config"
 )
 
-const xdgIndexPath string = endive + "/" + endive + ".index"
+const xdgIndexPath string = cfg.Endive + "/" + cfg.Endive + ".index"
 
 // getIndexPath gets the default index path
 func getIndexPath() (path string) {
@@ -34,7 +34,7 @@ func getIndexPath() (path string) {
 type LibraryDB struct {
 	DatabaseFile string
 	IndexFile    string // can be in XDG data path
-	Books        []Book
+	Books        []b.Book
 }
 
 // Load current DB
@@ -112,23 +112,23 @@ func (ldb *LibraryDB) generateID() (id int) {
 }
 
 // FindByID among known Books
-func (ldb *LibraryDB) FindByID(id int) (result *Book, err error) {
+func (ldb *LibraryDB) FindByID(id int) (result *b.Book, err error) {
 	for i, bk := range ldb.Books {
 		if bk.ID == id {
 			return &ldb.Books[i], nil
 		}
 	}
-	return &Book{}, errors.New("Could not find book with ID " + strconv.Itoa(id))
+	return &b.Book{}, errors.New("Could not find book with ID " + strconv.Itoa(id))
 }
 
 //FindByFilename among known Books
-func (ldb *LibraryDB) FindByFilename(filename string) (result *Book, err error) {
+func (ldb *LibraryDB) FindByFilename(filename string) (result *b.Book, err error) {
 	for i, bk := range ldb.Books {
 		if bk.RetailEpub.Filename == filename || bk.NonRetailEpub.Filename == filename {
 			return &ldb.Books[i], nil
 		}
 	}
-	return &Book{}, errors.New("Could not find book with epub " + filename)
+	return &b.Book{}, errors.New("Could not find book with epub " + filename)
 }
 
 // SearchJSON current DB and output as JSON
@@ -140,13 +140,13 @@ func (ldb *LibraryDB) SearchJSON() (jsonOutput string, err error) {
 }
 
 // ListNonRetailOnly among known epubs.
-func (ldb *LibraryDB) ListNonRetailOnly() (nonretail []Book, err error) {
+func (ldb *LibraryDB) ListNonRetailOnly() (nonretail []b.Book, err error) {
 	// TODO return Search for querying non retail epubs, removing the epubs with same title/author but retail
 	return
 }
 
 // ListRetailOnly among known epubs.
-func (ldb *LibraryDB) ListRetailOnly() (retail []Book, err error) {
+func (ldb *LibraryDB) ListRetailOnly() (retail []b.Book, err error) {
 	return
 }
 
@@ -162,11 +162,11 @@ func (ldb *LibraryDB) ListTags() (tags []string, err error) {
 }
 
 // ListUntagged among known epubs.
-func (ldb *LibraryDB) ListUntagged() (untagged []Book, err error) {
+func (ldb *LibraryDB) ListUntagged() (untagged []b.Book, err error) {
 	return
 }
 
 // ListWithTag among known epubs.
-func (ldb *LibraryDB) ListWithTag(tag string) (tagged []Book, err error) {
+func (ldb *LibraryDB) ListWithTag(tag string) (tagged []b.Book, err error) {
 	return
 }

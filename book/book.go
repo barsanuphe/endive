@@ -10,6 +10,9 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/barsanuphe/endive/config"
+	h "github.com/barsanuphe/endive/helpers"
 )
 
 var validProgress = []string{"unread", "read", "reading", "shortlisted"}
@@ -17,8 +20,8 @@ var validProgress = []string{"unread", "read", "reading", "shortlisted"}
 // Book can manipulate a book.
 // A Book can have multiple epub files.
 type Book struct {
-	Config Config `json:"-"`
-	ID     int    `json:"id"`
+	Config config.Config `json:"-"`
+	ID     int           `json:"id"`
 
 	RetailEpub    Epub     `json:"retail"`
 	NonRetailEpub Epub     `json:"nonretail"`
@@ -34,12 +37,12 @@ type Book struct {
 }
 
 // NewBook constucts a valid new Epub
-func NewBook(id int, filename string, c Config, isRetail bool) *Book {
+func NewBook(id int, filename string, c config.Config, isRetail bool) *Book {
 	return NewBookWithMetadata(id, filename, c, isRetail, NewMetadata())
 }
 
 // NewBookWithMetadata constucts a valid new Epub
-func NewBookWithMetadata(id int, filename string, c Config, isRetail bool, m *Metadata) *Book {
+func NewBookWithMetadata(id int, filename string, c config.Config, isRetail bool, m *Metadata) *Book {
 	f := Epub{Filename: filename, Config: c, NeedsReplacement: "false"}
 	if isRetail {
 		return &Book{ID: id, RetailEpub: f, Config: c, Metadata: *m, Progress: "unread"}
@@ -58,10 +61,11 @@ func (e *Book) String() (desc string) {
 	if len(e.Tags) != 0 {
 		tags = "[ " + strings.Join(e.Tags, " ") + " ]"
 	}
-	return e.getMainFilename() + ":\t" + e.Metadata.Get("creator")[0] + " (" + e.Metadata.Get("year")[0] + ") " + e.Metadata.Get("title")[0] + " [" + e.Metadata.Get("language")[0] + "] " + tags
+	return e.GetMainFilename() + ":\t" + e.Metadata.Get("creator")[0] + " (" + e.Metadata.Get("year")[0] + ") " + e.Metadata.Get("title")[0] + " [" + e.Metadata.Get("language")[0] + "] " + tags
 }
 
-func (e *Book) getMainFilename() (filename string) {
+// GetMainFilename of a Book.
+func (e *Book) GetMainFilename() (filename string) {
 	// assuming at least one epub is defined
 	if e.RetailEpub.Filename == "" && e.NonRetailEpub.Filename != "" {
 		return e.NonRetailEpub.Filename
@@ -76,7 +80,7 @@ func (e *Book) getMainFilename() (filename string) {
 // SetProgress sets reading progress
 func (e *Book) SetProgress(progress string) (err error) {
 	progress = strings.ToLower(progress)
-	if _, isIn := stringInSlice(progress, validProgress); isIn {
+	if _, isIn := h.StringInSlice(progress, validProgress); isIn {
 		e.Progress = progress
 	} else {
 		err = errors.New("Unknown reading progress: " + progress)
@@ -86,7 +90,7 @@ func (e *Book) SetProgress(progress string) (err error) {
 
 // AddTag adds a tag
 func (e *Book) AddTag(tagName string) (err error) {
-	_, isIn := stringInSlice(tagName, e.Tags)
+	_, isIn := h.StringInSlice(tagName, e.Tags)
 	if !isIn {
 		e.Tags = append(e.Tags, tagName)
 	}
@@ -95,7 +99,7 @@ func (e *Book) AddTag(tagName string) (err error) {
 
 // RemoveTag removes a series
 func (e *Book) RemoveTag(tagName string) (err error) {
-	i, isIn := stringInSlice(tagName, e.Tags)
+	i, isIn := h.StringInSlice(tagName, e.Tags)
 	if isIn {
 		e.Tags[i] = e.Tags[len(e.Tags)-1]
 		e.Tags = e.Tags[:len(e.Tags)-1]
@@ -107,7 +111,7 @@ func (e *Book) RemoveTag(tagName string) (err error) {
 
 // HasTag checks if epub is part of a series
 func (e *Book) HasTag(tagName string) (hasThisTag bool) {
-	_, hasThisTag = stringInSlice(tagName, e.Tags)
+	_, hasThisTag = h.StringInSlice(tagName, e.Tags)
 	return
 }
 
@@ -138,9 +142,9 @@ func (e *Book) generateNewName(fileTemplate string, isRetail bool) (newName stri
 
 	// replace with all valid epub parameters
 	tmpl := fmt.Sprintf(`{{$a := "%s"}}{{$y := "%s"}}{{$t := "%s"}}{{$l := "%s"}}%s`,
-		cleanForPath(e.Metadata.Get("creator")[0]),
+		h.CleanForPath(e.Metadata.Get("creator")[0]),
 		e.Metadata.Get("year")[0],
-		cleanForPath(e.Metadata.Get("title")[0]), e.Metadata.Get("language")[0], r.Replace(fileTemplate))
+		h.CleanForPath(e.Metadata.Get("title")[0]), e.Metadata.Get("language")[0], r.Replace(fileTemplate))
 
 	var doc bytes.Buffer
 	te := template.Must(template.New("hop").Parse(tmpl))
@@ -196,7 +200,7 @@ func (e *Book) Refresh() (wasRenamed []bool, newName []string, err error) {
 	fmt.Println("Refreshing Epub " + e.ShortString())
 	// metadata is blank, run GetMetadata
 	if hasMetadata := e.Metadata.HasAny(); !hasMetadata {
-		err = e.Metadata.Read(e.getMainFilename())
+		err = e.Metadata.Read(e.GetMainFilename())
 		if err != nil {
 			return
 		}
@@ -284,7 +288,7 @@ func (e *Book) Import(path string, isRetail bool, hash string) (imported bool, e
 	fmt.Println("Importing " + path)
 	// copy
 	dest := filepath.Join(e.Config.LibraryRoot, filepath.Base(path))
-	err = CopyFile(path, dest)
+	err = h.CopyFile(path, dest)
 	if err != nil {
 		return
 	}

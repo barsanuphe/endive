@@ -13,16 +13,16 @@ func TestMetaData(t *testing.T) {
 
 		hasMetadata := e.Metadata.HasAny()
 		if hasMetadata {
-			t.Errorf("Error: %s should not have metadata yet.", e.getMainFilename())
+			t.Errorf("Error: %s should not have metadata yet.", e.GetMainFilename())
 		}
 
 		err := e.Metadata.Read(e.RetailEpub.Filename)
 		if err != nil {
 			if testEpub.expectedError == nil {
-				t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.getMainFilename(), err)
+				t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.GetMainFilename(), err)
 			}
 			if err.Error() != testEpub.expectedError.Error() {
-				t.Errorf("Error getting Metadata for %s, got %s, expected %s", e.getMainFilename(), err, testEpub.expectedError)
+				t.Errorf("Error getting Metadata for %s, got %s, expected %s", e.GetMainFilename(), err, testEpub.expectedError)
 			}
 		}
 		if e.Metadata.Get("title")[0] != testEpub.expectedTitle {
@@ -40,7 +40,7 @@ func TestMetaData(t *testing.T) {
 
 		hasMetadata = e.Metadata.HasAny()
 		if !hasMetadata {
-			t.Errorf("Error: %s should have metadata by now.", e.getMainFilename())
+			t.Errorf("Error: %s should have metadata by now.", e.GetMainFilename())
 		}
 
 		fmt.Println(e.String())

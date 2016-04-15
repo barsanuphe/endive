@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"testing"
 
+	cfg "github.com/barsanuphe/endive/config"
 )
 
 func TestLibrarySearch(t *testing.T) {
-	c := Config{}
-	k := KnownHashes{}
+	c := cfg.Config{}
+	k := cfg.KnownHashes{}
 	ldb := LibraryDB{DatabaseFile: "test/endive.json"}
 	l := Library{c, k, ldb}
 

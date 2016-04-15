@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+
 	_ "github.com/barsanuphe/endive/book"
 )
 
@@ -20,7 +21,7 @@ func TestLdbLoad(t *testing.T) {
 	}
 	for _, epub := range l.Books {
 		if hasMetadata := epub.Metadata.HasAny(); !hasMetadata {
-			t.Errorf("Error loading epubs, epub %s does not have metadata in db", epub.getMainFilename())
+			t.Errorf("Error loading epubs, epub %s does not have metadata in db", epub.GetMainFilename())
 		}
 	}
 }

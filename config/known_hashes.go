@@ -8,12 +8,13 @@ import (
 	"os"
 	"strconv"
 
+	h "github.com/barsanuphe/endive/helpers"
 	"launchpad.net/go-xdg"
 )
 
 const (
 	hashes        = "endive_hashes"
-	xdgHashesPath = endive + "/" + hashes + ".json"
+	xdgHashesPath = Endive + "/" + hashes + ".json"
 )
 
 // KnownHashes keeps track of the hashes of already imported epubs.
@@ -23,8 +24,8 @@ type KnownHashes struct {
 	Count    int      `json:"-"`
 }
 
-// getKnownHashesPath gets the default path for known hashes.
-func getKnownHashesPath() (hashesFile string, err error) {
+// GetKnownHashesPath gets the default path for known hashes.
+func GetKnownHashesPath() (hashesFile string, err error) {
 	hashesFile, err = xdg.Data.Find(xdgHashesPath)
 	if err != nil {
 		hashesFile, err = xdg.Data.Ensure(xdgHashesPath)
@@ -103,6 +104,6 @@ func (k *KnownHashes) IsIn(hash string) (isIn bool) {
 		// no need to check
 		return
 	}
-	_, isIn = stringInSlice(hash, k.Hashes)
+	_, isIn = h.StringInSlice(hash, k.Hashes)
 	return
 }

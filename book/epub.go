@@ -1,13 +1,18 @@
 package book
 
-import "path/filepath"
+import (
+	"path/filepath"
+
+	"github.com/barsanuphe/endive/config"
+	"github.com/barsanuphe/endive/helpers"
+)
 
 // Epub can manipulate an epub file.
 type Epub struct {
-	Filename         string `json:"filename"` // relative to LibraryRoot
-	Config           Config `json:"-"`
-	Hash             string `json:"hash"`
-	NeedsReplacement string `json:"replace"`
+	Filename         string        `json:"filename"` // relative to LibraryRoot
+	Config           config.Config `json:"-"`
+	Hash             string        `json:"hash"`
+	NeedsReplacement string        `json:"replace"`
 }
 
 // getPath returns the absolute file path.
@@ -23,7 +28,7 @@ func (e *Epub) getPath() (path string) {
 
 // GetHash calculates an epub's current hash
 func (e *Epub) GetHash() (err error) {
-	hash, err := calculateSHA256(e.getPath())
+	hash, err := helpers.CalculateSHA256(e.getPath())
 	if err != nil {
 		return
 	}
@@ -40,7 +45,7 @@ func (e *Epub) FlagForReplacement() (err error) {
 // Check the retail epub integrity.
 func (e *Epub) Check() (hasChanged bool, err error) {
 	// get current hash
-	currentHash, err := calculateSHA256(e.getPath())
+	currentHash, err := helpers.CalculateSHA256(e.getPath())
 	if err != nil {
 		return
 	}
