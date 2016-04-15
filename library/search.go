@@ -79,9 +79,8 @@ func (ldb *DB) Index() (numIndexed uint64, err error) {
 	}
 
 	// index by filename
-	for _, epub := range ldb.Books {
-		// TODO: index epub.ShortString() instead?
-		index.Index(epub.GetMainFilename(), epub)
+	for _, book := range ldb.Books {
+		index.Index(book.GetMainFilename(), book)
 	}
 
 	// check number of indexed documents
@@ -97,10 +96,8 @@ func (ldb *DB) Index() (numIndexed uint64, err error) {
 func (ldb *DB) Search(queryString string) (results []b.Book, err error) {
 	// TODO make sure the index is up to date
 
-	fmt.Println("Searching database for " + queryString + " ...")
 	query := bleve.NewQueryStringQuery(queryString)
 	search := bleve.NewSearchRequest(query)
-
 	// open index
 	index, isNew := openIndex()
 	if isNew {
@@ -125,7 +122,6 @@ func (ldb *DB) Search(queryString string) (results []b.Book, err error) {
 	//fmt.Println(searchResults.Total)
 	if searchResults.Total != 0 {
 		for _, hit := range searchResults.Hits {
-			fmt.Println("Found " + hit.ID)
 			var epub *b.Book
 			epub, err = ldb.FindByFilename(hit.ID)
 			if err != nil {

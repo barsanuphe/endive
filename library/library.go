@@ -1,7 +1,9 @@
 package library
 
 import (
+	"errors"
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -232,14 +234,13 @@ func (l *Library) DuplicateRetailEpub(epub b.Book) (nonRetailEpub b.Book, err er
 
 // RunQuery and print the results
 func (l *Library) RunQuery(query string) (results string, err error) {
-	fmt.Println("Running query...")
-
 	// remplace fields for simpler queries
 	r := strings.NewReplacer(
 		"author:", "metadata.fields.creator:",
 		"title:", "metadata.fields.title:",
 		"year:", "metadata.fields.year:",
 		"language:", "metadata.fields.language:",
+		"series", "series.seriesname",
 	)
 	query = r.Replace(query)
 
@@ -251,7 +252,11 @@ func (l *Library) RunQuery(query string) (results string, err error) {
 	if len(hits) != 0 {
 		var rows [][]string
 		for _, res := range hits {
-			rows = append(rows, []string{strconv.Itoa(res.ID), res.Metadata.Get("creator")[0], res.Metadata.Get("title")[0], res.Metadata.Get("year")[0], res.GetMainFilename()})
+			relativePath, err := filepath.Rel(l.ConfigurationFile.LibraryRoot, res.GetMainFilename())
+			if err != nil {
+				return "Nothing", errors.New("File " + res.GetMainFilename() + " not in library?")
+			}
+			rows = append(rows, []string{strconv.Itoa(res.ID), res.Metadata.Get("creator")[0], res.Metadata.Get("title")[0], res.Metadata.Get("year")[0], relativePath})
 		}
 		tabulate := gotabulate.Create(rows)
 		tabulate.SetHeaders([]string{"ID", "Author", "Title", "Year", "Filename"})
