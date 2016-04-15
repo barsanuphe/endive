@@ -30,15 +30,15 @@ func getIndexPath() (path string) {
 	return
 }
 
-// LibraryDB manages the epub database and search
-type LibraryDB struct {
+// DB manages the epub database and search
+type DB struct {
 	DatabaseFile string
 	IndexFile    string // can be in XDG data path
 	Books        []b.Book
 }
 
 // Load current DB
-func (ldb *LibraryDB) Load() (err error) {
+func (ldb *DB) Load() (err error) {
 	fmt.Println("Loading database...")
 	bytes, err := ioutil.ReadFile(ldb.DatabaseFile)
 	if err != nil {
@@ -57,7 +57,7 @@ func (ldb *LibraryDB) Load() (err error) {
 }
 
 // Save current DB
-func (ldb *LibraryDB) Save() (hasSaved bool, err error) {
+func (ldb *DB) Save() (hasSaved bool, err error) {
 	jsonEpub, err := json.Marshal(ldb.Books)
 	if err != nil {
 		fmt.Println(err)
@@ -96,7 +96,7 @@ func (ldb *LibraryDB) Save() (hasSaved bool, err error) {
 }
 
 // generateID for a new Book
-func (ldb *LibraryDB) generateID() (id int) {
+func (ldb *DB) generateID() (id int) {
 	// id 0 for first Book
 	if len(ldb.Books) == 0 {
 		return
@@ -112,7 +112,7 @@ func (ldb *LibraryDB) generateID() (id int) {
 }
 
 // FindByID among known Books
-func (ldb *LibraryDB) FindByID(id int) (result *b.Book, err error) {
+func (ldb *DB) FindByID(id int) (result *b.Book, err error) {
 	for i, bk := range ldb.Books {
 		if bk.ID == id {
 			return &ldb.Books[i], nil
@@ -122,9 +122,9 @@ func (ldb *LibraryDB) FindByID(id int) (result *b.Book, err error) {
 }
 
 //FindByFilename among known Books
-func (ldb *LibraryDB) FindByFilename(filename string) (result *b.Book, err error) {
+func (ldb *DB) FindByFilename(filename string) (result *b.Book, err error) {
 	for i, bk := range ldb.Books {
-		if bk.RetailEpub.Filename == filename || bk.NonRetailEpub.Filename == filename {
+		if bk.RetailEpub.GetPath() == filename || bk.NonRetailEpub.GetPath() == filename {
 			return &ldb.Books[i], nil
 		}
 	}
@@ -132,7 +132,7 @@ func (ldb *LibraryDB) FindByFilename(filename string) (result *b.Book, err error
 }
 
 // SearchJSON current DB and output as JSON
-func (ldb *LibraryDB) SearchJSON() (jsonOutput string, err error) {
+func (ldb *DB) SearchJSON() (jsonOutput string, err error) {
 	// TODO Search() then get JSON output from each result Epub
 	// TODO OR --- the opposite. bleve can return JSON, Search has to parse it and locate the relevant Epub objects
 	fmt.Println("Searching database with JSON output...")
@@ -140,33 +140,33 @@ func (ldb *LibraryDB) SearchJSON() (jsonOutput string, err error) {
 }
 
 // ListNonRetailOnly among known epubs.
-func (ldb *LibraryDB) ListNonRetailOnly() (nonretail []b.Book, err error) {
+func (ldb *DB) ListNonRetailOnly() (nonretail []b.Book, err error) {
 	// TODO return Search for querying non retail epubs, removing the epubs with same title/author but retail
 	return
 }
 
 // ListRetailOnly among known epubs.
-func (ldb *LibraryDB) ListRetailOnly() (retail []b.Book, err error) {
+func (ldb *DB) ListRetailOnly() (retail []b.Book, err error) {
 	return
 }
 
 // ListAuthors among known epubs.
-func (ldb *LibraryDB) ListAuthors() (authors []string, err error) {
+func (ldb *DB) ListAuthors() (authors []string, err error) {
 	return
 }
 
 // ListTags associated with known epubs.
-func (ldb *LibraryDB) ListTags() (tags []string, err error) {
+func (ldb *DB) ListTags() (tags []string, err error) {
 	// TODO search for tags in all epubs, remove duplicates
 	return
 }
 
 // ListUntagged among known epubs.
-func (ldb *LibraryDB) ListUntagged() (untagged []b.Book, err error) {
+func (ldb *DB) ListUntagged() (untagged []b.Book, err error) {
 	return
 }
 
 // ListWithTag among known epubs.
-func (ldb *LibraryDB) ListWithTag(tag string) (tagged []b.Book, err error) {
+func (ldb *DB) ListWithTag(tag string) (tagged []b.Book, err error) {
 	return
 }

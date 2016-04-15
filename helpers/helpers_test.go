@@ -27,6 +27,8 @@ func TestHelpersListEpubs(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error getting current directory: %s", err.Error())
 	}
+	// go up
+	currentDir = filepath.Dir(currentDir)
 
 	epubsPaths, hashes, err := ListEpubsInDirectory(currentDir)
 	if err != nil {

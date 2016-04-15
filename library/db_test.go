@@ -9,7 +9,8 @@ import (
 	_ "github.com/barsanuphe/endive/book"
 )
 
-var l = LibraryDB{DatabaseFile: "test/endive.json"}
+var testDbName = "../test/endive.json"
+var l = DB{DatabaseFile: testDbName}
 
 func TestLdbLoad(t *testing.T) {
 	err := l.Load()
@@ -27,6 +28,8 @@ func TestLdbLoad(t *testing.T) {
 }
 
 func TestLdbSave(t *testing.T) {
+	tempTestDbName := "../test/db2.json"
+
 	err := l.Load()
 	if err != nil {
 		t.Errorf("Error loading epubs from database: " + err.Error())
@@ -43,7 +46,7 @@ func TestLdbSave(t *testing.T) {
 
 	// changing DatabaseFile will make Save() compare current db with an
 	// empty file, forcing save + new index
-	l.DatabaseFile = "test/db2.json"
+	l.DatabaseFile = tempTestDbName
 	hasSaved, err = l.Save()
 	if err != nil {
 		t.Errorf("Error saving epubs to database: " + err.Error())
@@ -53,8 +56,8 @@ func TestLdbSave(t *testing.T) {
 	}
 
 	// compare both jsons
-	db1, err := ioutil.ReadFile("test/endive.json")
-	db2, err2 := ioutil.ReadFile("test/db2.json")
+	db1, err := ioutil.ReadFile(testDbName)
+	db2, err2 := ioutil.ReadFile(tempTestDbName)
 	if err != nil || err2 != nil {
 		t.Errorf("Error reading db file")
 	}
@@ -62,9 +65,9 @@ func TestLdbSave(t *testing.T) {
 		t.Errorf("Error: original db != saved db")
 	}
 	// remove db2
-	err = os.Remove("test/db2.json")
+	err = os.Remove(tempTestDbName)
 	if err != nil {
 		t.Errorf("Error removing temp copy test/db2.json")
 	}
-	l.DatabaseFile = "test/endive.json"
+	l.DatabaseFile = testDbName
 }

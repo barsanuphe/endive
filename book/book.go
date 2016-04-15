@@ -68,10 +68,10 @@ func (e *Book) String() (desc string) {
 func (e *Book) GetMainFilename() (filename string) {
 	// assuming at least one epub is defined
 	if e.RetailEpub.Filename == "" && e.NonRetailEpub.Filename != "" {
-		return e.NonRetailEpub.getPath()
+		return e.NonRetailEpub.GetPath()
 	}
 	if e.RetailEpub.Filename != "" && e.NonRetailEpub.Filename == "" {
-		return e.RetailEpub.getPath()
+		return e.RetailEpub.GetPath()
 	}
 	// TODO return err
 	return "ERROR"
@@ -176,7 +176,7 @@ func (e *Book) refreshEpub(epub Epub, isRetail bool) (wasRenamed bool, newName s
 	}
 
 	if epub.Filename != newName {
-		origin := epub.getPath()
+		origin := epub.GetPath()
 		fmt.Println("Renaming " + origin + " to: " + newName)
 		// move to c.LibraryRoot + new name
 
@@ -311,14 +311,14 @@ func (e *Book) Import(path string, isRetail bool, hash string) (imported bool, e
 func (e *Book) removeEpub(isRetail bool) (err error) {
 	if isRetail {
 		// remove
-		err = os.Remove(e.RetailEpub.getPath())
+		err = os.Remove(e.RetailEpub.GetPath())
 		if err != nil {
 			return
 		}
 		e.RetailEpub = Epub{}
 	} else {
 		// remove
-		err = os.Remove(e.NonRetailEpub.getPath())
+		err = os.Remove(e.NonRetailEpub.GetPath())
 		if err != nil {
 			return
 		}

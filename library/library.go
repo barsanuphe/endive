@@ -16,7 +16,7 @@ import (
 type Library struct {
 	ConfigurationFile cfg.Config
 	KnownHashesFile   cfg.KnownHashes
-	LibraryDB         // anonymous, Library still has Epubs
+	DB                // anonymous, Library still has Epubs
 }
 
 // OpenLibrary constucts a valid new Library

@@ -63,7 +63,7 @@ func openIndex() (index bleve.Index, isNew bool) {
 }
 
 // Index current DB
-func (ldb *LibraryDB) Index() (numIndexed uint64, err error) {
+func (ldb *DB) Index() (numIndexed uint64, err error) {
 	// open index
 	index, _ := openIndex()
 	defer index.Close()
@@ -94,7 +94,7 @@ func (ldb *LibraryDB) Index() (numIndexed uint64, err error) {
 }
 
 // Search current DB
-func (ldb *LibraryDB) Search(queryString string) (results []b.Book, err error) {
+func (ldb *DB) Search(queryString string) (results []b.Book, err error) {
 	// TODO make sure the index is up to date
 
 	fmt.Println("Searching database for " + queryString + " ...")

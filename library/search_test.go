@@ -1,12 +1,8 @@
 package library
 
-import (
-	"testing"
+import "testing"
 
-	_ "github.com/barsanuphe/endive/book"
-)
-
-func TestLdbSearch(t *testing.T) {
+func TestSearch(t *testing.T) {
 	err := l.Load()
 	if err != nil {
 		t.Errorf("Error loading epubs from database: " + err.Error())

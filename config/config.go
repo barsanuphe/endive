@@ -12,6 +12,7 @@ import (
 )
 
 const (
+	// Endive is the name of this program.
 	Endive           = "endive"
 	xdgConfigPath    = Endive + "/" + Endive + ".yaml"
 	databaseFilename = Endive + ".json"

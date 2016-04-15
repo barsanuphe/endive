@@ -15,10 +15,10 @@ type Epub struct {
 	NeedsReplacement string        `json:"replace"`
 }
 
-// getPath returns the absolute file path.
+// GetPath returns the absolute file path.
 // if it is in the library, prepends LibraryRoot.
 // if it is outside, return Filename directly.
-func (e *Epub) getPath() (path string) {
+func (e *Epub) GetPath() (path string) {
 	// TODO: tests
 	if filepath.IsAbs(e.Filename) {
 		return e.Filename
@@ -28,7 +28,7 @@ func (e *Epub) getPath() (path string) {
 
 // GetHash calculates an epub's current hash
 func (e *Epub) GetHash() (err error) {
-	hash, err := helpers.CalculateSHA256(e.getPath())
+	hash, err := helpers.CalculateSHA256(e.GetPath())
 	if err != nil {
 		return
 	}
@@ -45,7 +45,7 @@ func (e *Epub) FlagForReplacement() (err error) {
 // Check the retail epub integrity.
 func (e *Epub) Check() (hasChanged bool, err error) {
 	// get current hash
-	currentHash, err := helpers.CalculateSHA256(e.getPath())
+	currentHash, err := helpers.CalculateSHA256(e.GetPath())
 	if err != nil {
 		return
 	}

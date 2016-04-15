@@ -10,7 +10,7 @@ import (
 func TestLibrarySearch(t *testing.T) {
 	c := cfg.Config{}
 	k := cfg.KnownHashes{}
-	ldb := LibraryDB{DatabaseFile: "test/endive.json"}
+	ldb := DB{DatabaseFile: "../test/endive.json"}
 	l := Library{c, k, ldb}
 
 	err := l.Load()
@@ -19,7 +19,7 @@ func TestLibrarySearch(t *testing.T) {
 	}
 	results, err := l.RunQuery("language:fr")
 	if err != nil {
-		t.Errorf("Error runnig query: " + err.Error())
+		t.Errorf("Error running query: " + err.Error())
 	}
 	fmt.Println(results)
 }
