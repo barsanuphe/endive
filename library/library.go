@@ -1,4 +1,4 @@
-package main
+package library
 
 import (
 	"fmt"
@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/bndr/gotabulate"
+	_ "github.com/barsanuphe/endive/book"
+	_ "github.com/barsanuphe/endive/config"
 )
 
 // Library manages Epubs

@@ -1,4 +1,4 @@
-package main
+package book
 
 import (
 	"errors"
@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	_ "github.com/barsanuphe/endive/config"
 )
 
 var epubs = []struct {
@@ -49,7 +51,7 @@ var epubs = []struct {
 		"fr/Alexandre Dumas/2006. [Alexandre Dumas] (Le comte de Monte-Cristo, Tome I).epub",
 	},
 }
-var standardTestConfig = Config{LibraryRoot: "."}
+var standardTestConfig = Config{LibraryRoot: ".."}
 var isRetail = true
 
 // TestBookJSON tests both JSON() and FromJSON().

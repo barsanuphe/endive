@@ -18,7 +18,28 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/ttacon/chalk"
+	_ "github.com/barsanuphe/endive/book"
+	_ "github.com/barsanuphe/endive/library"
+	"errors"
 )
+
+func checkArgsWithID(l Library, args []string) (book *Book, other []string, err error){
+	if len(args) < 1 {
+		err = errors.New("Not enough arguments")
+		return
+	}
+	id, err = strconv.Atoi(args[0])
+	if err != nil {
+		return
+	}
+	// get book from ID
+	book, err = l.FindByID(id)
+	if err != nil {
+		return
+	}
+	other = args[1:]
+	return
+}
 
 func main() {
 	fmt.Println(chalk.Bold.TextStyle("\n# # # E N D I V E # # #\n"))
@@ -251,11 +272,23 @@ func main() {
 				{
 					Name:    "add",
 					Aliases: []string{"a"},
-					Usage:   "add series to book.",
+					Usage:   "add series to book with: ID seriesname seriesindex",
 					Action: func(c *cli.Context) {
-						// TODO
-						// params: ID, series:index
-						fmt.Println("Adding series to book ID#...")
+						book, seriesInfo, err := checkArgsWithID(l, c.Args())
+						if err != nil || len(seriesInfo) != 2 {
+							fmt.Println("Error parsing arguments: " + err.Error())
+							return
+						}
+						seriesIndex, err := strconv.ParseFloat(seriesInfo[1], 32)
+						if err != nil {
+							fmt.Println("Index must be a float.")
+							return
+						}
+						fmt.Printf("Adding single series to book %s...\n", book.ShortString())
+						// add series
+						if book.Series.Add(seriesInfo[0], seriesIndex) {
+							fmt.Printf("Series %s #%f added to %s\n", seriesInfo[0], seriesIndex, book.ShortString())
+						}
 					},
 				},
 				{
@@ -263,8 +296,16 @@ func main() {
 					Aliases: []string{"r"},
 					Usage:   "remove series from book.",
 					Action: func(c *cli.Context) {
-						// TODO
-						fmt.Println("Removing series from book ID#...")
+						book, series, err := checkArgsWithID(l, c.Args())
+						if err != nil {
+							fmt.Println("Error parsing arguments: " + err.Error())
+							return
+						}
+						fmt.Printf("Removing series from book %s...\n", book.ShortString())
+						// remove series
+						if book.Series.Remove(series...) {
+							fmt.Printf("Series %s removed from %s\n", strings.Join(series, ", "), book.ShortString())
+						}
 					},
 				},
 				{
@@ -272,8 +313,13 @@ func main() {
 					Aliases: []string{"c"},
 					Usage:   "list series for a book.",
 					Action: func(c *cli.Context) {
-						// TODO
-						fmt.Println("Listing series for book ID#...")
+						book, _, err := checkArgsWithID(l, c.Args())
+						if err != nil {
+							fmt.Println("Error parsing arguments: " + err.Error())
+							return
+						}
+						fmt.Printf("Listing series from book %s...\n", book.ShortString())
+						fmt.Println(book.Series.String())
 					},
 				},
 			},

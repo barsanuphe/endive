@@ -1,6 +1,10 @@
-package main
+package book
 
-import "strconv"
+import (
+	"strconv"
+	"fmt"
+	"strings"
+)
 
 // SingleSeries holds the name and index of a series a Book is part of.
 type SingleSeries struct {
@@ -8,8 +12,22 @@ type SingleSeries struct {
 	Index string `json:"seriesindex"`
 }
 
+// String outputs a single series info.
+func (s *SingleSeries) String()  string {
+	return fmt.Sprintf("%s: (#%s)\n", s.Name, s.Index)
+}
+
 // Series can track a series and an epub's position.
 type Series []SingleSeries
+
+
+// String outputs a series info.
+func (s *Series) String() (description string) {
+	for _, ss := range s{
+		description += ss.String()
+	}
+	return
+}
 
 // Add a series
 func (s *Series) Add(seriesName string, index float32) (seriesModified bool) {
@@ -30,13 +48,15 @@ func (s *Series) Add(seriesName string, index float32) (seriesModified bool) {
 	return
 }
 
-// Remove a series
-func (s *Series) Remove(seriesName string) (seriesRemoved bool) {
-	hasSeries, seriesIndex, _ := s.Has(seriesName)
-	if hasSeries {
-		(*s)[seriesIndex] = (*s)[len(*s)-1]
-		(*s) = (*s)[:len(*s)-1]
-		seriesRemoved = true
+// Remove series from the list
+func (s *Series) Remove(seriesName ...string) (seriesRemoved bool) {
+	for _, series := range seriesName {
+		hasSeries, seriesIndex, _ := s.Has(series)
+		if hasSeries {
+			(*s)[seriesIndex] = (*s)[len(*s) - 1]
+			(*s) = (*s)[:len(*s) - 1]
+			seriesRemoved = true
+		}
 	}
 	return
 }

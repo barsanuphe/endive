@@ -1,8 +1,9 @@
-package main
+package library
 
 import (
 	"fmt"
 	"testing"
+
 )
 
 func TestLibrarySearch(t *testing.T) {
