@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-var configFile = "test/config.yaml"
+var configFile = "../test/config.yaml"
 
 func TestConfigLoad(t *testing.T) {
 	fmt.Println("+ Testing Config.Load()...")

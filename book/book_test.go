@@ -52,15 +52,26 @@ var epubs = []struct {
 		"fr/Alexandre Dumas/2006. [Alexandre Dumas] (Le comte de Monte-Cristo, Tome I).epub",
 	},
 }
-var standardTestConfig = c.Config{LibraryRoot: ".."}
+
+var parentDir string
+var standardTestConfig c.Config
 var isRetail = true
+
+func init() {
+	wd, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	parentDir = filepath.Dir(wd)
+	standardTestConfig = c.Config{LibraryRoot: parentDir}
+}
 
 // TestBookJSON tests both JSON() and FromJSON().
 func TestBookJSON(t *testing.T) {
 	fmt.Println("+ Testing Epub.JSON()...")
 	for i, testEpub := range epubs {
 		e := NewBook(i, testEpub.filename, standardTestConfig, isRetail)
-		err := e.Metadata.Read(e.RetailEpub.Filename)
+		err := e.Metadata.Read(e.GetMainFilename())
 		if err != nil {
 			t.Errorf("Error getting Metadata for epub %s", e.GetMainFilename())
 		}
@@ -127,7 +138,7 @@ func TestBookNewName(t *testing.T) {
 	fmt.Println("+ Testing Epub.generateNewName()...")
 	for i, testEpub := range epubs {
 		e := NewBook(i, testEpub.filename, standardTestConfig, !isRetail)
-		err := e.Metadata.Read(e.NonRetailEpub.Filename)
+		err := e.Metadata.Read(e.GetMainFilename())
 		if err != nil {
 			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.GetMainFilename(), err)
 		}
@@ -148,7 +159,7 @@ func TestBookNewName(t *testing.T) {
 		}
 
 		e = NewBook(10+i, testEpub.filename, standardTestConfig, isRetail)
-		err = e.Metadata.Read(e.RetailEpub.Filename)
+		err = e.Metadata.Read(e.GetMainFilename())
 		if err != nil {
 			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.GetMainFilename(), err)
 		}
@@ -164,21 +175,21 @@ func TestBookNewName(t *testing.T) {
 
 func TestBookRefresh(t *testing.T) {
 	fmt.Println("+ Testing Epub.Refresh()...")
-	cfg := c.Config{EpubFilenameFormat: "$a $y $t", LibraryRoot: "."}
+	cfg := c.Config{EpubFilenameFormat: "$a $y $t", LibraryRoot: parentDir}
 	for i, testEpub := range epubs {
 		// copy testEpub.filename
 		epubFilename := filepath.Base(testEpub.filename)
 		epubDir := filepath.Dir(testEpub.filename)
-		tempCopy := filepath.Join(epubDir, "temp_"+epubFilename)
+		tempCopy := filepath.Join(parentDir, epubDir, "temp_"+epubFilename)
 
-		err := helpers.CopyFile(testEpub.filename, tempCopy)
+		err := helpers.CopyFile(filepath.Join(parentDir, testEpub.filename), tempCopy)
 		if err != nil {
 			t.Errorf("Error copying %s to %s", testEpub.filename, tempCopy)
 		}
 
 		// creating Epub object
 		e := NewBook(i, tempCopy, cfg, isRetail)
-		err = e.Metadata.Read(e.RetailEpub.Filename)
+		err = e.Metadata.Read(e.GetMainFilename())
 		if err != nil {
 			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.GetMainFilename(), err)
 		}
@@ -197,8 +208,14 @@ func TestBookRefresh(t *testing.T) {
 		if newName[0] != testEpub.expectedFormat1Retail {
 			t.Errorf("Error renaming %s, got %s, expected %s", tempCopy, newName[0], testEpub.expectedFormat1Retail)
 		}
-		if newName[0] != e.GetMainFilename() {
-			t.Errorf("Error setting new name %s, got %s, expected %s", tempCopy, newName[0], e.GetMainFilename())
+
+		// getting epub path relative to parent dir (ie simulated library root) for comparison
+		filename, err := filepath.Rel(parentDir, e.GetMainFilename())
+		if err != nil {
+			t.Errorf("Error getting relative path: " + err.Error())
+		}
+		if newName[0] != filename {
+			t.Errorf("Error setting new name %s, got %s, expected %s", tempCopy, newName[0], filename)
 		}
 
 		//  cleanup
@@ -208,7 +225,7 @@ func TestBookRefresh(t *testing.T) {
 				t.Errorf("Error removing temp copy %s", tempCopy)
 			}
 		} else {
-			err = os.Remove(newName[0])
+			err = os.Remove(filepath.Join(parentDir, newName[0]))
 			if err != nil {
 				t.Errorf("Error removing temp copy %s", newName[0])
 			}

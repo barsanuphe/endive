@@ -16,7 +16,7 @@ func TestMetaData(t *testing.T) {
 			t.Errorf("Error: %s should not have metadata yet.", e.GetMainFilename())
 		}
 
-		err := e.Metadata.Read(e.RetailEpub.Filename)
+		err := e.Metadata.Read(e.GetMainFilename())
 		if err != nil {
 			if testEpub.expectedError == nil {
 				t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.GetMainFilename(), err)

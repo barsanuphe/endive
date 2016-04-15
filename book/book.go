@@ -68,10 +68,10 @@ func (e *Book) String() (desc string) {
 func (e *Book) GetMainFilename() (filename string) {
 	// assuming at least one epub is defined
 	if e.RetailEpub.Filename == "" && e.NonRetailEpub.Filename != "" {
-		return e.NonRetailEpub.Filename
+		return e.NonRetailEpub.getPath()
 	}
 	if e.RetailEpub.Filename != "" && e.NonRetailEpub.Filename == "" {
-		return e.RetailEpub.Filename
+		return e.RetailEpub.getPath()
 	}
 	// TODO return err
 	return "ERROR"
