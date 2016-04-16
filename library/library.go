@@ -202,7 +202,7 @@ func (l *Library) Refresh() (renamed int, err error) {
 		return
 	}
 
-	for i, _ := range l.Books {
+	for i := range l.Books {
 		wasRenamed, _, err := l.Books[i].Refresh()
 		if err != nil {
 			return renamed, err

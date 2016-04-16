@@ -210,14 +210,14 @@ func CalculateSHA256(filename string) (hash string, err error) {
 	return
 }
 
-// TabulateList of books
+// TabulateMap of map[string]int.
 func TabulateMap(input map[string]int, firstHeader string, secondHeader string) (table string) {
 	if len(input) == 0 {
 		return
 	}
 	// building first column list for sorting
 	var keys []string
-	for key, _ := range input {
+	for key := range input {
 		keys = append(keys, key)
 	}
 	sort.Strings(keys)

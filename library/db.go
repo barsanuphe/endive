@@ -168,7 +168,7 @@ func (ldb *DB) ListNonRetailOnly() (nonretail []b.Book) {
 	return
 }
 
-// ListRetailOnly among known epubs.
+// ListRetail among known epubs.
 func (ldb *DB) ListRetail() (retail []b.Book) {
 	for _, book := range ldb.Books {
 		if book.HasRetail() {
@@ -189,8 +189,13 @@ func (ldb *DB) ListAuthors() (authors map[string]int) {
 }
 
 // ListTags associated with known epubs.
-func (ldb *DB) ListTags() (tags []string, err error) {
-	// TODO search for tags in all epubs, remove duplicates
+func (ldb *DB) ListTags() (tags map[string]int) {
+	tags = make(map[string]int)
+	for _, book := range ldb.Books {
+		for _, tag := range book.Tags {
+			tags[tag]++
+		}
+	}
 	return
 }
 

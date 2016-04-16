@@ -19,11 +19,11 @@ import (
 	"strings"
 
 	b "github.com/barsanuphe/endive/book"
+	h "github.com/barsanuphe/endive/helpers"
 	l "github.com/barsanuphe/endive/library"
 	"github.com/bndr/gotabulate"
 	"github.com/codegangsta/cli"
 	"github.com/ttacon/chalk"
-	h "github.com/barsanuphe/endive/helpers"
 )
 
 func checkArgsWithID(l *l.Library, args []string) (book *b.Book, other []string, err error) {
@@ -329,8 +329,8 @@ func generateCLI(lb *l.Library) (app *cli.App) {
 					Aliases: []string{"t"},
 					Usage:   "list tags",
 					Action: func(c *cli.Context) {
-						// TODO
-						fmt.Println("Listing tags...")
+						tags := lb.ListTags()
+						fmt.Println(h.TabulateMap(tags, "Tag", "# of Books"))
 					},
 				},
 				{
