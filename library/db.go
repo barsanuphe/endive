@@ -111,6 +111,24 @@ func (ldb *DB) generateID() (id int) {
 	return
 }
 
+// Check all Books
+func (ldb *DB) Check() (err error) {
+	for i := range ldb.Books {
+		retailChanged, nonRetailChanged, err := ldb.Books[i].Check()
+		if err != nil {
+			return err
+		}
+		if retailChanged {
+			err = errors.New("Retail epub has changed for book: " + ldb.Books[i].ShortString())
+			return err
+		}
+		if nonRetailChanged {
+			fmt.Println("Non-retail epub for book " + ldb.Books[i].ShortString() + " has changed, check if this is normal.")
+		}
+	}
+	return
+}
+
 // FindByID among known Books
 func (ldb *DB) FindByID(id int) (result *b.Book, err error) {
 	for i, bk := range ldb.Books {

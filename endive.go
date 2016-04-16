@@ -268,8 +268,13 @@ func generateCLI(lb l.Library) (app *cli.App) {
 			Aliases: []string{"fsck"},
 			Usage:   "check library",
 			Action: func(c *cli.Context) {
-				fmt.Println("Checking...")
-				// TODO check all retail epubs for changes
+				fmt.Printf("Checking...")
+				err := lb.Check()
+				if err != nil {
+					fmt.Printf(" KO!\n")
+					panic(err)
+				}
+				fmt.Printf(" OK\n")
 			},
 		},
 		{

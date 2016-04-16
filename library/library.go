@@ -222,12 +222,13 @@ func (l *Library) Refresh() (renamed int, err error) {
 
 // ExportToEReader selected epubs.
 func (l *Library) ExportToEReader(epubs []b.Book) (err error) {
+	// TODO
 	return
 }
 
 // DuplicateRetailEpub copies a retail epub to make a non-retail version.
-func (l *Library) DuplicateRetailEpub(epub b.Book) (nonRetailEpub b.Book, err error) {
-	// TODO find epub
+func (l *Library) DuplicateRetailEpub(id int) (nonRetailEpub b.Book, err error) {
+	// TODO find epub from ID
 	// TODO copy file
 	return
 }
