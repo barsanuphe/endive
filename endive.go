@@ -54,7 +54,7 @@ func showInfo(lb l.Library, c *cli.Context) {
 	fmt.Println(book.Series.String())
 }
 
-func listTags(lb l.Library, c *cli.Context) {
+func listTags(lb l.Library, c *cli.Context) (err error) {
 	book, _, err := checkArgsWithID(lb, c.Args())
 	if err != nil {
 		fmt.Println("Error parsing arguments: " + err.Error())
@@ -62,6 +62,7 @@ func listTags(lb l.Library, c *cli.Context) {
 	}
 	fmt.Println(book.ShortString())
 	fmt.Println(strings.Join(book.Tags, " / "))
+	return
 }
 
 func addTags(lb l.Library, c *cli.Context) {
@@ -125,19 +126,44 @@ func addSeries(lb l.Library, c *cli.Context) {
 	}
 }
 
-func main() {
-	fmt.Println(chalk.Bold.TextStyle("\n# # # E N D I V E # # #\n"))
-
-	// get library
-	lb, err := l.OpenLibrary()
-	if err != nil {
-		fmt.Println("Error loading configuration. Check it.")
-		fmt.Println(err.Error())
-		return
+func search(lb l.Library, c *cli.Context) {
+	if c.NArg() == 0 {
+		fmt.Println("No query found!")
+	} else {
+		query := strings.Join(c.Args(), " ")
+		fmt.Println("Searching for '" + query + "'...")
+		results, err := lb.RunQuery(query)
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println(results)
 	}
-	defer lb.Save()
+}
 
-	app := cli.NewApp()
+func importEpubs(lb l.Library, c *cli.Context, isRetail bool) {
+	var err error
+	if isRetail {
+		if len(lb.ConfigurationFile.RetailSource) == 0 {
+			fmt.Println("No retail source found in configuration file!")
+			return
+		}
+		fmt.Println("Importing retail epubs...")
+		err = lb.ImportRetail()
+	} else {
+		if len(lb.ConfigurationFile.NonRetailSource) == 0 {
+			fmt.Println("No non-retail source found in configuration file!")
+			return
+		}
+		fmt.Println("Importing non-retail epubs...")
+		err = lb.ImportNonRetail()
+	}
+	if err != nil {
+		panic(err)
+	}
+}
+
+func generateCLI(lb l.Library) (app *cli.App) {
+	app = cli.NewApp()
 	app.Name = "E N D I V E"
 	app.Usage = "Organize your epub collection."
 	app.Version = "0.0.1"
@@ -153,7 +179,6 @@ func main() {
 					Aliases: []string{"ls"},
 					Usage:   "show configuration",
 					Action: func(c *cli.Context) {
-						// print config
 						fmt.Println(lb.ConfigurationFile.String())
 					},
 				},
@@ -161,7 +186,6 @@ func main() {
 					Name:  "aliases",
 					Usage: "show aliases defined in configuration",
 					Action: func(c *cli.Context) {
-						// print aliases
 						aliases := lb.ConfigurationFile.ListAuthorAliases()
 						fmt.Println(aliases)
 					},
@@ -174,7 +198,6 @@ func main() {
 			Usage:   "serve over http",
 			Action: func(c *cli.Context) {
 				// TODO get port as argument
-				// TODO
 				fmt.Println("Serving...")
 			},
 		},
@@ -189,16 +212,7 @@ func main() {
 					Aliases: []string{"r"},
 					Usage:   "import retail epubs",
 					Action: func(c *cli.Context) {
-						// import
-						fmt.Println("Importing retail epubs...")
-						if len(lb.ConfigurationFile.RetailSource) == 0 {
-							fmt.Println("No retail source found in configuration file!")
-						} else {
-							err := lb.ImportRetail()
-							if err != nil {
-								panic(err)
-							}
-						}
+						importEpubs(lb, c, true)
 					},
 				},
 				{
@@ -206,15 +220,7 @@ func main() {
 					Aliases: []string{"n"},
 					Usage:   "import non-retail epubs",
 					Action: func(c *cli.Context) {
-						fmt.Println("Importing non-retail epubs...")
-						if len(lb.ConfigurationFile.NonRetailSource) == 0 {
-							fmt.Println("No non-retail source found in configuration file!")
-						} else {
-							err := lb.ImportNonRetail()
-							if err != nil {
-								panic(err)
-							}
-						}
+						importEpubs(lb, c, false)
 					},
 				},
 			},
@@ -251,31 +257,21 @@ func main() {
 			},
 		},
 		{
-			Name:     "search",
-			Category: "searching",
-			Aliases:  []string{"c"},
-			Usage:    "search the epub collection",
-			Action: func(c *cli.Context) {
-				if c.NArg() == 0 {
-					fmt.Println("No query found!")
-				} else {
-					query := strings.Join(c.Args(), " ")
-					fmt.Println("Searching for '" + query + "'...")
-					results, err := lb.RunQuery(query)
-					if err != nil {
-						panic(err)
-					}
-					fmt.Println(results)
-				}
-			},
-		},
-		{
 			Name:     "info",
 			Category: "information",
 			Aliases:  []string{"information"},
 			Usage:    "get info about a specific book",
 			Action: func(c *cli.Context) {
 				showInfo(lb, c)
+			},
+		},
+		{
+			Name:     "search",
+			Category: "searching",
+			Aliases:  []string{"c"},
+			Usage:    "search the epub collection",
+			Action: func(c *cli.Context) {
+				search(lb, c)
 			},
 		},
 		{
@@ -385,5 +381,22 @@ func main() {
 			},
 		},
 	}
+	return
+}
+
+func main() {
+	fmt.Println(chalk.Bold.TextStyle("\n# # # E N D I V E # # #\n"))
+
+	// get library
+	lb, err := l.OpenLibrary()
+	if err != nil {
+		fmt.Println("Error loading configuration. Check it.")
+		fmt.Println(err.Error())
+		return
+	}
+	defer lb.Save()
+
+	// generate CLI interface and run it
+	app := generateCLI(lb)
 	app.Run(os.Args)
 }
