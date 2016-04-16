@@ -19,8 +19,25 @@ func TestEpubGetHash(t *testing.T) {
 	}
 }
 
-// TestEpubRetail tests for SetRetail, SetNonRetail and Check
-func TestEpubRetail(t *testing.T) {
+func TestEpubFlagReplacement(t *testing.T) {
+	fmt.Println("+ Testing Epub.FlagForReplacement()...")
+	for i, testEpub := range epubs {
+		e := NewBook(i, testEpub.filename, standardTestConfig, true)
+		if e.RetailEpub.NeedsReplacement != "false" {
+			t.Errorf("NeedsReplacement returned %s, expected false!", e.RetailEpub.NeedsReplacement)
+		}
+		err := e.RetailEpub.FlagForReplacement()
+		if err != nil {
+			t.Errorf("Error flagging for replacement", e.GetMainFilename())
+		}
+		if e.RetailEpub.NeedsReplacement != "true" {
+			t.Errorf("NeedsReplacement returned %s, expected true!", e.RetailEpub.NeedsReplacement)
+		}
+	}
+}
+
+// TestEpubRetail tests for Check
+func TestEpubCheck(t *testing.T) {
 	fmt.Println("+ Testing Epub.SetRetail()...")
 	e := NewBook(0, epubs[0].filename, standardTestConfig, isRetail)
 	e.RetailEpub.GetHash()
