@@ -33,7 +33,7 @@ func TestSeries(t *testing.T) {
 		if !hasAny {
 			t.Errorf("Error: expected to have at least one series.")
 		}
-		expectedString := fmt.Sprintf("%s (#%d)\n%s (#%d)\n", seriesName, i, seriesName2, i)
+		expectedString := fmt.Sprintf("%s (#%d), %s (#%d)", seriesName, i, seriesName2, i)
 		if e.Series.String() != expectedString {
 			t.Errorf("Error: expected String() to be: %s\n, got instead: %s.", expectedString, e.Series.String())
 		}

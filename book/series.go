@@ -3,6 +3,7 @@ package book
 import (
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 // SingleSeries holds the name and index of a series a Book is part of.
@@ -13,7 +14,7 @@ type SingleSeries struct {
 
 // String outputs a single series info.
 func (s *SingleSeries) String() string {
-	return fmt.Sprintf("%s (#%s)\n", s.Name, s.Index)
+	return fmt.Sprintf("%s (#%s)", s.Name, s.Index)
 }
 
 // Series can track a series and an epub's position.
@@ -21,10 +22,11 @@ type Series []SingleSeries
 
 // String outputs a series info.
 func (s Series) String() (description string) {
+	series := []string{}
 	for _, ss := range s {
-		description += ss.String()
+		series = append(series, ss.String())
 	}
-	return
+	return strings.Join(series, ", ")
 }
 
 // Add a series

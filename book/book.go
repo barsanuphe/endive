@@ -226,11 +226,13 @@ func (e *Book) Refresh() (wasRenamed []bool, newName []string, err error) {
 	return
 }
 
-func (e *Book) hasRetail() (hasRetail bool) {
+// HasRetail checks if a retail epub is available.
+func (e *Book) HasRetail() (hasRetail bool) {
 	return e.RetailEpub.Filename != ""
 }
 
-func (e *Book) hasNonRetail() (hasNonRetail bool) {
+// HasNonRetail checks if a non-retail epub is available.
+func (e *Book) HasNonRetail() (hasNonRetail bool) {
 	return e.NonRetailEpub.Filename != ""
 }
 
@@ -238,7 +240,7 @@ func (e *Book) hasNonRetail() (hasNonRetail bool) {
 func (e *Book) AddEpub(path string, isRetail bool, hash string) (imported bool, err error) {
 	// TODO tests
 	if isRetail {
-		if e.hasRetail() {
+		if e.HasRetail() {
 			fmt.Println("Trying to import retail epub although retail version already exists.")
 			if e.RetailEpub.NeedsReplacement == "true" {
 				// replace retail
@@ -253,7 +255,7 @@ func (e *Book) AddEpub(path string, isRetail bool, hash string) (imported bool, 
 			imported, err = e.Import(path, isRetail, hash)
 		}
 
-		if imported && e.hasNonRetail() {
+		if imported && e.HasNonRetail() {
 			// if a non-retail version existed, it is now trumped. Removing epub.
 			fmt.Println("Non-retail version trumped, removing.")
 			// replace ,nonretail
@@ -263,10 +265,10 @@ func (e *Book) AddEpub(path string, isRetail bool, hash string) (imported bool, 
 			}
 		}
 	} else {
-		if e.hasRetail() {
+		if e.HasRetail() {
 			fmt.Println("Trying to import non-retail epub although retail version exists, ignoring.")
 		} else {
-			if e.hasNonRetail() {
+			if e.HasNonRetail() {
 				fmt.Println("Trying to import non-retail epub although a non-retail version already exists.")
 				if e.NonRetailEpub.NeedsReplacement == "true" {
 					// replace ,nonretail
@@ -332,13 +334,13 @@ func (e *Book) removeEpub(isRetail bool) (err error) {
 
 // Check epubs integrity.
 func (e *Book) Check() (retailHasChanged bool, nonRetailHasChanged bool, err error) {
-	if e.hasNonRetail() {
+	if e.HasNonRetail() {
 		nonRetailHasChanged, err = e.RetailEpub.Check()
 		if err != nil {
 			return
 		}
 	}
-	if e.hasRetail() {
+	if e.HasRetail() {
 		retailHasChanged, err = e.RetailEpub.Check()
 		if err != nil {
 			return

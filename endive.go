@@ -11,15 +11,16 @@ and chances of files disappearing if invoked.
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
-	"errors"
-
 	b "github.com/barsanuphe/endive/book"
 	l "github.com/barsanuphe/endive/library"
+	"github.com/bndr/gotabulate"
 	"github.com/codegangsta/cli"
 	"github.com/ttacon/chalk"
 )
@@ -48,10 +49,37 @@ func showInfo(lb l.Library, c *cli.Context) {
 		fmt.Println("Error parsing arguments: " + err.Error())
 		return
 	}
-	// TODO tabulate
-	fmt.Println(book.ShortString())
-	fmt.Println(strings.Join(book.Tags, " / "))
-	fmt.Println(book.Series.String())
+	relativePath, err := filepath.Rel(lb.ConfigurationFile.LibraryRoot, book.GetMainFilename())
+	if err != nil {
+		panic(err)
+	}
+
+	var rows [][]string
+	rows = append(rows, []string{"ID", strconv.Itoa(book.ID)})
+	rows = append(rows, []string{"Filename", relativePath})
+	rows = append(rows, []string{"Author", book.Metadata.GetFirstValue("creator")})
+	rows = append(rows, []string{"Title", book.Metadata.GetFirstValue("title")})
+	rows = append(rows, []string{"Publication Year", book.Metadata.GetFirstValue("year")})
+	if len(book.Tags) != 0 {
+		rows = append(rows, []string{"Tags", strings.Join(book.Tags, " / ")})
+	}
+	if len(book.Series) != 0 {
+		rows = append(rows, []string{"Series", book.Series.String()})
+	}
+	available := ""
+	if book.HasRetail() {
+		available += "retail "
+	}
+	if book.HasNonRetail() {
+		available += "non-retail"
+	}
+	rows = append(rows, []string{"Available versions", available})
+
+	t := gotabulate.Create(rows)
+	t.SetHeaders([]string{"Info", "Book"})
+	t.SetEmptyString("N/A")
+	t.SetAlign("left")
+	fmt.Println(t.Render("simple"))
 }
 
 func listTags(lb l.Library, c *cli.Context) (err error) {
@@ -134,6 +162,7 @@ func search(lb l.Library, c *cli.Context) {
 		fmt.Println("Searching for '" + query + "'...")
 		results, err := lb.RunQuery(query)
 		if err != nil {
+			fmt.Println(err.Error())
 			panic(err)
 		}
 		fmt.Println(results)

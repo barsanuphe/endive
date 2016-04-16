@@ -258,12 +258,11 @@ func (l *Library) RunQuery(query string) (results string, err error) {
 			}
 			rows = append(rows, []string{strconv.Itoa(res.ID), res.Metadata.GetFirstValue("creator"), res.Metadata.GetFirstValue("title"), res.Metadata.GetFirstValue("year"), relativePath})
 		}
-		tabulate := gotabulate.Create(rows)
-		tabulate.SetHeaders([]string{"ID", "Author", "Title", "Year", "Filename"})
-		tabulate.SetEmptyString("N/A")
-		//tabulate.SetMaxCellSize(64)
-		//tabulate.SetWrapStrings(true)
-		return tabulate.Render("simple"), err
+		t := gotabulate.Create(rows)
+		t.SetHeaders([]string{"ID", "Author", "Title", "Year", "Filename"})
+		t.SetEmptyString("N/A")
+		t.SetAlign("left")
+		return t.Render("simple"), err
 	}
 	return "Nothing.", err
 }
