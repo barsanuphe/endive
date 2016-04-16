@@ -1,15 +1,24 @@
 language: go
 sudo: false
+
 go:
   - 1.5
   - 1.6
   - release
   - tip
+
 before_install:
   - go get github.com/axw/gocov/gocov
+  - go get github.com/golang/lint/golint
   - go get github.com/mattn/goveralls
   - if ! go get github.com/golang/tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
+
 script:
-    - go test ./... && golint ./... && go vet ./...
-#   - $HOME/gopath/bin/goveralls -service=travis-ci ./...
+    - go vet -x ./...
+    - $HOME/gopath/bin/golint ./...
+    - go test -v ./...
+    - go test -covermode=count -coverprofile=profile.cov .
+
+after_script:
+    - $HOME/gopath/bin/goveralls -coverprofile=profile.cov -service=travis-ci
 
