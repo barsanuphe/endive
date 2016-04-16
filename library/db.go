@@ -12,6 +12,7 @@ import (
 
 	b "github.com/barsanuphe/endive/book"
 	cfg "github.com/barsanuphe/endive/config"
+
 	"launchpad.net/go-xdg"
 )
 
@@ -160,7 +161,7 @@ func (ldb *DB) SearchJSON() (jsonOutput string, err error) {
 // ListNonRetailOnly among known epubs.
 func (ldb *DB) ListNonRetailOnly() (nonretail []b.Book) {
 	for _, book := range ldb.Books {
-		if !book.HasRetail()  {
+		if !book.HasRetail() {
 			nonretail = append(nonretail, book)
 		}
 	}
@@ -178,7 +179,12 @@ func (ldb *DB) ListRetail() (retail []b.Book) {
 }
 
 // ListAuthors among known epubs.
-func (ldb *DB) ListAuthors() (authors []string, err error) {
+func (ldb *DB) ListAuthors() (authors map[string]int) {
+	authors = make(map[string]int)
+	for _, book := range ldb.Books {
+		author := book.Metadata.GetFirstValue("creator")
+		authors[author]++
+	}
 	return
 }
 
@@ -189,7 +195,12 @@ func (ldb *DB) ListTags() (tags []string, err error) {
 }
 
 // ListUntagged among known epubs.
-func (ldb *DB) ListUntagged() (untagged []b.Book, err error) {
+func (ldb *DB) ListUntagged() (untagged []b.Book) {
+	for _, book := range ldb.Books {
+		if len(book.Tags) == 0 {
+			untagged = append(untagged, book)
+		}
+	}
 	return
 }
 

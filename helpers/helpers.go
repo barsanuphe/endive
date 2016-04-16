@@ -7,8 +7,12 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/bndr/gotabulate"
 )
 
 // TimeTrack helps track the time taken by a function.
@@ -204,4 +208,27 @@ func CalculateSHA256(filename string) (hash string, err error) {
 	}
 	hash = hex.EncodeToString(hashBytes.Sum(result))
 	return
+}
+
+// TabulateList of books
+func TabulateMap(input map[string]int, firstHeader string, secondHeader string) (table string) {
+	if len(input) == 0 {
+		return
+	}
+	// building first column list for sorting
+	var keys []string
+	for key, _ := range input {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	// building table
+	var rows [][]string
+	for _, key := range keys {
+		rows = append(rows, []string{key, strconv.Itoa(input[key])})
+	}
+	t := gotabulate.Create(rows)
+	t.SetHeaders([]string{firstHeader, secondHeader})
+	t.SetEmptyString("N/A")
+	t.SetAlign("left")
+	return t.Render("simple")
 }

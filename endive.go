@@ -23,6 +23,7 @@ import (
 	"github.com/bndr/gotabulate"
 	"github.com/codegangsta/cli"
 	"github.com/ttacon/chalk"
+	h "github.com/barsanuphe/endive/helpers"
 )
 
 func checkArgsWithID(l *l.Library, args []string) (book *b.Book, other []string, err error) {
@@ -319,8 +320,8 @@ func generateCLI(lb *l.Library) (app *cli.App) {
 					Aliases: []string{"u"},
 					Usage:   "list untagged epubs.",
 					Action: func(c *cli.Context) {
-						// TODO
-						fmt.Println("Listing untagged epubs...")
+						list := lb.ListUntagged()
+						fmt.Println(lb.TabulateList(list))
 					},
 				},
 				{
@@ -346,8 +347,8 @@ func generateCLI(lb *l.Library) (app *cli.App) {
 					Aliases: []string{"a"},
 					Usage:   "list authors.",
 					Action: func(c *cli.Context) {
-						// TODO
-						fmt.Println("Listing authors...")
+						authors := lb.ListAuthors()
+						fmt.Println(h.TabulateMap(authors, "Author", "# of Books"))
 					},
 				},
 				{
