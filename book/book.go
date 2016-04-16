@@ -91,7 +91,7 @@ func (e *Book) SetProgress(progress string) (err error) {
 // AddTags to the Book
 func (e *Book) AddTags(tags ...string) (added bool) {
 	for _, tag := range tags {
-		if ! e.HasTag(tag) {
+		if !e.HasTag(tag) {
 			e.Tags = append(e.Tags, tag)
 			added = true
 		}
@@ -104,8 +104,8 @@ func (e *Book) RemoveTags(tags ...string) (removed bool) {
 	for _, tag := range tags {
 		i, isIn := h.StringInSlice(tag, e.Tags)
 		if isIn {
-			e.Tags[i] = e.Tags[len(e.Tags) - 1]
-			e.Tags = e.Tags[:len(e.Tags) - 1]
+			e.Tags[i] = e.Tags[len(e.Tags)-1]
+			e.Tags = e.Tags[:len(e.Tags)-1]
 			removed = true
 		}
 	}

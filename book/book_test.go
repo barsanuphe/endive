@@ -107,29 +107,31 @@ func TestBookJSON(t *testing.T) {
 // TestBookTag tests AddTag, RemoveTag and HasTag
 func TestBookTag(t *testing.T) {
 	fmt.Println("+ Testing Epub.AddTag()...")
+	tagName := "test_é!/?*èç1"
+	tagName2 := "t54*èç1"
 	for i, testEpub := range epubs {
 		e := NewBook(i, testEpub.filename, standardTestConfig, isRetail)
-		tagName := "test_é!/?*èç1"
-
-		err := e.AddTag(tagName)
-		if err != nil {
+		if !e.AddTags(tagName, tagName2) {
 			t.Errorf("Error adding Tag %s for epub %s", tagName, e.GetMainFilename())
 		}
-		hasTag := e.HasTag(tagName)
-		if !hasTag {
+		if !e.HasTag(tagName) {
 			t.Errorf("Error:  expected epub %s to have tag %s", e.GetMainFilename(), tagName)
 		}
-		hasTag = e.HasTag(tagName + "A")
-		if hasTag {
+		if !e.HasTag(tagName2) {
+			t.Errorf("Error:  expected epub %s to have tag %s", e.GetMainFilename(), tagName2)
+		}
+		if e.HasTag(tagName + "A") {
 			t.Errorf("Error: did not expect epub %s to have tag %s", e.GetMainFilename(), tagName+"A")
 		}
-		err = e.RemoveTag(tagName)
-		if err != nil {
+
+		if !e.RemoveTags(tagName) {
 			t.Errorf("Error removing Tag %s for epub %s", tagName, e.GetMainFilename())
 		}
-		hasTag = e.HasTag(tagName)
-		if hasTag {
+		if e.HasTag(tagName) {
 			t.Errorf("Error: did not expect epub %s to have tag %s", e.GetMainFilename(), tagName)
+		}
+		if !e.HasTag(tagName2) {
+			t.Errorf("Error: expect epub %s to have tag %s", e.GetMainFilename(), tagName2)
 		}
 	}
 }
