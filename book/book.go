@@ -88,23 +88,26 @@ func (e *Book) SetProgress(progress string) (err error) {
 	return
 }
 
-// AddTag adds a tag
-func (e *Book) AddTag(tagName string) (err error) {
-	_, isIn := h.StringInSlice(tagName, e.Tags)
-	if !isIn {
-		e.Tags = append(e.Tags, tagName)
+// AddTags to the Book
+func (e *Book) AddTags(tags ...string) (added bool) {
+	for _, tag := range tags {
+		if ! e.HasTag(tag) {
+			e.Tags = append(e.Tags, tag)
+			added = true
+		}
 	}
 	return
 }
 
-// RemoveTag removes a series
-func (e *Book) RemoveTag(tagName string) (err error) {
-	i, isIn := h.StringInSlice(tagName, e.Tags)
-	if isIn {
-		e.Tags[i] = e.Tags[len(e.Tags)-1]
-		e.Tags = e.Tags[:len(e.Tags)-1]
-	} else {
-		err = errors.New(tagName + " not in tags")
+// RemoveTags from a Book
+func (e *Book) RemoveTags(tags ...string) (removed bool) {
+	for _, tag := range tags {
+		i, isIn := h.StringInSlice(tag, e.Tags)
+		if isIn {
+			e.Tags[i] = e.Tags[len(e.Tags) - 1]
+			e.Tags = e.Tags[:len(e.Tags) - 1]
+			removed = true
+		}
 	}
 	return
 }

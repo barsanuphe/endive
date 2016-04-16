@@ -42,6 +42,50 @@ func checkArgsWithID(l l.Library, args []string) (book *b.Book, other []string, 
 	return
 }
 
+func showInfo(lb l.Library, c *cli.Context) {
+	book, _, err := checkArgsWithID(lb, c.Args())
+	if err != nil {
+		fmt.Println("Error parsing arguments: " + err.Error())
+		return
+	}
+	// TODO tabulate
+	fmt.Println(book.ShortString())
+	fmt.Println(strings.Join(book.Tags, " / "))
+	fmt.Println(book.Series.String())
+}
+
+func listTags(lb l.Library, c *cli.Context) {
+	book, _, err := checkArgsWithID(lb, c.Args())
+	if err != nil {
+		fmt.Println("Error parsing arguments: " + err.Error())
+		return
+	}
+	fmt.Println(book.ShortString())
+	fmt.Println(strings.Join(book.Tags, " / "))
+}
+
+func addTags(lb l.Library, c *cli.Context) {
+	book, tags, err := checkArgsWithID(lb, c.Args())
+	if err != nil || len(tags) == 0 {
+		fmt.Println("Error parsing arguments")
+		return
+	}
+	if book.AddTags(tags...) {
+		fmt.Printf("Tags added to %s\n", book.ShortString())
+	}
+}
+
+func removeTags(lb l.Library, c *cli.Context) {
+	book, tags, err := checkArgsWithID(lb, c.Args())
+	if err != nil || len(tags) == 0 {
+		fmt.Println("Error parsing arguments")
+		return
+	}
+	if book.RemoveTags(tags...) {
+		fmt.Printf("Tags removed from %s\n", book.ShortString())
+	}
+}
+
 func listSeries(lb l.Library, c *cli.Context) {
 	book, _, err := checkArgsWithID(lb, c.Args())
 	if err != nil {
@@ -226,6 +270,15 @@ func main() {
 			},
 		},
 		{
+			Name:     "info",
+			Category: "information",
+			Aliases:  []string{"information"},
+			Usage:    "get info about a specific book",
+			Action: func(c *cli.Context) {
+				showInfo(lb, c)
+			},
+		},
+		{
 			Name:     "list",
 			Category: "searching",
 			Aliases:  []string{"ls"},
@@ -279,9 +332,7 @@ func main() {
 					Aliases: []string{"a"},
 					Usage:   "add tag(s) to book.",
 					Action: func(c *cli.Context) {
-						// TODO
-						// params: ID, tag list
-						fmt.Println("Adding tag to book ID#...")
+						addTags(lb, c)
 					},
 				},
 				{
@@ -289,8 +340,7 @@ func main() {
 					Aliases: []string{"r"},
 					Usage:   "remove tag(s) from book.",
 					Action: func(c *cli.Context) {
-						// TODO
-						fmt.Println("Removing tag from book ID#...")
+						removeTags(lb, c)
 					},
 				},
 				{
@@ -298,8 +348,7 @@ func main() {
 					Aliases: []string{"c"},
 					Usage:   "list tags for a book.",
 					Action: func(c *cli.Context) {
-						// TODO
-						fmt.Println("Listing tags for book ID#...")
+						listTags(lb, c)
 					},
 				},
 			},
