@@ -158,13 +158,22 @@ func (ldb *DB) SearchJSON() (jsonOutput string, err error) {
 }
 
 // ListNonRetailOnly among known epubs.
-func (ldb *DB) ListNonRetailOnly() (nonretail []b.Book, err error) {
-	// TODO return Search for querying non retail epubs, removing the epubs with same title/author but retail
+func (ldb *DB) ListNonRetailOnly() (nonretail []b.Book) {
+	for _, book := range ldb.Books {
+		if !book.HasRetail()  {
+			nonretail = append(nonretail, book)
+		}
+	}
 	return
 }
 
 // ListRetailOnly among known epubs.
-func (ldb *DB) ListRetailOnly() (retail []b.Book, err error) {
+func (ldb *DB) ListRetailOnly() (retail []b.Book) {
+	for _, book := range ldb.Books {
+		if book.HasRetail() && !book.HasNonRetail() {
+			retail = append(retail, book)
+		}
+	}
 	return
 }
 

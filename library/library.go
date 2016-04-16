@@ -251,19 +251,27 @@ func (l *Library) RunQuery(query string) (results string, err error) {
 	}
 
 	if len(hits) != 0 {
-		var rows [][]string
-		for _, res := range hits {
-			relativePath, err := filepath.Rel(l.ConfigurationFile.LibraryRoot, res.GetMainFilename())
-			if err != nil {
-				return "Nothing", errors.New("File " + res.GetMainFilename() + " not in library?")
-			}
-			rows = append(rows, []string{strconv.Itoa(res.ID), res.Metadata.GetFirstValue("creator"), res.Metadata.GetFirstValue("title"), res.Metadata.GetFirstValue("year"), relativePath})
-		}
-		t := gotabulate.Create(rows)
-		t.SetHeaders([]string{"ID", "Author", "Title", "Year", "Filename"})
-		t.SetEmptyString("N/A")
-		t.SetAlign("left")
-		return t.Render("simple"), err
+		return l.TabulateList(hits), err
 	}
 	return "Nothing.", err
+}
+
+// TabulateList of books
+func (l *Library) TabulateList(books []b.Book) (table string) {
+	if len(books) == 0 {
+		return
+	}
+	var rows [][]string
+	for _, res := range books {
+		relativePath, err := filepath.Rel(l.ConfigurationFile.LibraryRoot, res.GetMainFilename())
+		if err != nil {
+			panic(errors.New("File " + res.GetMainFilename() + " not in library?"))
+		}
+		rows = append(rows, []string{strconv.Itoa(res.ID), res.Metadata.GetFirstValue("creator"), res.Metadata.GetFirstValue("title"), res.Metadata.GetFirstValue("year"), relativePath})
+	}
+	t := gotabulate.Create(rows)
+	t.SetHeaders([]string{"ID", "Author", "Title", "Year", "Filename"})
+	t.SetEmptyString("N/A")
+	t.SetAlign("left")
+	return t.Render("simple")
 }

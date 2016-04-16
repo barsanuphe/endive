@@ -350,6 +350,17 @@ func generateCLI(lb l.Library) (app *cli.App) {
 						fmt.Println("Listing authors...")
 					},
 				},
+				{
+					Name:    "nonretail",
+					Aliases: []string{"nrt"},
+					Usage:   "list books that only have non-retail versions.",
+					Action: func(c *cli.Context) {
+						list := lb.ListNonRetailOnly()
+						fmt.Println("hi")
+						fmt.Println(list)
+						fmt.Println(lb.TabulateList(list))
+					},
+				},
 			},
 		},
 		{
