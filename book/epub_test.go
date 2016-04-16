@@ -28,7 +28,7 @@ func TestEpubFlagReplacement(t *testing.T) {
 		}
 		err := e.RetailEpub.FlagForReplacement()
 		if err != nil {
-			t.Errorf("Error flagging for replacement", e.GetMainFilename())
+			t.Errorf("Error flagging for replacement")
 		}
 		if e.RetailEpub.NeedsReplacement != "true" {
 			t.Errorf("NeedsReplacement returned %s, expected true!", e.RetailEpub.NeedsReplacement)
