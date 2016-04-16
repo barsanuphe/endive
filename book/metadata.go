@@ -92,6 +92,15 @@ func (m *Metadata) Get(field string) (values []string) {
 	return []string{}
 }
 
+// GetFirstValue of a given field
+func (m *Metadata) GetFirstValue(field string) (value string) {
+	// test field
+	if m.HasField(field) {
+		return m.Fields[field][0]
+	}
+	return
+}
+
 // HasAny checks if metadata was parsed
 func (m *Metadata) HasAny() (hasMetadata bool) {
 	// if at least one field contains something else than N/A, return true
@@ -108,7 +117,7 @@ func (m *Metadata) HasAny() (hasMetadata bool) {
 func (m *Metadata) IsSimilar(o *Metadata) (isSimilar bool) {
 	// TODO do much better, try with isbn if available on both sides
 	// similar == same author/title, for now
-	if m.Get("creator")[0] == o.Get("creator")[0] && m.Get("title")[0] == o.Get("title")[0] {
+	if m.GetFirstValue("creator") == o.GetFirstValue("creator") && m.GetFirstValue("title") == o.GetFirstValue("title") {
 		return true
 	}
 	return

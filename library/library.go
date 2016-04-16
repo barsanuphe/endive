@@ -256,7 +256,7 @@ func (l *Library) RunQuery(query string) (results string, err error) {
 			if err != nil {
 				return "Nothing", errors.New("File " + res.GetMainFilename() + " not in library?")
 			}
-			rows = append(rows, []string{strconv.Itoa(res.ID), res.Metadata.Get("creator")[0], res.Metadata.Get("title")[0], res.Metadata.Get("year")[0], relativePath})
+			rows = append(rows, []string{strconv.Itoa(res.ID), res.Metadata.GetFirstValue("creator"), res.Metadata.GetFirstValue("title"), res.Metadata.GetFirstValue("year"), relativePath})
 		}
 		tabulate := gotabulate.Create(rows)
 		tabulate.SetHeaders([]string{"ID", "Author", "Title", "Year", "Filename"})

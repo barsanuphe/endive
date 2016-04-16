@@ -8,6 +8,15 @@ func TestSearch(t *testing.T) {
 		t.Errorf("Error loading epubs from database: " + err.Error())
 	}
 
+	// search before indexing to check if index is built then.
+	res, err := l.Search("fr")
+	if err != nil {
+		t.Errorf("Error searching fr")
+	}
+	if len(res) != 1 && res[0].GetMainFilename() != "test/pg17989.epub" {
+		t.Errorf("Error searching fr, unexpected results")
+	}
+
 	numIndexed, err := l.Index()
 	if err != nil {
 		t.Errorf("Error indexing epubs from database: %s", err.Error())
@@ -16,7 +25,7 @@ func TestSearch(t *testing.T) {
 		t.Errorf("Error indexing epubs from database, expected 2, got %d.", numIndexed)
 	}
 
-	res, err := l.Search("fr")
+	res, err = l.Search("fr")
 	if err != nil {
 		t.Errorf("Error searching fr")
 	}

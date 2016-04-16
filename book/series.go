@@ -13,7 +13,7 @@ type SingleSeries struct {
 
 // String outputs a single series info.
 func (s *SingleSeries) String() string {
-	return fmt.Sprintf("%s: (#%s)\n", s.Name, s.Index)
+	return fmt.Sprintf("%s (#%s)\n", s.Name, s.Index)
 }
 
 // Series can track a series and an epub's position.
