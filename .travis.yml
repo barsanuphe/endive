@@ -9,14 +9,15 @@ before_install:
   - go get github.com/axw/gocov/gocov
   - go get github.com/golang/lint/golint
   - go get github.com/mattn/goveralls
+  - go get github.com/go-playground/overalls
   - if ! go get github.com/golang/tools/cmd/cover; then go get golang.org/x/tools/cmd/cover; fi
 
 script:
     - go vet -x ./...
     - $HOME/gopath/bin/golint ./...
     - go test -v ./...
-    - go test -covermode=count -coverprofile=profile.cov ./...
+    - overalls -project=github.com/barsanuphe/endive -covermode=count -debug
 
 after_script:
-    - $HOME/gopath/bin/goveralls -coverprofile=profile.cov -service=travis-ci
+    - $HOME/gopath/bin/goveralls -coverprofile=overalls.coverprofile -service=travis-ci
 
