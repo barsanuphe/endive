@@ -168,9 +168,9 @@ func (ldb *DB) ListNonRetailOnly() (nonretail []b.Book) {
 }
 
 // ListRetailOnly among known epubs.
-func (ldb *DB) ListRetailOnly() (retail []b.Book) {
+func (ldb *DB) ListRetail() (retail []b.Book) {
 	for _, book := range ldb.Books {
-		if book.HasRetail() && !book.HasNonRetail() {
+		if book.HasRetail() {
 			retail = append(retail, book)
 		}
 	}

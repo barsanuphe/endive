@@ -25,7 +25,7 @@ import (
 	"github.com/ttacon/chalk"
 )
 
-func checkArgsWithID(l l.Library, args []string) (book *b.Book, other []string, err error) {
+func checkArgsWithID(l *l.Library, args []string) (book *b.Book, other []string, err error) {
 	if len(args) < 1 {
 		err = errors.New("Not enough arguments")
 		return
@@ -43,7 +43,7 @@ func checkArgsWithID(l l.Library, args []string) (book *b.Book, other []string, 
 	return
 }
 
-func showInfo(lb l.Library, c *cli.Context) {
+func showInfo(lb *l.Library, c *cli.Context) {
 	book, _, err := checkArgsWithID(lb, c.Args())
 	if err != nil {
 		fmt.Println("Error parsing arguments: " + err.Error())
@@ -82,7 +82,7 @@ func showInfo(lb l.Library, c *cli.Context) {
 	fmt.Println(t.Render("simple"))
 }
 
-func listTags(lb l.Library, c *cli.Context) (err error) {
+func listTags(lb *l.Library, c *cli.Context) (err error) {
 	book, _, err := checkArgsWithID(lb, c.Args())
 	if err != nil {
 		fmt.Println("Error parsing arguments: " + err.Error())
@@ -93,7 +93,7 @@ func listTags(lb l.Library, c *cli.Context) (err error) {
 	return
 }
 
-func addTags(lb l.Library, c *cli.Context) {
+func addTags(lb *l.Library, c *cli.Context) {
 	book, tags, err := checkArgsWithID(lb, c.Args())
 	if err != nil || len(tags) == 0 {
 		fmt.Println("Error parsing arguments")
@@ -104,7 +104,7 @@ func addTags(lb l.Library, c *cli.Context) {
 	}
 }
 
-func removeTags(lb l.Library, c *cli.Context) {
+func removeTags(lb *l.Library, c *cli.Context) {
 	book, tags, err := checkArgsWithID(lb, c.Args())
 	if err != nil || len(tags) == 0 {
 		fmt.Println("Error parsing arguments")
@@ -115,7 +115,7 @@ func removeTags(lb l.Library, c *cli.Context) {
 	}
 }
 
-func listSeries(lb l.Library, c *cli.Context) {
+func listSeries(lb *l.Library, c *cli.Context) {
 	book, _, err := checkArgsWithID(lb, c.Args())
 	if err != nil {
 		fmt.Println("Error parsing arguments: " + err.Error())
@@ -125,7 +125,7 @@ func listSeries(lb l.Library, c *cli.Context) {
 	fmt.Println(book.Series.String())
 }
 
-func removeSeries(lb l.Library, c *cli.Context) {
+func removeSeries(lb *l.Library, c *cli.Context) {
 	book, series, err := checkArgsWithID(lb, c.Args())
 	if err != nil {
 		fmt.Println("Error parsing arguments: " + err.Error())
@@ -137,7 +137,7 @@ func removeSeries(lb l.Library, c *cli.Context) {
 	}
 }
 
-func addSeries(lb l.Library, c *cli.Context) {
+func addSeries(lb *l.Library, c *cli.Context) {
 	book, seriesInfo, err := checkArgsWithID(lb, c.Args())
 	if err != nil || len(seriesInfo) != 2 {
 		fmt.Println("Error parsing arguments")
@@ -154,7 +154,7 @@ func addSeries(lb l.Library, c *cli.Context) {
 	}
 }
 
-func search(lb l.Library, c *cli.Context) {
+func search(lb *l.Library, c *cli.Context) {
 	if c.NArg() == 0 {
 		fmt.Println("No query found!")
 	} else {
@@ -169,7 +169,7 @@ func search(lb l.Library, c *cli.Context) {
 	}
 }
 
-func importEpubs(lb l.Library, c *cli.Context, isRetail bool) {
+func importEpubs(lb *l.Library, c *cli.Context, isRetail bool) {
 	var err error
 	if isRetail {
 		if len(lb.ConfigurationFile.RetailSource) == 0 {
@@ -191,7 +191,7 @@ func importEpubs(lb l.Library, c *cli.Context, isRetail bool) {
 	}
 }
 
-func generateCLI(lb l.Library) (app *cli.App) {
+func generateCLI(lb *l.Library) (app *cli.App) {
 	app = cli.NewApp()
 	app.Name = "E N D I V E"
 	app.Usage = "Organize your epub collection."
@@ -356,8 +356,15 @@ func generateCLI(lb l.Library) (app *cli.App) {
 					Usage:   "list books that only have non-retail versions.",
 					Action: func(c *cli.Context) {
 						list := lb.ListNonRetailOnly()
-						fmt.Println("hi")
-						fmt.Println(list)
+						fmt.Println(lb.TabulateList(list))
+					},
+				},
+				{
+					Name:    "retail",
+					Aliases: []string{"rt"},
+					Usage:   "list books that only have retail versions.",
+					Action: func(c *cli.Context) {
+						list := lb.ListRetail()
 						fmt.Println(lb.TabulateList(list))
 					},
 				},
@@ -442,6 +449,6 @@ func main() {
 	defer lb.Save()
 
 	// generate CLI interface and run it
-	app := generateCLI(lb)
+	app := generateCLI(&lb)
 	app.Run(os.Args)
 }
