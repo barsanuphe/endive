@@ -9,7 +9,6 @@ import (
 
 	b "github.com/barsanuphe/endive/book"
 	"github.com/blevesearch/bleve"
-	"github.com/blevesearch/bleve/analysis/analyzers/keyword_analyzer"
 	"github.com/blevesearch/bleve/analysis/language/en"
 )
 
@@ -19,8 +18,6 @@ func buildIndexMapping() (*bleve.IndexMapping, error) {
 	// a generic reusable mapping for english text
 	textFieldMapping := bleve.NewTextFieldMapping()
 	textFieldMapping.Analyzer = en.AnalyzerName
-	keywordFieldMapping := bleve.NewTextFieldMapping()
-	keywordFieldMapping.Analyzer = keyword_analyzer.Name
 
 	epubMapping := bleve.NewDocumentMapping()
 
@@ -32,7 +29,7 @@ func buildIndexMapping() (*bleve.IndexMapping, error) {
 	epubMapping.AddFieldMappingsAt("year", textFieldMapping)
 	epubMapping.AddFieldMappingsAt("isbn", textFieldMapping)
 	epubMapping.AddFieldMappingsAt("rating", textFieldMapping)
-	epubMapping.AddFieldMappingsAt("tags", keywordFieldMapping)
+	epubMapping.AddFieldMappingsAt("tags", textFieldMapping)
 
 	indexMapping := bleve.NewIndexMapping()
 	indexMapping.AddDocumentMapping("epub", epubMapping)
