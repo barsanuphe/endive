@@ -4,6 +4,7 @@
 [![Build Status](https://travis-ci.org/barsanuphe/endive.svg?branch=master)](https://travis-ci.org/barsanuphe/endive)
 [![Report Card](http://goreportcard.com/badge/barsanuphe/endive)](http://goreportcard.com/report/barsanuphe/endive)
 [![Coverage Status](https://coveralls.io/repos/github/barsanuphe/endive/badge.svg?branch=master)](https://coveralls.io/github/barsanuphe/endive?branch=master)
+[![GPLv3](https://img.shields.io/badge/license-GPLv3-blue.svg)](http://www.gnu.org/licenses/gpl-3.0.en.html)
 
 In very early development.
 Right now, it will probably just delete your books and insult you.
