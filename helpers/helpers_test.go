@@ -12,25 +12,25 @@ var epubs = []struct {
 	expectedSha256 string
 }{
 	{
-		"test/pg16328.epub",
+		"pg16328.epub",
 		"dc325b3aceb77d9f943425728c037fdcaf4af58e3abd771a8094f2424455cc03",
 	},
 	{
-		"test/pg17989.epub",
+		"pg17989.epub",
 		"acd2b8eba1b11456bacf11e690edf56bc57774053668644ef34f669138ebdd9a",
 	},
 }
 
 func TestHelpersListEpubs(t *testing.T) {
 	fmt.Println("+ Testing Helpers/ListEpubs()...")
-	currentDir, err := os.Getwd()
+	testDir, err := os.Getwd()
 	if err != nil {
 		t.Errorf("Error getting current directory: %s", err.Error())
 	}
-	// go up
-	currentDir = filepath.Dir(currentDir)
+	// go up, down to test
+	testDir = filepath.Join(filepath.Dir(testDir), "test")
 
-	epubsPaths, hashes, err := ListEpubsInDirectory(currentDir)
+	epubsPaths, hashes, err := ListEpubsInDirectory(testDir)
 	if err != nil {
 
 		t.Errorf("Error listing epubs: %s", err.Error())
@@ -45,7 +45,7 @@ func TestHelpersListEpubs(t *testing.T) {
 	}
 
 	for i, path := range epubsPaths {
-		relativePath, err := filepath.Rel(currentDir, path)
+		relativePath, err := filepath.Rel(testDir, path)
 		if err != nil {
 			t.Errorf("Error: %s", err.Error())
 		}

@@ -3,6 +3,8 @@ package book
 import (
 	"fmt"
 	"testing"
+
+	cfg "github.com/barsanuphe/endive/config"
 )
 
 // TestEpubMetaData tests GetMetadata and HasMetadata
@@ -51,7 +53,7 @@ func TestMetaData(t *testing.T) {
 		}
 
 		// testing IsSimilar
-		o := NewMetadata()
+		o := NewMetadata(cfg.Config{})
 		if e.Metadata.IsSimilar(o) {
 			t.Errorf("Error: metadata should not be similar.")
 		}
