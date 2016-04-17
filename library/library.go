@@ -63,6 +63,7 @@ func OpenLibrary() (l Library, err error) {
 		l.Books[i].Config = l.ConfigurationFile
 		l.Books[i].NonRetailEpub.Config = l.ConfigurationFile
 		l.Books[i].RetailEpub.Config = l.ConfigurationFile
+		l.Books[i].Metadata.Config = l.ConfigurationFile
 	}
 	return l, err
 }
@@ -121,7 +122,7 @@ func (l *Library) importEpubs(allEpubs []string, allHashes []string, isRetail bo
 		// compare with known hashes
 		if !l.KnownHashesFile.IsIn(hash) {
 			// get Metadata from new epub
-			m := b.NewMetadata()
+			m := b.NewMetadata(l.ConfigurationFile)
 			err = m.Read(path)
 			if err != nil {
 				return

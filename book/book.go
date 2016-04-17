@@ -38,7 +38,7 @@ type Book struct {
 
 // NewBook constucts a valid new Epub
 func NewBook(id int, filename string, c config.Config, isRetail bool) *Book {
-	return NewBookWithMetadata(id, filename, c, isRetail, NewMetadata())
+	return NewBookWithMetadata(id, filename, c, isRetail, NewMetadata(c))
 }
 
 // NewBookWithMetadata constucts a valid new Epub
@@ -208,6 +208,10 @@ func (e *Book) Refresh() (wasRenamed []bool, newName []string, err error) {
 		if err != nil {
 			return
 		}
+	}
+	// refresh Metadata
+	if e.Metadata.Refresh() {
+		fmt.Println("Found author alias: " + e.Metadata.GetFirstValue("creator"))
 	}
 	// refresh both epubs
 	wasRenamedR, newNameR, errR := e.refreshEpub(e.RetailEpub, true)

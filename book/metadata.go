@@ -3,20 +3,23 @@ package book
 import (
 	"fmt"
 
+	cfg "github.com/barsanuphe/endive/config"
+	h "github.com/barsanuphe/endive/helpers"
 	"github.com/barsanuphe/epubgo"
 )
 
 // Metadata holds all of the recognized metadata fiels in the OPF file of an Epub.
 type Metadata struct {
+	Config cfg.Config          `json:"-"`
 	Fields map[string][]string `json:"fields"`
 }
 
 // NewMetadata returns a properly initialized Metadata.
-func NewMetadata() *Metadata {
-	return &Metadata{Fields: make(map[string][]string)}
+func NewMetadata(c cfg.Config) *Metadata {
+	return &Metadata{Fields: make(map[string][]string), Config: c}
 }
 
-// Read from the epub
+// Read from the epub.
 func (m *Metadata) Read(path string) (err error) {
 	fmt.Println("Reading metadata from OPF in ..." + path)
 	book, err := epubgo.Open(path)
@@ -67,10 +70,13 @@ func (m *Metadata) Read(path string) (err error) {
 			m.Fields["year"] = []string{dateEvents[0].Content[0:4]}
 		}
 	}
+	if m.Refresh() {
+		fmt.Println("Found author alias: " + m.GetFirstValue("creator"))
+	}
 	return
 }
 
-// HasField checks if a type of metadata is known
+// HasField checks if a type of metadata is known.
 func (m *Metadata) HasField(field string) (hasField bool) {
 	for f := range m.Fields {
 		if f == field {
@@ -80,7 +86,7 @@ func (m *Metadata) HasField(field string) (hasField bool) {
 	return
 }
 
-// Get field values
+// Get field values.
 func (m *Metadata) Get(field string) (values []string) {
 	// test field
 	if m.HasField(field) {
@@ -89,7 +95,7 @@ func (m *Metadata) Get(field string) (values []string) {
 	return []string{}
 }
 
-// GetFirstValue of a given field
+// GetFirstValue of a given field.
 func (m *Metadata) GetFirstValue(field string) (value string) {
 	// test field
 	if m.HasField(field) {
@@ -98,7 +104,7 @@ func (m *Metadata) GetFirstValue(field string) (value string) {
 	return
 }
 
-// HasAny checks if metadata was parsed
+// HasAny checks if metadata was parsed.
 func (m *Metadata) HasAny() (hasMetadata bool) {
 	// if at least one field contains something else than N/A, return true
 	for _, values := range m.Fields {
@@ -110,12 +116,27 @@ func (m *Metadata) HasAny() (hasMetadata bool) {
 	return
 }
 
-// IsSimilar checks if metadata is similar to known Metadata
+// IsSimilar checks if metadata is similar to known Metadata.
 func (m *Metadata) IsSimilar(o *Metadata) (isSimilar bool) {
 	// TODO do much better, try with isbn if available on both sides
 	// similar == same author/title, for now
 	if m.GetFirstValue("creator") == o.GetFirstValue("creator") && m.GetFirstValue("title") == o.GetFirstValue("title") {
 		return true
+	}
+	return
+}
+
+// Refresh updates Medatata fields, using the configuration file.
+func (m *Metadata) Refresh() (hasChanged bool) {
+	// for now, only taking into account author aliases
+	for i, author := range m.Fields["creator"] {
+		for mainalias, aliases := range m.Config.AuthorAliases {
+			_, isIn := h.StringInSlice(author, aliases)
+			if isIn {
+				m.Fields["creator"][i] = mainalias
+				break
+			}
+		}
 	}
 	return
 }
