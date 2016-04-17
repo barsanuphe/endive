@@ -1,7 +1,6 @@
 package book
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/barsanuphe/epubgo"
@@ -36,7 +35,7 @@ func (m *Metadata) Read(path string) (err error) {
 	for _, field := range knownFields {
 		m.Fields[field] = []string{"Unknown"}
 		results, err := book.MetadataElement(field)
-		if err == nil {
+		if err == nil && len(results) != 0 {
 			m.Fields[field] = []string{}
 			for _, t := range results {
 				m.Fields[field] = append(m.Fields[field], t.Content)
@@ -44,19 +43,17 @@ func (m *Metadata) Read(path string) (err error) {
 		}
 	}
 
-	dateEvents, err := book.MetadataElement("date")
-	if err != nil {
+	// default value for publication year
+	m.Fields["year"] = []string{"XXXX"}
+	dateEvents, dateErr := book.MetadataElement("date")
+	if dateErr != nil {
 		fmt.Println("Error parsing EPUB")
-		m.Fields["year"] = []string{"XXXX"}
 	} else {
 		found := false
 		for _, el := range dateEvents {
 			for _, evt := range el.Attr {
 				if evt == "publication" {
 					m.Fields["year"] = []string{el.Content[0:4]}
-					if err != nil {
-						panic(err)
-					}
 					found = true
 					break
 				}
@@ -66,8 +63,8 @@ func (m *Metadata) Read(path string) (err error) {
 			}
 		}
 		if !found {
-			fmt.Println("Error parsing EPUB, no publication year")
-			err = errors.New("No publication date")
+			// using first date found
+			m.Fields["year"] = []string{dateEvents[0].Content[0:4]}
 		}
 	}
 	return

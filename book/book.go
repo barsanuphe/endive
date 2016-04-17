@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"html/template"
 	"os"
 	"path/filepath"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/barsanuphe/endive/config"
@@ -131,11 +131,11 @@ func (e *Book) SetReadDateToday() (err error) {
 }
 
 func (e *Book) generateNewName(fileTemplate string, isRetail bool) (newName string, err error) {
-	// TODO add all replacements
 	if fileTemplate == "" {
 		return "", errors.New("Empty filename template")
 	}
 
+	// TODO add all replacements
 	r := strings.NewReplacer(
 		"$a", "{{$a}}",
 		"$t", "{{$t}}",
@@ -145,11 +145,12 @@ func (e *Book) generateNewName(fileTemplate string, isRetail bool) (newName stri
 
 	// replace with all valid epub parameters
 	tmpl := fmt.Sprintf(`{{$a := "%s"}}{{$y := "%s"}}{{$t := "%s"}}{{$l := "%s"}}%s`,
-		h.CleanForPath(e.Metadata.Get("creator")[0]),
-		e.Metadata.Get("year")[0],
-		h.CleanForPath(e.Metadata.Get("title")[0]), e.Metadata.Get("language")[0], r.Replace(fileTemplate))
+		h.CleanForPath(e.Metadata.GetFirstValue("creator")),
+		e.Metadata.GetFirstValue("year"),
+		h.CleanForPath(e.Metadata.GetFirstValue("title")), e.Metadata.GetFirstValue("language"), r.Replace(fileTemplate))
 
 	var doc bytes.Buffer
+	// NOTE: use html/template for html output
 	te := template.Must(template.New("hop").Parse(tmpl))
 	err = te.Execute(&doc, nil)
 	if err != nil {
