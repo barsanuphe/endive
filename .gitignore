@@ -1,5 +1,6 @@
 *.yaml
+*.xml
 .idea/
-temp/
+temp*
 TODO
 endive.index

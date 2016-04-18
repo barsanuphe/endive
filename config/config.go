@@ -9,6 +9,7 @@ import (
 	"github.com/barsanuphe/endive/helpers"
 	"github.com/spf13/viper"
 	"launchpad.net/go-xdg"
+	"os"
 )
 
 const (
@@ -28,6 +29,7 @@ type Config struct {
 	EpubFilenameFormat string
 	AuthorAliases      map[string][]string
 	EReaderTarget      string
+	GoodReadsAPIKey    string
 }
 
 // GetConfigPath gets the default path for configuration.
@@ -69,6 +71,14 @@ func (c *Config) Load() (err error) {
 		c.EpubFilenameFormat = "$a [$y] $t"
 	}
 	c.EReaderTarget = conf.GetString("ereader_target")
+	c.GoodReadsAPIKey = conf.GetString("goodreads_api_key")
+	if c.GoodReadsAPIKey == "" {
+		c.GoodReadsAPIKey = os.Getenv("GR_API_KEY")
+		if c.GoodReadsAPIKey == "" {
+			fmt.Println("Warning: no GoodReads API key found! go to https://www.goodreads.com/api/keys to get one.")
+		}
+	}
+
 	return
 }
 
