@@ -54,8 +54,8 @@ func TestGoodReads(t *testing.T) {
 		if b.Year != book.expectedYear {
 			t.Errorf("Bad year, got %s, expected %s.", b.Year, book.expectedYear)
 		}
-		if b.FullTitle() != book.expectedFullTitle {
-			t.Errorf("Bad title, got %s, expected %s.", b.FullTitle(), book.expectedFullTitle)
+		if b.String() != book.expectedFullTitle {
+			t.Errorf("Bad title, got %s, expected %s.", b.String(), book.expectedFullTitle)
 		}
 	}
 

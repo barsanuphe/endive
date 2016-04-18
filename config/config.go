@@ -3,13 +3,13 @@ package config
 import (
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/barsanuphe/endive/helpers"
 	"github.com/spf13/viper"
 	"launchpad.net/go-xdg"
-	"os"
 )
 
 const (
