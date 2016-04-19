@@ -1,7 +1,6 @@
 package book
 
 import (
-	"fmt"
 	"os"
 	"testing"
 )

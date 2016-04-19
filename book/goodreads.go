@@ -12,20 +12,20 @@ import (
 
 const apiRoot = "https://www.goodreads.com/"
 
-// Response is the top xml element in goodreads response.
-type Response struct {
-	Book   GoodreadsBook   `xml:"book"`
-	Search GoodreadsSearch `xml:"search"`
+// response is the top xml element in goodreads response.
+type response struct {
+	Book   Info          `xml:"book"`
+	Search searchResults `xml:"search"`
 }
 
-// GoodreadsSearch is the main xml element in goodreads search.
-type GoodreadsSearch struct {
-	ResultsNumber string           `xml:"total-results"`
-	Works         []GoodreadsWorks `xml:"results>work"`
+// searchResults is the main xml element in goodreads search.
+type searchResults struct {
+	ResultsNumber string `xml:"total-results"`
+	Works         []work `xml:"results>work"`
 }
 
-// GoodreadWorks holds the work information in the xml reponse.
-type GoodreadsWorks struct {
+// works holds the work information in the xml reponse.
+type work struct {
 	ID     string `xml:"best_book>id"`
 	Title  string `xml:"best_book>title"`
 	Author string `xml:"best_book>author>name"`
@@ -36,8 +36,8 @@ type Tag struct {
 	Name string `json:"tagname" xml:"name,attr"`
 }
 
-// GoodreadsBook contains all of the known book metadata.
-type GoodreadsBook struct {
+// Info contains all of the known book metadata.
+type Info struct {
 	ID            string   `xml:"id"`
 	Title         string   `xml:"title"`
 	OriginalTitle string   `xml:"work>original_title"`
@@ -53,22 +53,22 @@ type GoodreadsBook struct {
 }
 
 // Author return a GoodreadsBook's main author.
-func (b GoodreadsBook) Author() string {
+func (b Info) Author() string {
 	return b.Authors[0]
 }
 
 // MainSeries return a GoodreadsBook's main series.
-func (b GoodreadsBook) MainSeries() SingleSeries {
+func (b Info) MainSeries() SingleSeries {
 	return b.Series[0]
 }
 
 // SeriesString returns a representation of a GoodreadsBook's main series.
-func (b GoodreadsBook) SeriesString() string {
+func (b Info) SeriesString() string {
 	return fmt.Sprintf("%s #%s", strings.TrimSpace(b.MainSeries().Name), b.MainSeries().Position)
 }
 
 // String returns a representation of a GoodreadsBook
-func (b GoodreadsBook) String() string {
+func (b Info) String() string {
 	if len(b.Series) != 0 {
 		return fmt.Sprintf("%s (%s) %s [%s]", b.Author(), b.Year, b.OriginalTitle, b.SeriesString())
 	}
@@ -77,7 +77,7 @@ func (b GoodreadsBook) String() string {
 
 //------------------------
 
-func cleanTags(g *GoodreadsBook) {
+func cleanTags(g *Info) {
 	cleanTags := []Tag{}
 	// TODO: names of months, dates
 	// remove shelf names that are obviously not genres
@@ -104,10 +104,10 @@ func cleanTags(g *GoodreadsBook) {
 }
 
 // GetBook returns a GoodreadsBook from its Goodreads ID
-func GetBook(id, key string) GoodreadsBook {
+func GetBook(id, key string) Info {
 	defer h.TimeTrack(time.Now(), "Getting Book info")
 	uri := apiRoot + "book/show/" + id + ".xml?key=" + key
-	response := Response{}
+	response := response{}
 	h.GetXMLData(uri, &response)
 	cleanTags(&response.Book)
 	return response.Book
@@ -124,7 +124,7 @@ func GetBookIDByQuery(author, title, key string) (id string) {
 	defer h.TimeTrack(time.Now(), "Getting Book ID")
 
 	uri := apiRoot + "search/index.xml?key=" + key + "&q=" + makeSearchQ(author, title)
-	response := Response{}
+	response := response{}
 	h.GetXMLData(uri, &response)
 	// parsing results
 	hits, err := strconv.Atoi(response.Search.ResultsNumber)
