@@ -1,16 +1,11 @@
 package book
 
 import (
-	"encoding/xml"
 	"fmt"
-	"io/ioutil"
-	"log"
-	"net/http"
+	"html"
 	"strconv"
 	"strings"
 	"time"
-
-	"html"
 
 	h "github.com/barsanuphe/endive/helpers"
 )
@@ -90,38 +85,12 @@ func (b GoodreadsBook) String() string {
 
 //------------------------
 
-func getData(uri string, i interface{}) {
-	data := getRequest(uri)
-	xmlUnmarshal(data, i)
-}
-
-func getRequest(uri string) []byte {
-	res, err := http.Get(uri)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	body, err := ioutil.ReadAll(res.Body)
-	res.Body.Close()
-	if err != nil {
-		log.Fatal(err)
-	}
-	return body
-}
-
-func xmlUnmarshal(b []byte, i interface{}) {
-	err := xml.Unmarshal(b, i)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 // GetBook returns a GoodreadsBook from its Goodreads ID
 func GetBook(id, key string) GoodreadsBook {
 	defer h.TimeTrack(time.Now(), "Getting Book info")
 	uri := apiRoot + "book/show/" + id + ".xml?key=" + key
 	response := Response{}
-	getData(uri, &response)
+	h.GetXMLData(uri, &response)
 	return response.Book
 }
 
@@ -137,7 +106,7 @@ func GetBookIDByQuery(author, title, key string) (id string) {
 
 	uri := apiRoot + "search/index.xml?key=" + key + "&q=" + makeSearchQ(author, title)
 	response := Response{}
-	getData(uri, &response)
+	h.GetXMLData(uri, &response)
 	// parsing results
 	hits, err := strconv.Atoi(response.Search.ResultsNumber)
 	if err != nil {
