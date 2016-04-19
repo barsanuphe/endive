@@ -20,70 +20,88 @@ type Response struct {
 
 // GoodreadsSearch is the main xml element in goodreads search.
 type GoodreadsSearch struct {
-	ResultsNumber string          `xml:"total-results"`
-	Works         []GoodreadWorks `xml:"results>work"`
+	ResultsNumber string           `xml:"total-results"`
+	Works         []GoodreadsWorks `xml:"results>work"`
 }
 
 // GoodreadWorks holds the work information in the xml reponse.
-type GoodreadWorks struct {
+type GoodreadsWorks struct {
 	ID     string `xml:"best_book>id"`
 	Title  string `xml:"best_book>title"`
 	Author string `xml:"best_book>author>name"`
 }
 
-// GoodreadSeries has information about the series a book is part of.
-type GoodreadSeries struct {
-	ID       string `xml:"id"`
-	Title    string `xml:"series>title"`
-	Position string `xml:"user_position"`
-}
-
-// GoodreadAuthor is the author of a book.
-type GoodreadAuthor struct {
-	ID   string `xml:"id"`
-	Name string `xml:"name"`
+// Tag holds the name of a tag.
+type Tag struct {
+	Name string `json:"tagname" xml:"name,attr"`
 }
 
 // GoodreadsBook contains all of the known book metadata.
 type GoodreadsBook struct {
-	ID            string           `xml:"id"`
-	Title         string           `xml:"title"`
-	OriginalTitle string           `xml:"work>original_title"`
-	ImageURL      string           `xml:"image_url"`
-	NumPages      string           `xml:"num_pages"`
-	Format        string           `xml:"format"`
-	Authors       []GoodreadAuthor `xml:"authors>author"`
-	ISBN          string           `xml:"isbn"`
-	Year          string           `xml:"work>original_publication_year"`
-	Description   string           `xml:"description"`
-	Series        []GoodreadSeries `xml:"series_works>series_work"`
-	Rating        string           `xml:"average_rating"`
+	ID            string   `xml:"id"`
+	Title         string   `xml:"title"`
+	OriginalTitle string   `xml:"work>original_title"`
+	ImageURL      string   `xml:"image_url"`
+	NumPages      string   `xml:"num_pages"`
+	Authors       []string `xml:"authors>author>name"`
+	ISBN          string   `xml:"isbn"`
+	Year          string   `xml:"work>original_publication_year"`
+	Description   string   `xml:"description"`
+	Series        Series   `xml:"series_works>series_work"`
+	AverageRating string   `xml:"average_rating"`
+	Tags          []Tag    `xml:"popular_shelves>shelf"`
 }
 
 // Author return a GoodreadsBook's main author.
-func (b GoodreadsBook) Author() GoodreadAuthor {
+func (b GoodreadsBook) Author() string {
 	return b.Authors[0]
 }
 
 // MainSeries return a GoodreadsBook's main series.
-func (b GoodreadsBook) MainSeries() GoodreadSeries {
+func (b GoodreadsBook) MainSeries() SingleSeries {
 	return b.Series[0]
 }
 
 // SeriesString returns a representation of a GoodreadsBook's main series.
 func (b GoodreadsBook) SeriesString() string {
-	return fmt.Sprintf("%s #%s", strings.TrimSpace(b.MainSeries().Title), b.MainSeries().Position)
+	return fmt.Sprintf("%s #%s", strings.TrimSpace(b.MainSeries().Name), b.MainSeries().Position)
 }
 
 // String returns a representation of a GoodreadsBook
 func (b GoodreadsBook) String() string {
 	if len(b.Series) != 0 {
-		return fmt.Sprintf("%s (%s) %s [%s]", b.Author().Name, b.Year, b.OriginalTitle, b.SeriesString())
+		return fmt.Sprintf("%s (%s) %s [%s]", b.Author(), b.Year, b.OriginalTitle, b.SeriesString())
 	}
-	return fmt.Sprintf("%s (%s) %s", b.Author().Name, b.Year, b.OriginalTitle)
+	return fmt.Sprintf("%s (%s) %s", b.Author(), b.Year, b.OriginalTitle)
 }
 
 //------------------------
+
+func cleanTags(g *GoodreadsBook) {
+	cleanTags := []Tag{}
+	// TODO: names of months, dates
+	// remove shelf names that are obviously not genres
+	forbiddenTags := []string{
+		"own", "school", "favorite", "favourite", "book",
+		"read", "kindle", "borrowed", "classic", "novel", "buy",
+		"star", "release", "wait", "soon", "wish", "published", "want",
+		"tbr", "series", "finish", "to-", "not-", "library", "audible",
+		"coming", "anticipated", "default", "recommended", "-list", "sequel",
+	}
+	for _, tag := range g.Tags {
+		clean := true
+		for _, ft := range forbiddenTags {
+			if strings.Contains(tag.Name, ft) {
+				clean = false
+				break
+			}
+		}
+		if clean {
+			cleanTags = append(cleanTags, tag)
+		}
+	}
+	g.Tags = cleanTags
+}
 
 // GetBook returns a GoodreadsBook from its Goodreads ID
 func GetBook(id, key string) GoodreadsBook {
@@ -91,6 +109,7 @@ func GetBook(id, key string) GoodreadsBook {
 	uri := apiRoot + "book/show/" + id + ".xml?key=" + key
 	response := Response{}
 	h.GetXMLData(uri, &response)
+	cleanTags(&response.Book)
 	return response.Book
 }
 

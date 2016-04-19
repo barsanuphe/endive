@@ -1,6 +1,7 @@
 package book
 
 import (
+	"fmt"
 	"os"
 	"testing"
 )
@@ -45,8 +46,8 @@ func TestGoodReads(t *testing.T) {
 		}
 		// getting book information from book_id
 		b := GetBook(bookID, key)
-		if b.Author().Name != book.author {
-			t.Errorf("Bad author, got %s, expected %s.", b.Author().Name, book.author)
+		if b.Author() != book.author {
+			t.Errorf("Bad author, got %s, expected %s.", b.Author(), book.author)
 		}
 		if b.Title != book.title && b.OriginalTitle != book.title {
 			t.Errorf("Bad title, got %s / %s, expected %s.", b.Title, b.OriginalTitle, book.title)
