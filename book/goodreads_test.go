@@ -1,9 +1,9 @@
 package book
 
 import (
+	"fmt"
 	"os"
 	"testing"
-	"fmt"
 )
 
 var grBooks = []struct {

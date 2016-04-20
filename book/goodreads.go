@@ -14,24 +14,22 @@ const apiRoot = "https://www.goodreads.com/"
 
 // response is the top xml element in goodreads response.
 type response struct {
-	book   Info          `xml:"book"`
-	search searchResults `xml:"search"`
+	Book   Info          `xml:"book"`
+	Search searchResults `xml:"search"`
 }
 
 // searchResults is the main xml element in goodreads search.
 type searchResults struct {
-	resultsNumber string `xml:"total-results"`
-	works         []work `xml:"results>work"`
+	ResultsNumber string `xml:"total-results"`
+	Works         []work `xml:"results>work"`
 }
 
 // works holds the work information in the xml reponse.
 type work struct {
-	id     string `xml:"best_book>id"`
-	author string `xml:"best_book>author>name"`
-	title  string `xml:"best_book>title"`
+	ID     string `xml:"best_book>id"`
+	Author string `xml:"best_book>author>name"`
+	Title  string `xml:"best_book>title"`
 }
-
-//------------------------
 
 // GetBook returns a GoodreadsBook from its Goodreads ID
 func GetBook(id, key string) Info {
@@ -39,11 +37,11 @@ func GetBook(id, key string) Info {
 	uri := apiRoot + "book/show/" + id + ".xml?key=" + key
 	r := response{}
 	h.GetXMLData(uri, &r)
-	r.book.Tags.Clean()
-	return r.book
+	r.Book.Tags.Clean()
+	return r.Book
 }
 
-func makeSearchQ(parts ...string) (query string) {
+func makeSearchQuery(parts ...string) (query string) {
 	query = strings.Join(parts, "+")
 	r := strings.NewReplacer(" ", "+")
 	return html.EscapeString(r.Replace(query))
@@ -53,24 +51,22 @@ func makeSearchQ(parts ...string) (query string) {
 func GetBookIDByQuery(author, title, key string) (id string) {
 	defer h.TimeTrack(time.Now(), "Getting Book ID")
 
-	uri := apiRoot + "search/index.xml?key=" + key + "&q=" + makeSearchQ(author, title)
-	fmt.Println(uri)
+	uri := apiRoot + "search/index.xml?key=" + key + "&q=" + makeSearchQuery(author, title)
 	r := response{}
 	h.GetXMLData(uri, &r)
-
 	// parsing results
-	hits, err := strconv.Atoi(r.search.resultsNumber)
+	hits, err := strconv.Atoi(r.Search.ResultsNumber)
 	if err != nil {
 		fmt.Println("error")
 	}
 	if hits != 0 {
-		for _, work := range r.search.works {
-			if work.author == author && work.title == title {
-				return work.id
+		for _, work := range r.Search.Works {
+			if work.Author == author && work.Title == title {
+				return work.ID
 			}
 		}
 		fmt.Println("Could not find exact match, returning first hit.")
-		return r.search.works[0].id
+		return r.Search.Works[0].ID
 	}
 	return
 }
