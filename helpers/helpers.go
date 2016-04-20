@@ -1,7 +1,16 @@
+/*
+Helpers is a subpackage of Endive.
+
+It is a mix of helper functions, for file manipulation, logging, remote API access, and display.
+
+*/
 package helpers
 
 import (
+	"bufio"
+	"errors"
 	"fmt"
+	"os"
 	"sort"
 	"strconv"
 	"time"
@@ -46,4 +55,29 @@ func TabulateMap(input map[string]int, firstHeader string, secondHeader string) 
 	t.SetEmptyString("N/A")
 	t.SetAlign("left")
 	return t.Render("simple")
+}
+
+// GetChoice displays a list of candidates and returns the user's pick
+func GetChoice(candidates []string) (index int, err error) {
+	for i, choice := range candidates {
+		fmt.Printf("%d. %s\n", i+1, choice)
+	}
+	fmt.Printf("Choose: [1-%d], (A)bort? ", len(candidates))
+	scanner := bufio.NewScanner(os.Stdin)
+	// TODO: ask for: more choices, new search (prompt for author/title manually)
+	var choice string
+	for scanner.Scan() {
+		choice = scanner.Text()
+	}
+	switch choice {
+	case "a", "A", "abort":
+		return -1, errors.New("Abort")
+	default:
+		index, err := strconv.Atoi(choice)
+		if err == nil {
+			index -= 1
+		}
+		fmt.Println(index)
+	}
+	return
 }

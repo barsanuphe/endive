@@ -2,8 +2,10 @@ package helpers
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -56,4 +58,45 @@ func TestHelpersListEpubs(t *testing.T) {
 			t.Errorf("Error:  expected %s, got %s.", epubs[i].expectedSha256, hashes[i])
 		}
 	}
+}
+
+func TestHelpersLog(t *testing.T) {
+	fmt.Println("+ Testing Helpers/GetLogger()...")
+	logFilename := "../test/testing"
+	log, logFile := GetLogger(logFilename)
+	defer logFile.Close()
+
+	log.Error("Error")
+	log.Infof("Test %d%% complete", 50)
+	// should not be displayed
+	log.Debug("Debug")
+
+	// checking log file
+	output, err := ioutil.ReadFile(logFilename)
+	if os.IsNotExist(err) {
+		t.Errorf("Error: cannot find log file")
+		t.FailNow()
+	} else if err != nil {
+		t.Errorf("Error reading log file: %s", err.Error())
+	}
+	// checking 3 lines were written + 1 return at end of file
+	lines := strings.Split(string(output), "\n")
+	if len(lines) != 4 {
+		t.Errorf("Error checking log file: wrong number of lines: %d", len(lines))
+	}
+	// remove log file
+	err = os.Remove(logFilename)
+	if err != nil {
+		t.Errorf("Error removing test log file")
+	}
+}
+
+func TestHelpersChoice(t *testing.T) {
+	fmt.Println("+ Testing Helpers/GetChoice()...")
+	candidates := []string{"one", "two"}
+	idx, err := GetChoice(candidates)
+	if err != nil || idx != 0 {
+		t.Errorf("Error with GetChoice")
+	}
+
 }
