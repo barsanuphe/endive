@@ -82,26 +82,43 @@ func cleanTags(g *Info) {
 	// TODO: names of months, dates
 	// remove shelf names that are obviously not genres
 	forbiddenTags := []string{
-		"own", "school", "favorite", "favourite", "book",
+		"own", "school", "favorite", "favourite", "book", "adult",
 		"read", "kindle", "borrowed", "classic", "novel", "buy",
 		"star", "release", "wait", "soon", "wish", "published", "want",
 		"tbr", "series", "finish", "to-", "not-", "library", "audible",
 		"coming", "anticipated", "default", "recommended", "-list", "sequel",
 	}
+	// remove duplicates
+	tagAliases := make(map[string][]string)
+	tagAliases["science-fiction"] = []string{"sci-fi-fantasy", "scifi-fantasy", "scifi", "science fiction", "sciencefiction"}
+	tagAliases["fantasy"] = []string{"fantasy-sci-fi", "fantasy-scifi", "fantasy-fiction"}
+	tagAliases["dystopia"] = []string{"dystopian"}
+
 	for _, tag := range g.Tags {
 		clean := true
+		// reducing to main alias
+		for mainalias, aliasList := range tagAliases {
+			_, isIn := h.StringInSlice(tag.Name, aliasList)
+			if isIn {
+				tag.Name = mainalias
+				break
+			}
+		}
+		// checking if not forbidden
 		for _, ft := range forbiddenTags {
 			if strings.Contains(tag.Name, ft) {
 				clean = false
 				break
 			}
 		}
+		// TODO: adding if not already present: hasTag(tag) for []Tag
 		if clean {
 			cleanTags = append(cleanTags, tag)
 		}
 	}
 	g.Tags = cleanTags
 }
+
 
 // GetBook returns a GoodreadsBook from its Goodreads ID
 func GetBook(id, key string) Info {
