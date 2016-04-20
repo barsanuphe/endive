@@ -5,12 +5,14 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"fmt"
 )
 
 // GetXMLData retrieves XML responses from online APIs.
 func GetXMLData(uri string, i interface{}) {
 	data := getRequest(uri)
 	xmlUnmarshal(data, i)
+	fmt.Println(*i)
 }
 
 func getRequest(uri string) []byte {

@@ -3,6 +3,7 @@ package book
 import (
 	"os"
 	"testing"
+	"fmt"
 )
 
 var grBooks = []struct {
@@ -45,6 +46,7 @@ func TestGoodReads(t *testing.T) {
 		}
 		// getting book information from book_id
 		b := GetBook(bookID, key)
+		fmt.Println(b.Tags)
 		if b.Author() != book.author {
 			t.Errorf("Bad author, got %s, expected %s.", b.Author(), book.author)
 		}
