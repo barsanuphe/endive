@@ -11,7 +11,7 @@ func TestEpubGetHash(t *testing.T) {
 		e := NewBook(i, testEpub.filename, standardTestConfig, true)
 		err := e.RetailEpub.GetHash()
 		if err != nil {
-			t.Errorf("Error calculating hash for %s", e.GetMainFilename())
+			t.Errorf("Error calculating hash for %s", e.FullPath())
 		}
 		if e.RetailEpub.Hash != testEpub.expectedSha256 {
 			t.Errorf("GetHash(%s) returned %s, expected %s!", testEpub.filename, e.RetailEpub.Hash, testEpub.expectedSha256)
