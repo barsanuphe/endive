@@ -13,7 +13,7 @@ type SingleSeries struct {
 }
 
 // String outputs a single series info.
-func (s *SingleSeries) String() string {
+func (s SingleSeries) String() string {
 	return fmt.Sprintf("%s (#%s)", s.Name, s.Position)
 }
 
