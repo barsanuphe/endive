@@ -6,6 +6,23 @@ import (
 	h "github.com/barsanuphe/endive/helpers"
 )
 
+// tagAliases defines redundant tags and a main alias for them.
+var tagAliases = map[string][]string{
+	"science-fiction": []string{"sci-fi", "scifi-fantasy", "scifi", "science fiction", "sciencefiction"},
+	"fantasy":         []string{"fantasy-sci-fi", "fantasy-scifi", "fantasy-fiction"},
+	"dystopia":        []string{"dystopian"},
+}
+
+// TODO: names of months, dates
+// remove shelf names that are obviously not genres
+var forbiddenTags = []string{
+	"own", "school", "favorite", "favourite", "book", "adult",
+	"read", "kindle", "borrowed", "classic", "novel", "buy",
+	"star", "release", "wait", "soon", "wish", "published", "want",
+	"tbr", "series", "finish", "to-", "not-", "library", "audible",
+	"coming", "anticipated", "default", "recommended", "-list", "sequel",
+}
+
 // Tag holds the name of a tag.
 type Tag struct {
 	Name string `json:"tagname" xml:"name,attr"`
@@ -16,8 +33,31 @@ type Tags []Tag
 
 // String give a string representation of Tags.
 func (t *Tags) String() (text string) {
+	tagNames := []string{}
 	for _, tag := range *t {
-		text += tag.Name + " "
+		tagNames = append(tagNames, tag.Name)
+	}
+	return strings.Join(tagNames, ", ")
+}
+
+// Add Tags to the list
+func (t *Tags) Add(tags ...Tag) (added bool) {
+	for _, tag := range tags {
+		if !t.Has(tag) {
+			*t = append(*t, tag)
+			added = true
+		}
+	}
+	return
+}
+
+// Remove Tags from the list
+func (t Tags) Remove(tags ...Tag) (removed bool) {
+	for i, tag := range tags {
+		if t.Has(tag) {
+			t = append(t[:i], t[i+1:]...)
+			removed = true
+		}
 	}
 	return
 }
@@ -35,21 +75,6 @@ func (t *Tags) Has(o Tag) (isIn bool) {
 // Clean a list of tags.
 func (t *Tags) Clean() {
 	cleanTags := Tags{}
-	// TODO: names of months, dates
-	// remove shelf names that are obviously not genres
-	forbiddenTags := []string{
-		"own", "school", "favorite", "favourite", "book", "adult",
-		"read", "kindle", "borrowed", "classic", "novel", "buy",
-		"star", "release", "wait", "soon", "wish", "published", "want",
-		"tbr", "series", "finish", "to-", "not-", "library", "audible",
-		"coming", "anticipated", "default", "recommended", "-list", "sequel",
-	}
-	// remove duplicates
-	tagAliases := make(map[string][]string)
-	tagAliases["science-fiction"] = []string{"sci-fi", "scifi-fantasy", "scifi", "science fiction", "sciencefiction"}
-	tagAliases["fantasy"] = []string{"fantasy-sci-fi", "fantasy-scifi", "fantasy-fiction"}
-	tagAliases["dystopia"] = []string{"dystopian"}
-
 	for _, tag := range *t {
 		clean := true
 		// reducing to main alias
@@ -68,8 +93,8 @@ func (t *Tags) Clean() {
 			}
 		}
 		// adding if not already present
-		if clean && !cleanTags.Has(tag) {
-			cleanTags = append(cleanTags, tag)
+		if clean {
+			cleanTags.Add(tag)
 		}
 	}
 	*t = cleanTags
