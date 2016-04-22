@@ -1,3 +1,9 @@
+/*
+Config is a subpackage of Endive.
+
+It aims at reading and checking the Endive configuration file.
+It also deals with the internal database of already imported files (tracked through their SHA256 hashes).
+*/
 package config
 
 import (
@@ -28,7 +34,7 @@ type Config struct {
 	NonRetailSource    []string
 	EpubFilenameFormat string
 	AuthorAliases      map[string][]string
-	EReaderTarget      string
+	EReaderMountPoint  string
 	GoodReadsAPIKey    string
 }
 
@@ -70,7 +76,7 @@ func (c *Config) Load() (err error) {
 	if c.EpubFilenameFormat == "" {
 		c.EpubFilenameFormat = "$a [$y] $t"
 	}
-	c.EReaderTarget = conf.GetString("ereader_target")
+	c.EReaderMountPoint = conf.GetString("ereader_target")
 	c.GoodReadsAPIKey = conf.GetString("goodreads_api_key")
 	if c.GoodReadsAPIKey == "" {
 		c.GoodReadsAPIKey = os.Getenv("GR_API_KEY")
