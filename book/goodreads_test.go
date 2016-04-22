@@ -18,7 +18,7 @@ var grBooks = []struct {
 		"The Thorn of Emberlain",
 		"8074907",
 		"2016",
-		"Scott Lynch (2016) The Thorn of Emberlain [Gentleman Bastard #4]",
+		"Scott Lynch (2016) The Thorn of Emberlain [Gentleman Bastard (#4)]",
 	},
 	{
 		"George Orwell",
@@ -50,8 +50,8 @@ func TestGoodReads(t *testing.T) {
 		if b.Author() != book.author {
 			t.Errorf("Bad author, got %s, expected %s.", b.Author(), book.author)
 		}
-		if b.Title != book.title && b.OriginalTitle != book.title {
-			t.Errorf("Bad title, got %s / %s, expected %s.", b.Title, b.OriginalTitle, book.title)
+		if b.MainTitle != book.title && b.OriginalTitle != book.title {
+			t.Errorf("Bad title, got %s / %s, expected %s.", b.MainTitle, b.OriginalTitle, book.title)
 		}
 		if b.Year != book.expectedYear {
 			t.Errorf("Bad year, got %s, expected %s.", b.Year, book.expectedYear)

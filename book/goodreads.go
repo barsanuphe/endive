@@ -37,7 +37,7 @@ func GetBook(id, key string) Info {
 	uri := apiRoot + "book/show/" + id + ".xml?key=" + key
 	r := response{}
 	h.GetXMLData(uri, &r)
-	r.Book.Tags.Clean()
+	r.Book.Clean()
 	return r.Book
 }
 
@@ -60,6 +60,7 @@ func GetBookIDByQuery(author, title, key string) (id string) {
 		fmt.Println("error")
 	}
 	if hits != 0 {
+		// TODO: if more than 1 hit, give the user a choice, as in beets import.
 		for _, work := range r.Search.Works {
 			if work.Author == author && work.Title == title {
 				return work.ID
