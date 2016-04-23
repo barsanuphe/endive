@@ -7,21 +7,26 @@ import (
 	"github.com/op/go-logging"
 )
 
+// Logger provides a logger to both stdout and a log file (for debug).
+var Logger *logging.Logger
+
+// LogFile is the pointer to the log file, to be closed by the main function.
+var LogFile *os.File
+
 var format = logging.MustStringFormatter(
 	`%{time:15:04:05.000} | %{level:.1s} | %{shortfunc} ▶ %{message}`,
 )
 
 // GetLogger returns a global logger
-func GetLogger(name string) (log *logging.Logger, logFile *os.File) {
-	// TODO: use global vars, use everywhere
-	log = logging.MustGetLogger(name)
+func GetLogger(name string) (err error) {
+	Logger = logging.MustGetLogger(name)
 
 	// TODO set log file in XDG dir
 	fileName := name
-	logFile, err := os.OpenFile(fileName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	LogFile, err = os.OpenFile(fileName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		fmt.Printf("error opening file: %v", err)
-		panic(err)
+		return
 	}
 
 	// stdout logger
@@ -31,10 +36,11 @@ func GetLogger(name string) (log *logging.Logger, logFile *os.File) {
 	stdoutLeveled.SetLevel(logging.INFO, "")
 
 	// file log: everything
-	fileLog := logging.NewLogBackend(logFile, "", 0)
+	fileLog := logging.NewLogBackend(LogFile, "", 0)
 	fileLogFormatter := logging.NewBackendFormatter(fileLog, format)
 
 	// Set the backends to be used.
 	logging.SetBackend(stdoutLeveled, fileLogFormatter)
+	Logger.Debug("Logger set up.")
 	return
 }

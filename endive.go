@@ -18,6 +18,7 @@ import (
 	"strings"
 
 	b "github.com/barsanuphe/endive/book"
+	cfg "github.com/barsanuphe/endive/config"
 	h "github.com/barsanuphe/endive/helpers"
 	l "github.com/barsanuphe/endive/library"
 
@@ -439,6 +440,9 @@ func generateCLI(lb *l.Library) (app *cli.App) {
 
 func main() {
 	fmt.Println(chalk.Bold.TextStyle("\n# # # E N D I V E # # #\n"))
+
+	err := h.GetLogger(cfg.Endive)
+	defer h.LogFile.Close()
 
 	// get library
 	lb, err := l.OpenLibrary()
