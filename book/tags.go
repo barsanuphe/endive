@@ -26,7 +26,7 @@ var forbiddenTags = []string{
 
 // Tag holds the name of a tag.
 type Tag struct {
-	Name string `json:"tagname" xml:"name,attr"`
+	Name string `json:"name" xml:"name,attr"`
 }
 
 // Tags can track a book's Tags

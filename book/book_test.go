@@ -1,7 +1,6 @@
 package book
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -14,7 +13,6 @@ import (
 
 var epubs = []struct {
 	filename                string
-	expectedError           error
 	expectedTitle           string
 	expectedAuthor          string
 	expectedPublicationYear string
@@ -27,26 +25,24 @@ var epubs = []struct {
 }{
 	{
 		"test/pg16328.epub",
-		errors.New("Metadata field creator does not exist"),
 		"Beowulf / An Anglo-Saxon Epic Poem",
 		"Unknown",
 		"2005",
 		"en",
 		"dc325b3aceb77d9f943425728c037fdcaf4af58e3abd771a8094f2424455cc03",
-		`{"id":0,"retail":{"filename":"test/pg16328.epub","hash":"dc325b3aceb77d9f943425728c037fdcaf4af58e3abd771a8094f2424455cc03","replace":"false"},"nonretail":{"filename":"","hash":"","replace":""},"metadata":{"fields":{"contributor":["J. Lesslie Hall"],"coverage":["Unknown"],"creator":["Unknown"],"description":["Unknown"],"format":["Unknown"],"identifier":["http://www.gutenberg.org/ebooks/16328"],"language":["en"],"meta":["Unknown"],"publisher":["Unknown"],"relation":["Unknown"],"rights":["Public domain in the USA."],"source":["http://www.gutenberg.org/files/16328/16328-h/16328-h.htm"],"subject":["Epic poetry, English (Old)","Monsters -- Poetry","Dragons -- Poetry"],"title":["Beowulf / An Anglo-Saxon Epic Poem"],"type":["Unknown"],"year":["2005"]}},"series":null,"tags":null,"progress":"unread","readdate":"","rating":"","review":"","description":""}`,
+		`{"id":0,"retail":{"filename":"test/pg16328.epub","hash":"dc325b3aceb77d9f943425728c037fdcaf4af58e3abd771a8094f2424455cc03","replace":"false"},"nonretail":{"filename":"","hash":"","replace":""},"epub_metadata":{"title":"Beowulf / An Anglo-Saxon Epic Poem","original_title":"","image_url":"","num_pages":"","authors":null,"isbn":"","year":"2005","description":"","series":null,"average_rating":"","tags":[{"name":"Epic poetry, English (Old)"},{"name":"Monsters -- Poetry"},{"name":"Dragons -- Poetry"}]},"metadata":{"title":"Beowulf / An Anglo-Saxon Epic Poem","original_title":"","image_url":"","num_pages":"","authors":null,"isbn":"","year":"2005","description":"","series":null,"average_rating":"","tags":[{"name":"Epic poetry, English (Old)"},{"name":"Monsters -- Poetry"},{"name":"Dragons -- Poetry"}]},"progress":"unread","readdate":"","rating":"","review":""}`,
 		"Unknown 2005 Beowulf - An Anglo-Saxon Epic Poem.epub",
 		"Unknown 2005 Beowulf - An Anglo-Saxon Epic Poem [retail].epub",
 		"en/Unknown/2005. [Unknown] (Beowulf - An Anglo-Saxon Epic Poem).epub",
 	},
 	{
 		"test/pg17989.epub",
-		nil,
 		"Le comte de Monte-Cristo, Tome I",
 		"Alexandre Dumas",
 		"2006",
 		"fr",
 		"acd2b8eba1b11456bacf11e690edf56bc57774053668644ef34f669138ebdd9a",
-		`{"id":1,"retail":{"filename":"test/pg17989.epub","hash":"acd2b8eba1b11456bacf11e690edf56bc57774053668644ef34f669138ebdd9a","replace":"false"},"nonretail":{"filename":"","hash":"","replace":""},"metadata":{"fields":{"contributor":["Unknown"],"coverage":["Unknown"],"creator":["Alexandre Dumas"],"description":["Unknown"],"format":["Unknown"],"identifier":["http://www.gutenberg.org/ebooks/17989"],"language":["fr"],"meta":["Unknown"],"publisher":["Unknown"],"relation":["Unknown"],"rights":["Public domain in the USA."],"source":["http://www.gutenberg.org/files/17989/17989-h/17989-h.htm"],"subject":["Historical fiction","Revenge -- Fiction","Adventure stories","Prisoners -- Fiction","France -- History -- 19th century -- Fiction","Pirates -- Fiction","Dantès, Edmond (Fictitious character) -- Fiction"],"title":["Le comte de Monte-Cristo, Tome I"],"type":["Unknown"],"year":["2006"]}},"series":null,"tags":null,"progress":"unread","readdate":"","rating":"","review":"","description":""}`,
+		`{"id":1,"retail":{"filename":"test/pg17989.epub","hash":"acd2b8eba1b11456bacf11e690edf56bc57774053668644ef34f669138ebdd9a","replace":"false"},"nonretail":{"filename":"","hash":"","replace":""},"epub_metadata":{"title":"Le comte de Monte-Cristo, Tome I","original_title":"","image_url":"","num_pages":"","authors":["Alexandre Dumas"],"isbn":"","year":"2006","description":"","series":null,"average_rating":"","tags":[{"name":"Historical fiction"},{"name":"Revenge -- Fiction"},{"name":"Adventure stories"},{"name":"Prisoners -- Fiction"},{"name":"France -- History -- 19th century -- Fiction"},{"name":"Pirates -- Fiction"},{"name":"Dantès, Edmond (Fictitious character) -- Fiction"}]},"metadata":{"title":"Le comte de Monte-Cristo, Tome I","original_title":"","image_url":"","num_pages":"","authors":["Alexandre Dumas"],"isbn":"","year":"2006","description":"","series":null,"average_rating":"","tags":[{"name":"Historical fiction"},{"name":"Revenge -- Fiction"},{"name":"Adventure stories"},{"name":"Prisoners -- Fiction"},{"name":"France -- History -- 19th century -- Fiction"},{"name":"Pirates -- Fiction"},{"name":"Dantès, Edmond (Fictitious character) -- Fiction"}]},"progress":"unread","readdate":"","rating":"","review":""}`,
 		"Alexandre Dumas 2006 Le comte de Monte-Cristo, Tome I.epub",
 		"Alexandre Dumas 2006 Le comte de Monte-Cristo, Tome I [retail].epub",
 		"fr/Alexandre Dumas/2006. [Alexandre Dumas] (Le comte de Monte-Cristo, Tome I).epub",
@@ -71,17 +67,19 @@ func TestBookJSON(t *testing.T) {
 	fmt.Println("+ Testing Epub.JSON()...")
 	for i, testEpub := range epubs {
 		e := NewBook(i, testEpub.filename, standardTestConfig, isRetail)
-		err := e.Metadata.Read(e.GetMainFilename())
+		info, err := e.MainEpub().ReadMetadata()
 		if err != nil {
-			t.Errorf("Error getting Metadata for epub %s", e.GetMainFilename())
+			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.FullPath(), err)
 		}
+		e.EpubMetadata = info
+		e.Metadata = info
 		err = e.RetailEpub.GetHash()
 		if err != nil {
-			t.Errorf("Error getting Hash for epub %s", e.GetMainFilename())
+			t.Errorf("Error getting Hash for epub %s", e.FullPath())
 		}
 		jsonString, err := e.JSON()
 		if err != nil {
-			t.Errorf("Error exporting epub %s to JSON string", e.GetMainFilename())
+			t.Errorf("Error exporting epub %s to JSON string", e.FullPath())
 		}
 		if jsonString != testEpub.expectedJSONString {
 			t.Errorf("JSON(%s) returned:\n%s\nexpected:\n%s!", testEpub.filename, jsonString, testEpub.expectedJSONString)
@@ -90,7 +88,7 @@ func TestBookJSON(t *testing.T) {
 		f := Book{}
 		f.FromJSON([]byte(jsonString))
 		// comparing a few fields
-		if e.Metadata.Get("title")[0] != e.Metadata.Get("title")[0] {
+		if e.Metadata.Title() != f.Metadata.Title() {
 			t.Errorf("Error rebuilt Epub and original are different")
 		}
 		// exporting again to compare
@@ -104,46 +102,16 @@ func TestBookJSON(t *testing.T) {
 	}
 }
 
-// TestBookTag tests AddTag, RemoveTag and HasTag
-func TestBookTag(t *testing.T) {
-	fmt.Println("+ Testing Epub.AddTag()...")
-	tagName := "test_é!/?*èç1"
-	tagName2 := "t54*èç1"
-	for i, testEpub := range epubs {
-		e := NewBook(i, testEpub.filename, standardTestConfig, isRetail)
-		if !e.AddTags(tagName, tagName2) {
-			t.Errorf("Error adding Tag %s for epub %s", tagName, e.GetMainFilename())
-		}
-		if !e.HasTag(tagName) {
-			t.Errorf("Error:  expected epub %s to have tag %s", e.GetMainFilename(), tagName)
-		}
-		if !e.HasTag(tagName2) {
-			t.Errorf("Error:  expected epub %s to have tag %s", e.GetMainFilename(), tagName2)
-		}
-		if e.HasTag(tagName + "A") {
-			t.Errorf("Error: did not expect epub %s to have tag %s", e.GetMainFilename(), tagName+"A")
-		}
-
-		if !e.RemoveTags(tagName) {
-			t.Errorf("Error removing Tag %s for epub %s", tagName, e.GetMainFilename())
-		}
-		if e.HasTag(tagName) {
-			t.Errorf("Error: did not expect epub %s to have tag %s", e.GetMainFilename(), tagName)
-		}
-		if !e.HasTag(tagName2) {
-			t.Errorf("Error: expect epub %s to have tag %s", e.GetMainFilename(), tagName2)
-		}
-	}
-}
-
 func TestBookNewName(t *testing.T) {
 	fmt.Println("+ Testing Epub.generateNewName()...")
 	for i, testEpub := range epubs {
 		e := NewBook(i, testEpub.filename, standardTestConfig, !isRetail)
-		err := e.Metadata.Read(e.GetMainFilename())
+		info, err := e.MainEpub().ReadMetadata()
 		if err != nil {
-			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.GetMainFilename(), err)
+			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.FullPath(), err)
 		}
+		e.EpubMetadata = info
+		e.Metadata = info
 
 		newName1, err := e.generateNewName("$a $y $t", !isRetail)
 		if err != nil {
@@ -161,10 +129,13 @@ func TestBookNewName(t *testing.T) {
 		}
 
 		e = NewBook(10+i, testEpub.filename, standardTestConfig, isRetail)
-		err = e.Metadata.Read(e.GetMainFilename())
+		info, err = e.MainEpub().ReadMetadata()
 		if err != nil {
-			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.GetMainFilename(), err)
+			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.FullPath(), err)
 		}
+		e.EpubMetadata = info
+		e.Metadata = info
+
 		newName1, err = e.generateNewName("$a $y $t", isRetail)
 		if err != nil {
 			t.Errorf("Error generating new name")
@@ -191,10 +162,12 @@ func TestBookRefresh(t *testing.T) {
 
 		// creating Epub object
 		e := NewBook(i, tempCopy, cfg, isRetail)
-		err = e.Metadata.Read(e.GetMainFilename())
+		info, err := e.MainEpub().ReadMetadata()
 		if err != nil {
-			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.GetMainFilename(), err)
+			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.FullPath(), err)
 		}
+		e.EpubMetadata = info
+		e.Metadata = info
 
 		// refresh
 		wasRenamed, newName, err := e.Refresh()
@@ -212,7 +185,7 @@ func TestBookRefresh(t *testing.T) {
 		}
 
 		// getting epub path relative to parent dir (ie simulated library root) for comparison
-		filename, err := filepath.Rel(parentDir, e.GetMainFilename())
+		filename, err := filepath.Rel(parentDir, e.FullPath())
 		if err != nil {
 			t.Errorf("Error getting relative path: " + err.Error())
 		}

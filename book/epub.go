@@ -128,7 +128,7 @@ func (e *Epub) ReadMetadata() (info Info, err error) {
 	// TODO !!!! identifier (isbn)
 
 	// TODO show other included data:"publisher", "contributor", "type", "format",
-	// 	"source", "relation", "coverage", "rights", "meta",
+	// TODO "source", "relation", "coverage", "rights", "meta",
 
 	if info.Refresh(e.Config) {
 		fmt.Println("Found author alias: " + info.Author())

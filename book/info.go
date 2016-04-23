@@ -52,7 +52,7 @@ func (i *Info) Title() string {
 }
 
 // Clean cleans up the Info
-func (i *Info) Clean()  {
+func (i *Info) Clean() {
 	// default year
 	if i.Year == "" {
 		i.Year = "XXXX"

@@ -1,3 +1,14 @@
+/*
+Book is a subpackage of Endive, that aims to manipulate epub files and their metadata.
+
+A Book can hold at most 2 epubs: a retail version and/or a non-retail version.
+
+It keeps two versions of metadata:
+	- EpubMetadata, which is read directly from the main epub file (retail if it exists, non-retail otherwise)
+	- Metadata, which starts with EpubMetadata, but holds additionnal information retrieved from online sources (ie, Goodreads).
+
+The Book struct controls where the files are and how they are named.
+*/
 package book
 
 import (
@@ -11,7 +22,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/barsanuphe/endive/config"
+	cfg "github.com/barsanuphe/endive/config"
 	h "github.com/barsanuphe/endive/helpers"
 )
 
@@ -20,61 +31,76 @@ var validProgress = []string{"unread", "read", "reading", "shortlisted"}
 // Book can manipulate a book.
 // A Book can have multiple epub files.
 type Book struct {
-	Config config.Config `json:"-"`
-	ID     int           `json:"id"`
-
-	RetailEpub    Epub     `json:"retail"`
-	NonRetailEpub Epub     `json:"nonretail"`
-	Metadata      Metadata `json:"metadata"`
-	Series        Series   `json:"series"`
-	Tags          []string `json:"tags"`
-
-	Progress    string `json:"progress"`
-	ReadDate    string `json:"readdate"`
-	Rating      string `json:"rating"`
-	Review      string `json:"review"`
-	Description string `json:"description"`
+	Config cfg.Config `json:"-"`
+	ID     int        `json:"id"`
+	// associated files
+	RetailEpub    Epub `json:"retail"`
+	NonRetailEpub Epub `json:"nonretail"`
+	// metadata
+	EpubMetadata Info `json:"epub_metadata"`
+	Metadata     Info `json:"metadata"`
+	// user info
+	Progress string `json:"progress"`
+	ReadDate string `json:"readdate"`
+	Rating   string `json:"rating"`
+	Review   string `json:"review"`
 }
 
 // NewBook constucts a valid new Epub
-func NewBook(id int, filename string, c config.Config, isRetail bool) *Book {
-	return NewBookWithMetadata(id, filename, c, isRetail, NewMetadata(c))
+// TODO remove
+func NewBook(id int, filename string, c cfg.Config, isRetail bool) *Book {
+	return NewBookWithMetadata(id, filename, c, isRetail, Info{})
 }
 
 // NewBookWithMetadata constucts a valid new Epub
-func NewBookWithMetadata(id int, filename string, c config.Config, isRetail bool, m *Metadata) *Book {
+func NewBookWithMetadata(id int, filename string, c cfg.Config, isRetail bool, i Info) *Book {
 	f := Epub{Filename: filename, Config: c, NeedsReplacement: "false"}
 	if isRetail {
-		return &Book{ID: id, RetailEpub: f, Config: c, Metadata: *m, Progress: "unread"}
+		return &Book{ID: id, RetailEpub: f, Config: c, EpubMetadata: i, Metadata: i, Progress: "unread"}
 	}
-	return &Book{ID: id, NonRetailEpub: f, Config: c, Metadata: *m, Progress: "unread"}
+	return &Book{ID: id, NonRetailEpub: f, Config: c, EpubMetadata: i, Metadata: i, Progress: "unread"}
 }
 
 // ShortString returns a short string representation of Epub
 func (e *Book) ShortString() (desc string) {
-	return e.Metadata.Get("creator")[0] + " (" + e.Metadata.Get("year")[0] + ") " + e.Metadata.Get("title")[0]
+	return e.Metadata.Author() + " (" + e.Metadata.Year + ") " + e.Metadata.Title()
 }
 
 // String returns a string representation of Epub
 func (e *Book) String() (desc string) {
 	tags := ""
-	if len(e.Tags) != 0 {
-		tags = "[ " + strings.Join(e.Tags, " ") + " ]"
+	if len(e.Metadata.Tags) != 0 {
+		tags += "[ "
+		for _, tag := range e.Metadata.Tags {
+			tags += tag.Name + " "
+		}
+		tags += " ]"
 	}
-	return e.GetMainFilename() + ":\t" + e.Metadata.Get("creator")[0] + " (" + e.Metadata.Get("year")[0] + ") " + e.Metadata.Get("title")[0] + " [" + e.Metadata.Get("language")[0] + "] " + tags
+	return e.FullPath() + ":\t" + e.Metadata.Author() + " (" + e.Metadata.Year + ") " + e.Metadata.Title() + " [" + e.Metadata.Language + "] " + tags
 }
 
-// GetMainFilename of a Book.
-func (e *Book) GetMainFilename() (filename string) {
+// FullPath of the main Epub of a Book.
+func (e *Book) FullPath() (filename string) {
 	// assuming at least one epub is defined
-	if e.RetailEpub.Filename == "" && e.NonRetailEpub.Filename != "" {
-		return e.NonRetailEpub.GetPath()
+	if e.HasRetail() {
+		return e.RetailEpub.FullPath()
+	} else if e.HasNonRetail() {
+		return e.NonRetailEpub.FullPath()
+	} else {
+		panic(errors.New("Book has no epub file!"))
 	}
-	if e.RetailEpub.Filename != "" && e.NonRetailEpub.Filename == "" {
-		return e.RetailEpub.GetPath()
+}
+
+// MainEpub of a Book.
+func (e *Book) MainEpub() (epub *Epub) {
+	// assuming at least one epub is defined
+	if e.HasRetail() {
+		return &e.RetailEpub
+	} else if e.HasNonRetail() {
+		return &e.NonRetailEpub
+	} else {
+		panic(errors.New("Book has no epub file!"))
 	}
-	// TODO return err
-	return "ERROR"
 }
 
 // SetProgress sets reading progress
@@ -85,36 +111,6 @@ func (e *Book) SetProgress(progress string) (err error) {
 	} else {
 		err = errors.New("Unknown reading progress: " + progress)
 	}
-	return
-}
-
-// AddTags to the Book
-func (e *Book) AddTags(tags ...string) (added bool) {
-	for _, tag := range tags {
-		if !e.HasTag(tag) {
-			e.Tags = append(e.Tags, tag)
-			added = true
-		}
-	}
-	return
-}
-
-// RemoveTags from a Book
-func (e *Book) RemoveTags(tags ...string) (removed bool) {
-	for _, tag := range tags {
-		i, isIn := h.StringInSlice(tag, e.Tags)
-		if isIn {
-			e.Tags[i] = e.Tags[len(e.Tags)-1]
-			e.Tags = e.Tags[:len(e.Tags)-1]
-			removed = true
-		}
-	}
-	return
-}
-
-// HasTag checks if epub is part of a series
-func (e *Book) HasTag(tagName string) (hasThisTag bool) {
-	_, hasThisTag = h.StringInSlice(tagName, e.Tags)
 	return
 }
 
@@ -145,9 +141,9 @@ func (e *Book) generateNewName(fileTemplate string, isRetail bool) (newName stri
 
 	// replace with all valid epub parameters
 	tmpl := fmt.Sprintf(`{{$a := "%s"}}{{$y := "%s"}}{{$t := "%s"}}{{$l := "%s"}}%s`,
-		h.CleanForPath(e.Metadata.GetFirstValue("creator")),
-		e.Metadata.GetFirstValue("year"),
-		h.CleanForPath(e.Metadata.GetFirstValue("title")), e.Metadata.GetFirstValue("language"), r.Replace(fileTemplate))
+		h.CleanForPath(e.Metadata.Author()),
+		e.Metadata.Year,
+		h.CleanForPath(e.Metadata.Title()), e.Metadata.Language, r.Replace(fileTemplate))
 
 	var doc bytes.Buffer
 	// NOTE: use html/template for html output
@@ -180,7 +176,7 @@ func (e *Book) refreshEpub(epub Epub, isRetail bool) (wasRenamed bool, newName s
 	}
 
 	if epub.Filename != newName {
-		origin := epub.GetPath()
+		origin := epub.FullPath()
 		fmt.Println("Renaming " + origin + " to: " + newName)
 		// move to c.LibraryRoot + new name
 
@@ -204,14 +200,17 @@ func (e *Book) Refresh() (wasRenamed []bool, newName []string, err error) {
 	fmt.Println("Refreshing Epub " + e.ShortString())
 	// metadata is blank, run GetMetadata
 	if hasMetadata := e.Metadata.HasAny(); !hasMetadata {
-		err = e.Metadata.Read(e.GetMainFilename())
-		if err != nil {
+		// FIXME: should probably test EpubMetadata then Metadata
+		info, ok := e.MainEpub().ReadMetadata()
+		if ok != nil {
+			err = ok
 			return
 		}
+		e.Metadata = info
 	}
 	// refresh Metadata
-	if e.Metadata.Refresh() {
-		fmt.Println("Found author alias: " + e.Metadata.GetFirstValue("creator"))
+	if e.Metadata.Refresh(e.Config) {
+		fmt.Println("Found author alias: " + e.Metadata.Author())
 	}
 	// refresh both epubs
 	wasRenamedR, newNameR, errR := e.refreshEpub(e.RetailEpub, true)
@@ -321,14 +320,14 @@ func (e *Book) Import(path string, isRetail bool, hash string) (imported bool, e
 func (e *Book) removeEpub(isRetail bool) (err error) {
 	if isRetail {
 		// remove
-		err = os.Remove(e.RetailEpub.GetPath())
+		err = os.Remove(e.RetailEpub.FullPath())
 		if err != nil {
 			return
 		}
 		e.RetailEpub = Epub{}
 	} else {
 		// remove
-		err = os.Remove(e.NonRetailEpub.GetPath())
+		err = os.Remove(e.NonRetailEpub.FullPath())
 		if err != nil {
 			return
 		}
@@ -354,6 +353,20 @@ func (e *Book) Check() (retailHasChanged bool, nonRetailHasChanged bool, err err
 			err = errors.New("Retail Epub hash has changed")
 		}
 	}
+	return
+}
+
+// SearchOnline tries to find metadata from online sources.
+func (e *Book) SearchOnline() (err error) {
+	// TODO tests
+	// TODO: if e.Metadata.ISBN exists, GetBookIDByISBN(e.Metadata.ISBN, e.Config.GoodReadsAPIKey)
+	id := GetBookIDByQuery(e.Metadata.Author(), e.Metadata.Title(), e.Config.GoodReadsAPIKey)
+	if id == "" {
+		return errors.New("Could not find online data for " + e.ShortString())
+	}
+	onlineInfo := GetBook(id, e.Config.GoodReadsAPIKey)
+	// TODO merge e.Metadata with onlineInfo, asking user
+	fmt.Println(onlineInfo)
 	return
 }
 
