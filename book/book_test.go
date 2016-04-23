@@ -64,7 +64,7 @@ func init() {
 
 // TestBookJSON tests both JSON() and FromJSON().
 func TestBookJSON(t *testing.T) {
-	fmt.Println("+ Testing Epub.JSON()...")
+	fmt.Println("+ Testing Book.JSON()...")
 	for i, testEpub := range epubs {
 		e := NewBook(i, testEpub.filename, standardTestConfig, isRetail)
 		info, err := e.MainEpub().ReadMetadata()
@@ -103,7 +103,7 @@ func TestBookJSON(t *testing.T) {
 }
 
 func TestBookNewName(t *testing.T) {
-	fmt.Println("+ Testing Epub.generateNewName()...")
+	fmt.Println("+ Testing Book.generateNewName()...")
 	for i, testEpub := range epubs {
 		e := NewBook(i, testEpub.filename, standardTestConfig, !isRetail)
 		info, err := e.MainEpub().ReadMetadata()
@@ -147,7 +147,7 @@ func TestBookNewName(t *testing.T) {
 }
 
 func TestBookRefresh(t *testing.T) {
-	fmt.Println("+ Testing Epub.Refresh()...")
+	fmt.Println("+ Testing Book.Refresh()...")
 	cfg := c.Config{EpubFilenameFormat: "$a $y $t", LibraryRoot: parentDir}
 	for i, testEpub := range epubs {
 		// copy testEpub.filename
@@ -210,7 +210,7 @@ func TestBookRefresh(t *testing.T) {
 
 // TestBookSetReadDate tests for SetReadDate and SetReadDateToday
 func TestBookSetReadDate(t *testing.T) {
-	fmt.Println("+ Testing Epub.SetReadDate()...")
+	fmt.Println("+ Testing Book.SetReadDate()...")
 	for i, testEpub := range epubs {
 		e := NewBook(i, testEpub.filename, standardTestConfig, isRetail)
 
@@ -228,7 +228,7 @@ func TestBookSetReadDate(t *testing.T) {
 
 // TestBookProgress tests for SetProgress
 func TestBookProgress(t *testing.T) {
-	fmt.Println("+ Testing Epub.TestEpubProgress()...")
+	fmt.Println("+ Testing Book.TestEpubProgress()...")
 	e := NewBook(0, epubs[0].filename, standardTestConfig, isRetail)
 
 	err := e.SetProgress("Shortlisted")
@@ -245,5 +245,34 @@ func TestBookProgress(t *testing.T) {
 	}
 	if e.Progress != "shortlisted" {
 		t.Errorf("Error setting progress, expected %s, got %s", "shortlisted", e.Progress)
+	}
+}
+
+// TestBookSearchOnline tests for SearchOnline
+func TestBookSearchOnline(t *testing.T) {
+	fmt.Println("+ Testing Book.SearchOnline()...")
+	// get GR api key
+	key := os.Getenv("GR_API_KEY")
+	if len(key) == 0 {
+		t.Error("Cannot get Goodreads API key")
+		t.FailNow()
+	}
+	standardTestConfig.GoodReadsAPIKey = key
+
+	for i, testEpub := range epubs {
+		fmt.Println(testEpub.filename)
+		e := NewBook(i, testEpub.filename, standardTestConfig, isRetail)
+		info, err := e.MainEpub().ReadMetadata()
+		if err != nil {
+			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.FullPath(), err)
+		}
+		e.EpubMetadata = info
+		e.Metadata = info
+
+		err = e.SearchOnline()
+		if err != nil {
+			t.Errorf("Error searching online")
+		}
+
 	}
 }
