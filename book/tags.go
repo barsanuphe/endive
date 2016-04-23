@@ -116,5 +116,10 @@ func (t *Tags) Clean() {
 			cleanTags.Add(tag)
 		}
 	}
+	// TODO see if this is wise
+	// only keep top10 tags, since they are ordered by popularity and will be increasingly wrong.
+	if len(cleanTags) > 10 {
+		cleanTags = cleanTags[:10]
+	}
 	*t = cleanTags
 }
