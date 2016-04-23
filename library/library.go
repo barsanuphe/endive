@@ -1,3 +1,14 @@
+/*
+Library is a subpackage of Endive.
+
+Library tracks and manipulates all the Books known to Endive.
+It can:
+	- import books (retail and non-retail)
+	- build a database of said books and their metadata
+	- search this database
+	- organize the books according to the configuration file
+
+*/
 package library
 
 import (
@@ -16,9 +27,9 @@ import (
 
 // Library manages Epubs
 type Library struct {
-	ConfigurationFile cfg.Config
-	KnownHashesFile   cfg.KnownHashes
-	DB                // anonymous, Library still has Epubs
+	Config      cfg.Config
+	KnownHashes cfg.KnownHashes
+	DB
 }
 
 // OpenLibrary constucts a valid new Library
@@ -52,7 +63,7 @@ func OpenLibrary() (l Library, err error) {
 		return
 	}
 
-	l = Library{ConfigurationFile: c, KnownHashesFile: h}
+	l = Library{Config: c, KnownHashes: h}
 	l.DatabaseFile = c.DatabaseFile
 	err = l.Load()
 	if err != nil {
@@ -60,10 +71,10 @@ func OpenLibrary() (l Library, err error) {
 	}
 	// make each Book aware of current Config file
 	for i := range l.Books {
-		l.Books[i].Config = l.ConfigurationFile
-		l.Books[i].NonRetailEpub.Config = l.ConfigurationFile
-		l.Books[i].RetailEpub.Config = l.ConfigurationFile
-		l.Books[i].Metadata.Config = l.ConfigurationFile
+		l.Books[i].Config = l.Config
+		l.Books[i].NonRetailEpub.Config = l.Config
+		l.Books[i].RetailEpub.Config = l.Config
+		l.Books[i].Metadata.Config = l.Config
 	}
 	return l, err
 }
@@ -75,7 +86,7 @@ func (l *Library) ImportRetail() (err error) {
 
 	// checking all defined sources
 	var allEpubs, allHashes []string
-	for _, source := range l.ConfigurationFile.RetailSource {
+	for _, source := range l.Config.RetailSource {
 		fmt.Println("Searching for retail epubs in " + source)
 		epubs, hashes, err := h.ListEpubsInDirectory(source)
 		if err != nil {
@@ -94,7 +105,7 @@ func (l *Library) ImportNonRetail() (err error) {
 
 	// checking all defined sources
 	var allEpubs, allHashes []string
-	for _, source := range l.ConfigurationFile.RetailSource {
+	for _, source := range l.Config.RetailSource {
 		fmt.Println("Searching for non-retail epubs in " + source)
 		epubs, hashes, err := h.ListEpubsInDirectory(source)
 		if err != nil {
@@ -109,38 +120,31 @@ func (l *Library) ImportNonRetail() (err error) {
 // importEpubs, retail or not.
 func (l *Library) importEpubs(allEpubs []string, allHashes []string, isRetail bool) (err error) {
 	// force reload if it has changed
-	err = l.KnownHashesFile.Load()
+	err = l.KnownHashes.Load()
 	if err != nil {
 		return
 	}
-	defer l.KnownHashesFile.Save()
+	defer l.KnownHashes.Save()
 
 	newEpubs := 0
 	// importing what is necessary
 	for i, path := range allEpubs {
 		hash := allHashes[i]
 		// compare with known hashes
-		if !l.KnownHashesFile.IsIn(hash) {
+		if !l.KnownHashes.IsIn(hash) {
 			// get Metadata from new epub
-			m := b.NewMetadata(l.ConfigurationFile)
-			err = m.Read(path)
+			e := b.Epub{Filename: path}
+			info, err := e.ReadMetadata()
 			if err != nil {
 				return
 			}
 
 			// loop over Books to find similar Metadata
-			var found, imported bool
-			var knownBook *b.Book
-			for i, book := range l.Books {
-				if book.Metadata.IsSimilar(m) {
-					found = true
-					knownBook = &l.Books[i]
-					break
-				}
-			}
-			if !found {
+			var imported bool
+			knownBook, err := FindByMetadata(info)
+			if err != nil {
 				// new Book
-				bk := b.NewBookWithMetadata(l.generateID(), path, l.ConfigurationFile, isRetail, m)
+				bk := b.NewBookWithMetadata(l.generateID(), path, l.Config, isRetail, info)
 				imported, err = bk.Import(path, isRetail, hash)
 				if err != nil {
 					return
@@ -158,7 +162,7 @@ func (l *Library) importEpubs(allEpubs []string, allHashes []string, isRetail bo
 			if imported {
 				// add hash to known hashes
 				// TODO otherwise it'll pop up every other time
-				added, err := l.KnownHashesFile.Add(hash)
+				added, err := l.KnownHashes.Add(hash)
 				if !added || err != nil {
 					return err
 				}
@@ -181,7 +185,7 @@ func (l *Library) Refresh() (renamed int, err error) {
 	fmt.Println("Refreshing database...")
 
 	// scan for new epubs
-	allEpubs, allHashes, err := h.ListEpubsInDirectory(l.ConfigurationFile.LibraryRoot)
+	allEpubs, allHashes, err := h.ListEpubsInDirectory(l.Config.LibraryRoot)
 	if err != nil {
 		return
 	}
@@ -217,7 +221,7 @@ func (l *Library) Refresh() (renamed int, err error) {
 	}
 
 	// remove all empty dirs
-	err = h.DeleteEmptyFolders(l.ConfigurationFile.LibraryRoot)
+	err = h.DeleteEmptyFolders(l.Config.LibraryRoot)
 	return
 }
 
@@ -238,11 +242,12 @@ func (l *Library) DuplicateRetailEpub(id int) (nonRetailEpub b.Book, err error) 
 func (l *Library) RunQuery(query string) (results string, err error) {
 	// remplace fields for simpler queries
 	r := strings.NewReplacer(
-		"author:", "metadata.fields.creator:",
-		"title:", "metadata.fields.title:",
-		"year:", "metadata.fields.year:",
-		"language:", "metadata.fields.language:",
-		"series", "series.seriesname",
+		"author:", "metadata.authors:",
+		"title:", "metadata.title:",
+		"year:", "metadata.year:",
+		"language:", "metadata.language:",
+		"series:", "metadata.series.seriesname:",
+		"tags:", "metadata.tags.name:",
 	)
 	query = r.Replace(query)
 
@@ -264,11 +269,11 @@ func (l *Library) TabulateList(books []b.Book) (table string) {
 	}
 	var rows [][]string
 	for _, res := range books {
-		relativePath, err := filepath.Rel(l.ConfigurationFile.LibraryRoot, res.GetMainFilename())
+		relativePath, err := filepath.Rel(l.Config.LibraryRoot, res.GetMainFilename())
 		if err != nil {
 			panic(errors.New("File " + res.GetMainFilename() + " not in library?"))
 		}
-		rows = append(rows, []string{strconv.Itoa(res.ID), res.Metadata.GetFirstValue("creator"), res.Metadata.GetFirstValue("title"), res.Metadata.GetFirstValue("year"), relativePath})
+		rows = append(rows, []string{strconv.Itoa(res.ID), res.Metadata.Author(), res.Metadata.Title(), res.Metadata.Year, relativePath})
 	}
 	t := gotabulate.Create(rows)
 	t.SetHeaders([]string{"ID", "Author", "Title", "Year", "Filename"})

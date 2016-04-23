@@ -4,8 +4,7 @@ Endive is a tool to keep your epub library in great shape.
 It can rename and organize your library from the epub metadata, and can keep
 track of retail and non-retail versions.
 
-It is in a very early development, with basically nothing actually working,
-and chances of files disappearing if invoked.
+It is in a very early development: things can crash and files disappear.
 
 */
 package main
@@ -21,6 +20,7 @@ import (
 	b "github.com/barsanuphe/endive/book"
 	h "github.com/barsanuphe/endive/helpers"
 	l "github.com/barsanuphe/endive/library"
+
 	"github.com/bndr/gotabulate"
 	"github.com/codegangsta/cli"
 	"github.com/ttacon/chalk"
@@ -58,14 +58,14 @@ func showInfo(lb *l.Library, c *cli.Context) {
 	var rows [][]string
 	rows = append(rows, []string{"ID", strconv.Itoa(book.ID)})
 	rows = append(rows, []string{"Filename", relativePath})
-	rows = append(rows, []string{"Author", book.Metadata.GetFirstValue("creator")})
-	rows = append(rows, []string{"Title", book.Metadata.GetFirstValue("title")})
-	rows = append(rows, []string{"Publication Year", book.Metadata.GetFirstValue("year")})
-	if len(book.Tags) != 0 {
+	rows = append(rows, []string{"Author", book.Metadata.Author()})
+	rows = append(rows, []string{"Title", book.Metadata.Title()})
+	rows = append(rows, []string{"Publication Year", book.Metadata.Year})
+	if len(book.Metadata.Tags) != 0 {
 		rows = append(rows, []string{"Tags", strings.Join(book.Tags, " / ")})
 	}
-	if len(book.Series) != 0 {
-		rows = append(rows, []string{"Series", book.Series.String()})
+	if len(book.Metadata.Series) != 0 {
+		rows = append(rows, []string{"Series", book.Metadata.Series.String()})
 	}
 	available := ""
 	if book.HasRetail() {
@@ -90,7 +90,7 @@ func listTags(lb *l.Library, c *cli.Context) (err error) {
 		return
 	}
 	fmt.Println(book.ShortString())
-	fmt.Println(strings.Join(book.Tags, " / "))
+	fmt.Println(strings.Join(book.Metadata.Tags, " / "))
 	return
 }
 
@@ -100,7 +100,7 @@ func addTags(lb *l.Library, c *cli.Context) {
 		fmt.Println("Error parsing arguments")
 		return
 	}
-	if book.AddTags(tags...) {
+	if book.Metadata.Tags.Add(tags...) {
 		fmt.Printf("Tags added to %s\n", book.ShortString())
 	}
 }
@@ -111,7 +111,7 @@ func removeTags(lb *l.Library, c *cli.Context) {
 		fmt.Println("Error parsing arguments")
 		return
 	}
-	if book.RemoveTags(tags...) {
+	if book.Metadata.Tags.Remove(tags...) {
 		fmt.Printf("Tags removed from %s\n", book.ShortString())
 	}
 }
@@ -123,7 +123,7 @@ func listSeries(lb *l.Library, c *cli.Context) {
 		return
 	}
 	fmt.Println(book.ShortString())
-	fmt.Println(book.Series.String())
+	fmt.Println(book.Metadata.Series.String())
 }
 
 func removeSeries(lb *l.Library, c *cli.Context) {
@@ -133,7 +133,7 @@ func removeSeries(lb *l.Library, c *cli.Context) {
 		return
 	}
 	// remove series
-	if book.Series.Remove(series...) {
+	if book.Metadata.Series.Remove(series...) {
 		fmt.Printf("Series %s removed from %s\n", strings.Join(series, ", "), book.ShortString())
 	}
 }
@@ -150,7 +150,7 @@ func addSeries(lb *l.Library, c *cli.Context) {
 		return
 	}
 	// add series
-	if book.Series.Add(seriesInfo[0], float32(seriesIndex)) {
+	if book.Metadata.Series.Add(seriesInfo[0], float32(seriesIndex)) {
 		fmt.Printf("Series %s #%f added to %s\n", seriesInfo[0], seriesIndex, book.ShortString())
 	}
 }

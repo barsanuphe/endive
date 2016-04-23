@@ -140,6 +140,17 @@ func (ldb *DB) FindByID(id int) (result *b.Book, err error) {
 	return &b.Book{}, errors.New("Could not find book with ID " + strconv.Itoa(id))
 }
 
+// FindByMetadata among known Books
+func (ldb *DB) FindByMetadata(i Info) (result *b.Book, err error) {
+	// TODO tests
+	for i, book := range ldb.Books {
+		if book.Metadata.IsSimilar(info) {
+			return &ldb.Books[i], nil
+		}
+	}
+	return &b.Book{}, errors.New("Could not find book with ID " + strconv.Itoa(id))
+}
+
 //FindByFilename among known Books
 func (ldb *DB) FindByFilename(filename string) (result *b.Book, err error) {
 	for i, bk := range ldb.Books {
