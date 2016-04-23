@@ -82,16 +82,6 @@ func (i *Info) MainSeries() SingleSeries {
 	return SingleSeries{}
 }
 
-// IsSimilar checks if metadata is similar to known Info.
-func (i *Info) IsSimilar(o Info) (isSimilar bool) {
-	// TODO do much better, try with isbn if available on both sides
-	// similar == same author/title, for now
-	if i.Author() == o.Author() && i.Title() == o.Title() {
-		return true
-	}
-	return
-}
-
 // Refresh updates Info fields, using the configuration file.
 func (i *Info) Refresh(c cfg.Config) (hasChanged bool) {
 	// for now, only taking into account author aliases
@@ -105,4 +95,29 @@ func (i *Info) Refresh(c cfg.Config) (hasChanged bool) {
 		}
 	}
 	return
+}
+
+// IsSimilar checks if metadata is similar to known Info.
+func (i *Info) IsSimilar(o Info) (isSimilar bool) {
+	// TODO do much better, try with isbn if available on both sides
+	// similar == same author/title, for now
+	if i.Author() == o.Author() && i.Title() == o.Title() {
+		return true
+	}
+	return
+}
+
+// Diff returns differences between Infos.
+func (i *Info) Diff(o Info, firstHeader, secondHeader string) (diff string) {
+	var rows [][]string
+	// TODO
+	rows = append(rows, []string{i.String(), o.String()})
+	rows = append(rows, []string{i.Author(), o.Author()})
+	rows = append(rows, []string{i.Title(), o.Title()})
+	rows = append(rows, []string{i.Year, o.Year})
+	rows = append(rows, []string{i.Description, o.Description})
+	rows = append(rows, []string{i.Tags.String(), o.Tags.String()})
+	rows = append(rows, []string{i.Series.String(), o.Series.String()})
+	rows = append(rows, []string{i.Language, o.Language})
+	return h.TabulateRows(rows, firstHeader, secondHeader)
 }

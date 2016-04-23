@@ -104,7 +104,7 @@ func (l *Library) ImportNonRetail() (err error) {
 
 	// checking all defined sources
 	var allEpubs, allHashes []string
-	for _, source := range l.Config.RetailSource {
+	for _, source := range l.Config.NonRetailSource {
 		fmt.Println("Searching for non-retail epubs in " + source)
 		epubs, hashes, err := h.ListEpubsInDirectory(source)
 		if err != nil {

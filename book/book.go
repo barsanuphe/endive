@@ -12,6 +12,7 @@ The Book struct controls where the files are and how they are named.
 package book
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -308,6 +309,13 @@ func (e *Book) Import(path string, isRetail bool, hash string) (imported bool, e
 	} else {
 		e.NonRetailEpub = ep
 	}
+
+	// get online data
+	err = e.SearchOnline()
+	if err != nil {
+		return
+	}
+
 	// rename
 	_, _, err = e.Refresh()
 	if err != nil {
@@ -360,13 +368,34 @@ func (e *Book) Check() (retailHasChanged bool, nonRetailHasChanged bool, err err
 func (e *Book) SearchOnline() (err error) {
 	// TODO tests
 	// TODO: if e.Metadata.ISBN exists, GetBookIDByISBN(e.Metadata.ISBN, e.Config.GoodReadsAPIKey)
+	// TODO: if unsure, show hits
 	id := GetBookIDByQuery(e.Metadata.Author(), e.Metadata.Title(), e.Config.GoodReadsAPIKey)
 	if id == "" {
 		return errors.New("Could not find online data for " + e.ShortString())
 	}
 	onlineInfo := GetBook(id, e.Config.GoodReadsAPIKey)
-	// TODO merge e.Metadata with onlineInfo, asking user
-	fmt.Println(onlineInfo)
+	// show diff between epub and GR versions, then ask what to do.
+	fmt.Println(e.Metadata.Diff(onlineInfo, "Local", "GoodReads"))
+	fmt.Printf("Accept in (B)ulk? Choose (F)ield by field? (S)earch again? (A)bort? ")
+
+	scanner := bufio.NewReader(os.Stdin)
+	choice, _ := scanner.ReadString('\n')
+	switch strings.TrimSpace(choice) {
+	case "a", "A", "abort":
+		return errors.New("Abort")
+	case "b", "B", "Bulk":
+		fmt.Println("Accepting online version.")
+		e.Metadata = onlineInfo
+	case "f", "F", "Field":
+		fmt.Println("Going through every field.")
+		// TODO
+	case "s", "S", "Search":
+		fmt.Println("Searching again.")
+		// TODO GetBookIDByQuery but show hits instead of choosing automatically
+	default:
+		fmt.Println("What was that?")
+		// TODO ask again
+	}
 	return
 }
 
