@@ -1,5 +1,5 @@
 /*
-Library is a subpackage of Endive.
+Package library is a subpackage of Endive.
 
 Library tracks and manipulates all the Books known to Endive.
 It can:
@@ -74,7 +74,6 @@ func OpenLibrary() (l Library, err error) {
 		l.Books[i].Config = l.Config
 		l.Books[i].NonRetailEpub.Config = l.Config
 		l.Books[i].RetailEpub.Config = l.Config
-		l.Books[i].Metadata.Config = l.Config
 	}
 	return l, err
 }
@@ -136,18 +135,18 @@ func (l *Library) importEpubs(allEpubs []string, allHashes []string, isRetail bo
 			e := b.Epub{Filename: path}
 			info, err := e.ReadMetadata()
 			if err != nil {
-				return
+				return err
 			}
 
 			// loop over Books to find similar Metadata
 			var imported bool
-			knownBook, err := FindByMetadata(info)
+			knownBook, err := l.FindByMetadata(info)
 			if err != nil {
 				// new Book
 				bk := b.NewBookWithMetadata(l.generateID(), path, l.Config, isRetail, info)
 				imported, err = bk.Import(path, isRetail, hash)
 				if err != nil {
-					return
+					return err
 				}
 				l.Books = append(l.Books, *bk)
 			} else {
@@ -155,7 +154,7 @@ func (l *Library) importEpubs(allEpubs []string, allHashes []string, isRetail bo
 				fmt.Println("Adding epub to " + knownBook.ShortString())
 				imported, err = knownBook.AddEpub(path, isRetail, hash)
 				if err != nil {
-					return
+					return err
 				}
 			}
 
@@ -250,6 +249,7 @@ func (l *Library) RunQuery(query string) (results string, err error) {
 		"tags:", "metadata.tags.name:",
 	)
 	query = r.Replace(query)
+	fmt.Println(query)
 
 	hits, err := l.Search(query)
 	if err != nil {
@@ -269,9 +269,9 @@ func (l *Library) TabulateList(books []b.Book) (table string) {
 	}
 	var rows [][]string
 	for _, res := range books {
-		relativePath, err := filepath.Rel(l.Config.LibraryRoot, res.GetMainFilename())
+		relativePath, err := filepath.Rel(l.Config.LibraryRoot, res.FullPath())
 		if err != nil {
-			panic(errors.New("File " + res.GetMainFilename() + " not in library?"))
+			panic(errors.New("File " + res.FullPath() + " not in library?"))
 		}
 		rows = append(rows, []string{strconv.Itoa(res.ID), res.Metadata.Author(), res.Metadata.Title(), res.Metadata.Year, relativePath})
 	}

@@ -1,5 +1,5 @@
 /*
-Book is a subpackage of Endive, that aims to manipulate epub files and their metadata.
+Package book is a subpackage of Endive, that aims to manipulate epub files and their metadata.
 
 A Book can hold at most 2 epubs: a retail version and/or a non-retail version.
 

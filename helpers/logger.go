@@ -11,14 +11,16 @@ var format = logging.MustStringFormatter(
 	`%{time:15:04:05.000} | %{level:.1s} | %{shortfunc} ▶ %{message}`,
 )
 
+// GetLogger returns a global logger
 func GetLogger(name string) (log *logging.Logger, logFile *os.File) {
+	// TODO: use global vars, use everywhere
 	log = logging.MustGetLogger(name)
 
 	// TODO set log file in XDG dir
 	fileName := name
 	logFile, err := os.OpenFile(fileName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
-		fmt.Println("error opening file: %v", err)
+		fmt.Printf("error opening file: %v", err)
 		panic(err)
 	}
 

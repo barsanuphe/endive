@@ -77,7 +77,7 @@ func (ldb *DB) Index() (numIndexed uint64, err error) {
 
 	// index by filename
 	for _, book := range ldb.Books {
-		index.Index(book.GetMainFilename(), book)
+		index.Index(book.FullPath(), book)
 	}
 
 	// check number of indexed documents

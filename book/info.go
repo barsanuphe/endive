@@ -22,7 +22,7 @@ type Info struct {
 	Series        Series   `json:"series" xml:"series_works>series_work"`
 	AverageRating string   `json:"average_rating" xml:"average_rating"`
 	Tags          Tags     `json:"tags" xml:"popular_shelves>shelf"`
-	Language      string   `json:"-" xml:"TODO: FIND XML PATH"`
+	Language      string   `json:"language" xml:"language_code"`
 }
 
 // String returns a representation of a GoodreadsBook

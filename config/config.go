@@ -1,5 +1,5 @@
 /*
-Config is a subpackage of Endive.
+Package config is a subpackage of Endive.
 
 It aims at reading and checking the Endive configuration file.
 It also deals with the internal database of already imported files (tracked through their SHA256 hashes).

@@ -52,6 +52,15 @@ func (t *Tags) Add(tags ...Tag) (added bool) {
 	return
 }
 
+// AddFromNames Tags to the list, from []string
+func (t *Tags) AddFromNames(tags ...string) (added bool) {
+	newTags := Tags{}
+	for _, tag := range tags {
+		newTags = append(newTags, Tag{Name: tag})
+	}
+	return t.Add(newTags...)
+}
+
 // Remove Tags from the list
 func (t Tags) Remove(tags ...Tag) (removed bool) {
 	for i, tag := range tags {
@@ -61,6 +70,15 @@ func (t Tags) Remove(tags ...Tag) (removed bool) {
 		}
 	}
 	return
+}
+
+// RemoveFromNames Tags to the list, from []string
+func (t *Tags) RemoveFromNames(tags ...string) (added bool) {
+	newTags := Tags{}
+	for _, tag := range tags {
+		newTags = append(newTags, Tag{Name: tag})
+	}
+	return t.Remove(newTags...)
 }
 
 // Has finds out if a Tag is already in list.

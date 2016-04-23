@@ -1,8 +1,17 @@
 package library
 
-import "testing"
+import (
+	"testing"
+
+	cfg "github.com/barsanuphe/endive/config"
+)
 
 func TestSearch(t *testing.T) {
+	c := cfg.Config{}
+	k := cfg.KnownHashes{}
+	ldb := DB{DatabaseFile: "../test/endive.json"}
+	l := Library{c, k, ldb}
+
 	err := l.Load()
 	if err != nil {
 		t.Errorf("Error loading epubs from database: " + err.Error())
@@ -13,7 +22,7 @@ func TestSearch(t *testing.T) {
 	if err != nil {
 		t.Errorf("Error searching fr")
 	}
-	if len(res) != 1 && res[0].GetMainFilename() != "test/pg17989.epub" {
+	if len(res) != 1 && res[0].FullPath() != "test/pg17989.epub" {
 		t.Errorf("Error searching fr, unexpected results")
 	}
 
@@ -25,27 +34,28 @@ func TestSearch(t *testing.T) {
 		t.Errorf("Error indexing epubs from database, expected 2, got %d.", numIndexed)
 	}
 
-	res, err = l.Search("fr")
+	res, err = l.Search("metadata.language:fr")
 	if err != nil {
 		t.Errorf("Error searching fr")
 	}
-	if len(res) != 1 && res[0].GetMainFilename() != "test/pg17989.epub" {
+	if len(res) != 1 && res[0].FullPath() != "test/pg17989.epub" {
 		t.Errorf("Error searching fr, unexpected results")
 	}
-	res, err = l.Search("metadata.fields.creator:dumas")
+	res, err = l.Search("metadata.authors:dumas")
 	if err != nil {
-		t.Errorf("Error searching for metadata.fields.creator:dumas " + err.Error())
+		t.Errorf("Error searching for author:dumas " + err.Error())
 	}
 	if len(res) != 1 {
-		t.Errorf("Error searching metadata.fields.creator:dumas, got %d hits, expected 1.", len(res))
+		t.Errorf("Error searching author:dumas, got %d hits, expected 1.", len(res))
 	}
-	res, err = l.Search("metadata.fields.year:2005")
+	res, err = l.Search("metadata.year:2005")
 	if err != nil {
-		t.Errorf("Error searching for metadata.fields.year:2005")
+		t.Errorf("Error searching for year:2005")
 	}
 	if len(res) != 1 {
 		t.Errorf("Error searching metadata.fields.year:2005, got %d hits, expected 1.", len(res))
 	}
+	// TODO search all fields
 
 	/*
 		res, err = l.Search("publicationyear:2005")

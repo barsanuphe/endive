@@ -141,20 +141,20 @@ func (ldb *DB) FindByID(id int) (result *b.Book, err error) {
 }
 
 // FindByMetadata among known Books
-func (ldb *DB) FindByMetadata(i Info) (result *b.Book, err error) {
+func (ldb *DB) FindByMetadata(i b.Info) (result *b.Book, err error) {
 	// TODO tests
-	for i, book := range ldb.Books {
-		if book.Metadata.IsSimilar(info) {
-			return &ldb.Books[i], nil
+	for j, book := range ldb.Books {
+		if book.Metadata.IsSimilar(i) {
+			return &ldb.Books[j], nil
 		}
 	}
-	return &b.Book{}, errors.New("Could not find book with ID " + strconv.Itoa(id))
+	return &b.Book{}, errors.New("Could not find book with info " + i.String())
 }
 
 //FindByFilename among known Books
 func (ldb *DB) FindByFilename(filename string) (result *b.Book, err error) {
 	for i, bk := range ldb.Books {
-		if bk.RetailEpub.GetPath() == filename || bk.NonRetailEpub.GetPath() == filename {
+		if bk.RetailEpub.FullPath() == filename || bk.NonRetailEpub.FullPath() == filename {
 			return &ldb.Books[i], nil
 		}
 	}
@@ -193,7 +193,7 @@ func (ldb *DB) ListRetail() (retail []b.Book) {
 func (ldb *DB) ListAuthors() (authors map[string]int) {
 	authors = make(map[string]int)
 	for _, book := range ldb.Books {
-		author := book.Metadata.GetFirstValue("creator")
+		author := book.Metadata.Author()
 		authors[author]++
 	}
 	return
@@ -203,8 +203,8 @@ func (ldb *DB) ListAuthors() (authors map[string]int) {
 func (ldb *DB) ListTags() (tags map[string]int) {
 	tags = make(map[string]int)
 	for _, book := range ldb.Books {
-		for _, tag := range book.Tags {
-			tags[tag]++
+		for _, tag := range book.Metadata.Tags {
+			tags[tag.Name]++
 		}
 	}
 	return
@@ -213,7 +213,7 @@ func (ldb *DB) ListTags() (tags map[string]int) {
 // ListUntagged among known epubs.
 func (ldb *DB) ListUntagged() (untagged []b.Book) {
 	for _, book := range ldb.Books {
-		if len(book.Tags) == 0 {
+		if len(book.Metadata.Tags) == 0 {
 			untagged = append(untagged, book)
 		}
 	}
@@ -222,5 +222,6 @@ func (ldb *DB) ListUntagged() (untagged []b.Book) {
 
 // ListWithTag among known epubs.
 func (ldb *DB) ListWithTag(tag string) (tagged []b.Book, err error) {
+	// TODO
 	return
 }

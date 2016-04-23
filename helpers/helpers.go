@@ -1,5 +1,5 @@
 /*
-Helpers is a subpackage of Endive.
+Package helpers is a subpackage of Endive.
 
 It is a mix of helper functions, for file manipulation, logging, remote API access, and display.
 
@@ -75,7 +75,7 @@ func GetChoice(candidates []string) (index int, err error) {
 	default:
 		index, err := strconv.Atoi(choice)
 		if err == nil {
-			index -= 1
+			index--
 		}
 		fmt.Println(index)
 	}

@@ -50,7 +50,7 @@ func showInfo(lb *l.Library, c *cli.Context) {
 		fmt.Println("Error parsing arguments: " + err.Error())
 		return
 	}
-	relativePath, err := filepath.Rel(lb.ConfigurationFile.LibraryRoot, book.GetMainFilename())
+	relativePath, err := filepath.Rel(lb.Config.LibraryRoot, book.FullPath())
 	if err != nil {
 		panic(err)
 	}
@@ -62,7 +62,7 @@ func showInfo(lb *l.Library, c *cli.Context) {
 	rows = append(rows, []string{"Title", book.Metadata.Title()})
 	rows = append(rows, []string{"Publication Year", book.Metadata.Year})
 	if len(book.Metadata.Tags) != 0 {
-		rows = append(rows, []string{"Tags", strings.Join(book.Tags, " / ")})
+		rows = append(rows, []string{"Tags", book.Metadata.Tags.String()})
 	}
 	if len(book.Metadata.Series) != 0 {
 		rows = append(rows, []string{"Series", book.Metadata.Series.String()})
@@ -90,7 +90,7 @@ func listTags(lb *l.Library, c *cli.Context) (err error) {
 		return
 	}
 	fmt.Println(book.ShortString())
-	fmt.Println(strings.Join(book.Metadata.Tags, " / "))
+	fmt.Println(book.Metadata.Tags.String())
 	return
 }
 
@@ -100,7 +100,7 @@ func addTags(lb *l.Library, c *cli.Context) {
 		fmt.Println("Error parsing arguments")
 		return
 	}
-	if book.Metadata.Tags.Add(tags...) {
+	if book.Metadata.Tags.AddFromNames(tags...) {
 		fmt.Printf("Tags added to %s\n", book.ShortString())
 	}
 }
@@ -111,7 +111,7 @@ func removeTags(lb *l.Library, c *cli.Context) {
 		fmt.Println("Error parsing arguments")
 		return
 	}
-	if book.Metadata.Tags.Remove(tags...) {
+	if book.Metadata.Tags.RemoveFromNames(tags...) {
 		fmt.Printf("Tags removed from %s\n", book.ShortString())
 	}
 }
@@ -173,14 +173,14 @@ func search(lb *l.Library, c *cli.Context) {
 func importEpubs(lb *l.Library, c *cli.Context, isRetail bool) {
 	var err error
 	if isRetail {
-		if len(lb.ConfigurationFile.RetailSource) == 0 {
+		if len(lb.Config.RetailSource) == 0 {
 			fmt.Println("No retail source found in configuration file!")
 			return
 		}
 		fmt.Println("Importing retail epubs...")
 		err = lb.ImportRetail()
 	} else {
-		if len(lb.ConfigurationFile.NonRetailSource) == 0 {
+		if len(lb.Config.NonRetailSource) == 0 {
 			fmt.Println("No non-retail source found in configuration file!")
 			return
 		}
@@ -209,14 +209,14 @@ func generateCLI(lb *l.Library) (app *cli.App) {
 					Aliases: []string{"ls"},
 					Usage:   "show configuration",
 					Action: func(c *cli.Context) {
-						fmt.Println(lb.ConfigurationFile.String())
+						fmt.Println(lb.Config.String())
 					},
 				},
 				{
 					Name:  "aliases",
 					Usage: "show aliases defined in configuration",
 					Action: func(c *cli.Context) {
-						aliases := lb.ConfigurationFile.ListAuthorAliases()
+						aliases := lb.Config.ListAuthorAliases()
 						fmt.Println(aliases)
 					},
 				},

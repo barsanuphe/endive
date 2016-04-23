@@ -22,4 +22,6 @@ func TestLibrarySearch(t *testing.T) {
 		t.Errorf("Error running query: " + err.Error())
 	}
 	fmt.Println(results)
+	// TODO search all fields to check replacements
+
 }
