@@ -44,7 +44,7 @@ func (t *Tags) String() (text string) {
 // Add Tags to the list
 func (t *Tags) Add(tags ...Tag) (added bool) {
 	for _, tag := range tags {
-		if !t.Has(tag) {
+		if isIn, _ := t.Has(tag); !isIn {
 			*t = append(*t, tag)
 			added = true
 		}
@@ -62,10 +62,10 @@ func (t *Tags) AddFromNames(tags ...string) (added bool) {
 }
 
 // Remove Tags from the list
-func (t Tags) Remove(tags ...Tag) (removed bool) {
-	for i, tag := range tags {
-		if t.Has(tag) {
-			t = append(t[:i], t[i+1:]...)
+func (t *Tags) Remove(tags ...Tag) (removed bool) {
+	for _, tag := range tags {
+		if isIn, i := t.Has(tag); isIn {
+			*t = append((*t)[:i], (*t)[i+1:]...)
 			removed = true
 		}
 	}
@@ -73,7 +73,7 @@ func (t Tags) Remove(tags ...Tag) (removed bool) {
 }
 
 // RemoveFromNames Tags to the list, from []string
-func (t *Tags) RemoveFromNames(tags ...string) (added bool) {
+func (t *Tags) RemoveFromNames(tags ...string) (removed bool) {
 	newTags := Tags{}
 	for _, tag := range tags {
 		newTags = append(newTags, Tag{Name: tag})
@@ -82,13 +82,13 @@ func (t *Tags) RemoveFromNames(tags ...string) (added bool) {
 }
 
 // Has finds out if a Tag is already in list.
-func (t *Tags) Has(o Tag) (isIn bool) {
-	for _, tag := range *t {
+func (t *Tags) Has(o Tag) (isIn bool, index int) {
+	for i, tag := range *t {
 		if o.Name == tag.Name {
-			return true
+			return true, i
 		}
 	}
-	return false
+	return
 }
 
 // Clean a list of tags.
