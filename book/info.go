@@ -1,6 +1,7 @@
 package book
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -127,17 +128,22 @@ func (i *Info) Merge(o Info) (err error) {
 	// TODO tests
 	// TODO all fields
 	if i.Author() != o.Author() {
-		index, err := h.Choose(i.Author(), o.Author())
+		fmt.Println("Authors: ")
+		index, userInput, err := h.Choose(i.Author(), o.Author())
 		if err != nil {
 			return err
 		}
 		if index == 1 {
 			i.Authors = o.Authors
 		}
+		if index == -1 && userInput != "" {
+			// TODO trim
+			i.Authors = strings.Split(userInput, ",")
+		}
 	}
-
 	if i.Title() != o.Title() {
-		index, err := h.Choose(i.Title(), o.Title())
+		fmt.Println("Title: ")
+		index, userInput, err := h.Choose(i.Title(), o.Title())
 		if err != nil {
 			return err
 		}
@@ -146,39 +152,56 @@ func (i *Info) Merge(o Info) (err error) {
 			i.MainTitle = o.MainTitle
 			i.OriginalTitle = o.OriginalTitle
 		}
+		if index == -1 && userInput != "" {
+			i.MainTitle = userInput
+			i.OriginalTitle = userInput
+		}
 	}
-
-	i.Year, err = chooseFieldVersion(i.Year, o.Year)
+	i.Year, err = chooseFieldVersion("Publication year", i.Year, o.Year)
 	if err != nil {
 		return
 	}
-	i.Description, err = chooseFieldVersion(i.Description, o.Description)
+	i.Description, err = chooseFieldVersion("Description", i.Description, o.Description)
 	if err != nil {
 		return
 	}
-	i.Language, err = chooseFieldVersion(i.Language, o.Language)
+	i.Language, err = chooseFieldVersion("Language",i.Language, o.Language)
 	if err != nil {
 		return
 	}
 	if i.Tags.String() != o.Tags.String() {
-		index, err := h.Choose(i.Tags.String(), o.Tags.String())
+		fmt.Println("Tags: ")
+		index, userInput, err := h.Choose(i.Tags.String(), o.Tags.String())
 		if err != nil {
 			return err
 		}
 		if index == 1 {
 			i.Tags = o.Tags
 		}
+		if index == -1 && userInput != "" {
+			i.Tags = Tags{}
+			i.Tags.AddFromNames(strings.Split(userInput, ",")...)
+			i.Tags.Clean()
+		}
 	}
 	if i.Series.String() != o.Series.String() {
-		index, err := h.Choose(i.Series.String(), o.Series.String())
+		fmt.Println("Series: ")
+		index, userInput, err := h.Choose(i.Series.String(), o.Series.String())
 		if err != nil {
 			return err
 		}
 		if index == 1 {
 			i.Series = o.Series
 		}
+		if index == -1 && userInput != "" {
+			// TODO do better, what about position?
+			i.Series = Series{}
+			for _, s := range strings.Split(userInput, ",") {
+				i.Series.Add(s, 0)
+			}
+		}
 	}
-	i.ISBN, err = chooseFieldVersion(i.ISBN, o.ISBN)
+	i.ISBN, err = chooseFieldVersion("ISBN", i.ISBN, o.ISBN)
 	if err != nil {
 		return
 	}
@@ -189,16 +212,22 @@ func (i *Info) Merge(o Info) (err error) {
 	return
 }
 
-func chooseFieldVersion(local, remote string) (choice string, err error) {
+func chooseFieldVersion(title, local, remote string) (choice string, err error) {
+	fmt.Printf("* %s: \n", title)
 	if local == remote {
 		return local, err
 	}
-	index, err := h.Choose(local, remote)
+	index, userInput, err := h.Choose(local, remote)
 	if err != nil {
 		// in case of error, return original version
 		return local, err
 	}
 	switch index {
+	case -1:
+		if userInput != "" {
+			return userInput, err
+		}
+		return local, errors.New("Empty user input")
 	case 0:
 		return local, err
 	case 1:

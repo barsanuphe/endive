@@ -70,17 +70,29 @@ func TabulateMap(input map[string]int, firstHeader string, secondHeader string) 
 }
 
 // Choose displays a list of candidates and returns the user's pick
-func Choose(candidates ...string) (index int, err error) {
+func Choose(candidates ...string) (index int, userInput string, err error) {
 	for i, choice := range candidates {
 		fmt.Printf("%d. %s\n", i+1, choice)
 	}
-	fmt.Printf("Choose: [1-%d], (A)bort? ", len(candidates))
+	fmt.Printf("Choose: [1-%d], (E)nter manually, (A)bort? ", len(candidates))
 	scanner := bufio.NewReader(os.Stdin)
 	choice, _ := scanner.ReadString('\n')
 	choice = strings.TrimSpace(choice)
 	switch choice {
 	case "a", "A", "abort":
-		return -1, errors.New("Abort")
+		return -1, "", errors.New("Abort")
+	case "e", "E", "enter":
+		fmt.Printf("Enter new value: ")
+		choice, _ = scanner.ReadString('\n')
+		choice = strings.TrimSpace(choice)
+		confirmed := YesOrNo("Confirm: " + choice)
+		if confirmed {
+			userInput = choice
+			index = -1
+		} else {
+			fmt.Println("Manual entry not confirmed. Sticking with original value.")
+			index = 0
+		}
 	default:
 		index, err = strconv.Atoi(choice)
 		if err != nil {
