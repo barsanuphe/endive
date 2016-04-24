@@ -69,23 +69,36 @@ func TabulateMap(input map[string]int, firstHeader string, secondHeader string) 
 	return TabulateRows(rows, firstHeader, secondHeader)
 }
 
-// GetChoice displays a list of candidates and returns the user's pick
-func GetChoice(candidates []string) (index int, err error) {
+// Choose displays a list of candidates and returns the user's pick
+func Choose(candidates ...string) (index int, err error) {
 	for i, choice := range candidates {
 		fmt.Printf("%d. %s\n", i+1, choice)
 	}
 	fmt.Printf("Choose: [1-%d], (A)bort? ", len(candidates))
 	scanner := bufio.NewReader(os.Stdin)
 	choice, _ := scanner.ReadString('\n')
-	switch strings.TrimSpace(choice) {
+	choice = strings.TrimSpace(choice)
+	switch choice {
 	case "a", "A", "abort":
 		return -1, errors.New("Abort")
 	default:
-		index, err := strconv.Atoi(choice)
-		if err == nil {
-			index--
+		index, err = strconv.Atoi(choice)
+		if err != nil {
+			err = errors.New("Incorrect input")
 		}
-		fmt.Println(index)
+		index--
+	}
+	return
+}
+
+// YesOrNo asks a question and returns the answer
+func YesOrNo(question string) (yes bool) {
+	fmt.Printf("%s (y)/(n)? ", question)
+	scanner := bufio.NewReader(os.Stdin)
+	choice, _ := scanner.ReadString('\n')
+	switch strings.TrimSpace(choice) {
+	case "y", "Y", "yes":
+		yes = true
 	}
 	return
 }

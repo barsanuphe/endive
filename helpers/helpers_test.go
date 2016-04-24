@@ -61,9 +61,9 @@ func TestHelpersListEpubs(t *testing.T) {
 func TestHelpersChoice(t *testing.T) {
 	fmt.Println("+ Testing Helpers/GetChoice()...")
 	candidates := []string{"one", "two"}
-	idx, err := GetChoice(candidates)
-	if err != nil || idx != 0 {
-		t.Errorf("Error with GetChoice")
+	idx, err := Choose(candidates...)
+	if err.Error() != "Incorrect input" || idx != -1 {
+		t.Errorf("Expected GetChoice to fail without input")
 	}
 
 }
