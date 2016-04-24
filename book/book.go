@@ -366,6 +366,11 @@ func (e *Book) Check() (retailHasChanged bool, nonRetailHasChanged bool, err err
 
 // SearchOnline tries to find metadata from online sources.
 func (e *Book) SearchOnline() (err error) {
+	if e.Config.GoodReadsAPIKey == "" {
+		fmt.Println("Goodreads API key not found, not getting online information.")
+		return
+	}
+
 	// TODO tests
 	// TODO: if e.Metadata.ISBN exists, GetBookIDByISBN(e.Metadata.ISBN, e.Config.GoodReadsAPIKey)
 	// TODO: if unsure, show hits
@@ -388,7 +393,10 @@ func (e *Book) SearchOnline() (err error) {
 		e.Metadata = onlineInfo
 	case "f", "F", "Field":
 		fmt.Println("Going through every field.")
-		// TODO
+		err = e.Metadata.Merge(onlineInfo)
+		if err != nil {
+			return err
+		}
 	case "s", "S", "Search":
 		fmt.Println("Searching again.")
 		// TODO GetBookIDByQuery but show hits instead of choosing automatically

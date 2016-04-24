@@ -121,3 +121,88 @@ func (i *Info) Diff(o Info, firstHeader, secondHeader string) (diff string) {
 	rows = append(rows, []string{i.Language, o.Language})
 	return h.TabulateRows(rows, firstHeader, secondHeader)
 }
+
+// Merge with another Info.
+func (i *Info) Merge(o Info) (err error) {
+	// TODO tests
+	// TODO all fields
+	if i.Author() != o.Author() {
+		index, err := h.Choose(i.Author(), o.Author())
+		if err != nil {
+			return err
+		}
+		if index == 1 {
+			i.Authors = o.Authors
+		}
+	}
+
+	if i.Title() != o.Title() {
+		index, err := h.Choose(i.Title(), o.Title())
+		if err != nil {
+			return err
+		}
+		if index == 1 {
+			// TODO show both versions?
+			i.MainTitle = o.MainTitle
+			i.OriginalTitle = o.OriginalTitle
+		}
+	}
+
+	i.Year, err = chooseFieldVersion(i.Year, o.Year)
+	if err != nil {
+		return
+	}
+	i.Description, err = chooseFieldVersion(i.Description, o.Description)
+	if err != nil {
+		return
+	}
+	i.Language, err = chooseFieldVersion(i.Language, o.Language)
+	if err != nil {
+		return
+	}
+	if i.Tags.String() != o.Tags.String() {
+		index, err := h.Choose(i.Tags.String(), o.Tags.String())
+		if err != nil {
+			return err
+		}
+		if index == 1 {
+			i.Tags = o.Tags
+		}
+	}
+	if i.Series.String() != o.Series.String() {
+		index, err := h.Choose(i.Series.String(), o.Series.String())
+		if err != nil {
+			return err
+		}
+		if index == 1 {
+			i.Series = o.Series
+		}
+	}
+	i.ISBN, err = chooseFieldVersion(i.ISBN, o.ISBN)
+	if err != nil {
+		return
+	}
+	// automatically fill fields usually not found in epubs.
+	i.ImageURL = o.ImageURL
+	i.NumPages = o.NumPages
+	i.AverageRating = o.AverageRating
+	return
+}
+
+func chooseFieldVersion(local, remote string) (choice string, err error) {
+	if local == remote {
+		return local, err
+	}
+	index, err := h.Choose(local, remote)
+	if err != nil {
+		// in case of error, return original version
+		return local, err
+	}
+	switch index {
+	case 0:
+		return local, err
+	case 1:
+		return remote, err
+	}
+	return
+}
