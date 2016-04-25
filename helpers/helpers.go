@@ -117,11 +117,11 @@ func YesOrNo(question string) (yes bool) {
 }
 
 // BlueBold outputs a string in blue bold.
-func BlueBold(in string) (out string) {
+func BlueBold(in string) string {
 	return chalk.Bold.TextStyle(chalk.Blue.Color(in))
 }
 
 // GreenBold outputs a string in green bold.
-func GreenBold(in string) (out string) {
+func GreenBold(in string) string {
 	return chalk.Bold.TextStyle(chalk.Green.Color(in))
 }

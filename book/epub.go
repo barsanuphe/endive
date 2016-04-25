@@ -68,8 +68,8 @@ func (e *Epub) ReadMetadata() (info Info, err error) {
 	defer book.Close()
 
 	// year
-	dateEvents, dateErr := book.MetadataElement("date")
-	if dateErr != nil || len(dateEvents) == 0 {
+	dateEvents, nonFatalErr := book.MetadataElement("date")
+	if nonFatalErr != nil || len(dateEvents) == 0 {
 		h.Logger.Error("Error parsing EPUB: no date found")
 	} else {
 		found := false
@@ -93,31 +93,31 @@ func (e *Epub) ReadMetadata() (info Info, err error) {
 		}
 	}
 	// title
-	results, err := book.MetadataElement("title")
-	if err == nil && len(results) != 0 {
+	results, nonFatalErr := book.MetadataElement("title")
+	if nonFatalErr == nil && len(results) != 0 {
 		info.MainTitle = results[0].Content
 	}
 	// authors
-	results, err = book.MetadataElement("creator")
-	if err == nil && len(results) != 0 {
+	results, nonFatalErr = book.MetadataElement("creator")
+	if nonFatalErr == nil && len(results) != 0 {
 		info.Authors = []string{}
 		for _, t := range results {
 			info.Authors = append(info.Authors, t.Content)
 		}
 	}
 	// language
-	results, err = book.MetadataElement("language")
-	if err == nil && len(results) != 0 {
+	results, nonFatalErr = book.MetadataElement("language")
+	if nonFatalErr == nil && len(results) != 0 {
 		info.Language = results[0].Content
 	}
 	// description
-	results, err = book.MetadataElement("description")
-	if err == nil && len(results) != 0 {
+	results, nonFatalErr = book.MetadataElement("description")
+	if nonFatalErr == nil && len(results) != 0 {
 		info.Description = results[0].Content
 	}
 	// tags
-	results, err = book.MetadataElement("subject")
-	if err == nil && len(results) != 0 {
+	results, nonFatalErr = book.MetadataElement("subject")
+	if nonFatalErr == nil && len(results) != 0 {
 		info.Tags = Tags{}
 		for _, t := range results {
 			tag := Tag{Name: t.Content}

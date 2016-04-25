@@ -21,7 +21,7 @@ var forbiddenTags = []string{
 	"star", "release", "wait", "soon", "wish", "published", "want",
 	"tbr", "series", "finish", "to-", "not-", "library", "audible",
 	"coming", "anticipated", "default", "recommended", "-list", "sequel",
-	"general",
+	"general", "have",
 }
 
 // Tag holds the name of a tag.

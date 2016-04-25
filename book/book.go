@@ -313,7 +313,7 @@ func (e *Book) Import(path string, isRetail bool, hash string) (imported bool, e
 	// get online data
 	err = e.SearchOnline()
 	if err != nil {
-		return
+		h.Logger.Warning(err.Error())
 	}
 
 	// rename
@@ -381,8 +381,8 @@ func (e *Book) SearchOnline() (err error) {
 	onlineInfo := GetBook(id, e.Config.GoodReadsAPIKey)
 	// show diff between epub and GR versions, then ask what to do.
 	fmt.Println(e.Metadata.Diff(onlineInfo, "Local", "GoodReads"))
-	h.GreenBold("Accept in (B)ulk? Choose (F)ield by field? (S)earch again? (A)bort? ")
 
+	fmt.Printf(h.GreenBold("Accept in (B)ulk? Choose (F)ield by field? (S)earch again? (A)bort? "))
 	scanner := bufio.NewReader(os.Stdin)
 	choice, _ := scanner.ReadString('\n')
 	switch strings.TrimSpace(choice) {
