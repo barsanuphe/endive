@@ -138,6 +138,12 @@ func (l *Library) importEpubs(allEpubs []string, allHashes []string, isRetail bo
 				return err
 			}
 
+			// ask if user really wants to import it
+			confirmImport := h.YesOrNo(fmt.Sprintf("Found %s (%s).\nImport", filepath.Base(path), info.String()))
+			if !confirmImport {
+				continue
+			}
+
 			// loop over Books to find similar Metadata
 			var imported bool
 			knownBook, err := l.FindByMetadata(info)

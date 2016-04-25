@@ -165,7 +165,7 @@ func (i *Info) Merge(o Info) (err error) {
 	if err != nil {
 		return
 	}
-	i.Language, err = chooseFieldVersion("Language",i.Language, o.Language)
+	i.Language, err = chooseFieldVersion("Language", i.Language, o.Language)
 	if err != nil {
 		return
 	}

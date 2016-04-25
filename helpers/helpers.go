@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/bndr/gotabulate"
+	"github.com/ttacon/chalk"
 )
 
 // TimeTrack helps track the time taken by a function.
@@ -74,7 +75,7 @@ func Choose(candidates ...string) (index int, userInput string, err error) {
 	for i, choice := range candidates {
 		fmt.Printf("%d. %s\n", i+1, choice)
 	}
-	fmt.Printf("Choose: [1-%d], (E)nter manually, (A)bort? ", len(candidates))
+	fmt.Printf(GreenBold("Choose: [1-%d], (E)nter manually, (A)bort? "), len(candidates))
 	scanner := bufio.NewReader(os.Stdin)
 	choice, _ := scanner.ReadString('\n')
 	choice = strings.TrimSpace(choice)
@@ -105,7 +106,7 @@ func Choose(candidates ...string) (index int, userInput string, err error) {
 
 // YesOrNo asks a question and returns the answer
 func YesOrNo(question string) (yes bool) {
-	fmt.Printf("%s (y)/(n)? ", question)
+	fmt.Printf(BlueBold("%s (y)/(n)? "), question)
 	scanner := bufio.NewReader(os.Stdin)
 	choice, _ := scanner.ReadString('\n')
 	switch strings.TrimSpace(choice) {
@@ -113,4 +114,14 @@ func YesOrNo(question string) (yes bool) {
 		yes = true
 	}
 	return
+}
+
+// BlueBold outputs a string in blue bold.
+func BlueBold(in string) (out string) {
+	return chalk.Bold.TextStyle(chalk.Blue.Color(in))
+}
+
+// GreenBold outputs a string in green bold.
+func GreenBold(in string) (out string) {
+	return chalk.Bold.TextStyle(chalk.Green.Color(in))
 }
