@@ -4,8 +4,27 @@ import (
 	"fmt"
 	"testing"
 
+	"os"
+
 	cfg "github.com/barsanuphe/endive/config"
+	h "github.com/barsanuphe/endive/helpers"
 )
+
+func TestMain(m *testing.M) {
+	// init logger
+	err := h.GetLogger("log_testing")
+	if err != nil {
+		panic(err)
+	}
+	// do the actual testing
+	retCode := m.Run()
+	// cleanup
+	h.LogFile.Close()
+	if err := os.Remove("log_testing"); err != nil {
+		panic(err)
+	}
+	os.Exit(retCode)
+}
 
 func TestLibrarySearch(t *testing.T) {
 	c := cfg.Config{}

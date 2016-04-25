@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	c "github.com/barsanuphe/endive/config"
-	"github.com/barsanuphe/endive/helpers"
+	cfg "github.com/barsanuphe/endive/config"
+	h "github.com/barsanuphe/endive/helpers"
 )
 
 var epubs = []struct {
@@ -50,16 +50,30 @@ var epubs = []struct {
 }
 
 var parentDir string
-var standardTestConfig c.Config
+var standardTestConfig cfg.Config
 var isRetail = true
 
-func init() {
+func TestMain(m *testing.M) {
+	// init global variables
 	wd, err := os.Getwd()
 	if err != nil {
 		panic(err)
 	}
 	parentDir = filepath.Dir(wd)
-	standardTestConfig = c.Config{LibraryRoot: parentDir}
+	standardTestConfig = cfg.Config{LibraryRoot: parentDir}
+	// init logger
+	err = h.GetLogger("log_testing")
+	if err != nil {
+		panic(err)
+	}
+	// do the actual testing
+	retCode := m.Run()
+	// cleanup
+	h.LogFile.Close()
+	if err := os.Remove("log_testing"); err != nil {
+		panic(err)
+	}
+	os.Exit(retCode)
 }
 
 // TestBookJSON tests both JSON() and FromJSON().
@@ -148,14 +162,14 @@ func TestBookNewName(t *testing.T) {
 
 func TestBookRefresh(t *testing.T) {
 	fmt.Println("+ Testing Book.Refresh()...")
-	cfg := c.Config{EpubFilenameFormat: "$a $y $t", LibraryRoot: parentDir}
+	cfg := cfg.Config{EpubFilenameFormat: "$a $y $t", LibraryRoot: parentDir}
 	for i, testEpub := range epubs {
 		// copy testEpub.filename
 		epubFilename := filepath.Base(testEpub.filename)
 		epubDir := filepath.Dir(testEpub.filename)
 		tempCopy := filepath.Join(parentDir, epubDir, "temp_"+epubFilename)
 
-		err := helpers.CopyFile(filepath.Join(parentDir, testEpub.filename), tempCopy)
+		err := h.CopyFile(filepath.Join(parentDir, testEpub.filename), tempCopy)
 		if err != nil {
 			t.Errorf("Error copying %s to %s", testEpub.filename, tempCopy)
 		}

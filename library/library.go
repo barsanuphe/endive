@@ -80,7 +80,7 @@ func OpenLibrary() (l Library, err error) {
 
 // ImportRetail imports epubs from the Retail source.
 func (l *Library) ImportRetail() (err error) {
-	fmt.Println("Library: Importing retail epubs...")
+	h.Logger.Debug("Importing retail epubs...")
 	defer h.TimeTrack(time.Now(), "Imported")
 
 	// checking all defined sources
@@ -99,7 +99,7 @@ func (l *Library) ImportRetail() (err error) {
 
 // ImportNonRetail imports epubs from the Non-Retail source.
 func (l *Library) ImportNonRetail() (err error) {
-	fmt.Println("Library: Importing non-retail epubs...")
+	h.Logger.Debug("Importing non-retail epubs...")
 	defer h.TimeTrack(time.Now(), "Imported")
 
 	// checking all defined sources
@@ -157,7 +157,7 @@ func (l *Library) importEpubs(allEpubs []string, allHashes []string, isRetail bo
 				l.Books = append(l.Books, *bk)
 			} else {
 				// add to existing book
-				fmt.Println("Adding epub to " + knownBook.ShortString())
+				h.Logger.Infof("Adding epub to " + knownBook.ShortString())
 				imported, err = knownBook.AddEpub(path, isRetail, hash)
 				if err != nil {
 					return err
@@ -174,20 +174,20 @@ func (l *Library) importEpubs(allEpubs []string, allHashes []string, isRetail bo
 				newEpubs++
 			}
 		} else {
-			fmt.Println("Ignoring already imported epub " + path)
+			h.Logger.Infof("Ignoring already imported epub " + filepath.Base(path))
 		}
 	}
 	if isRetail {
-		fmt.Printf("Found %d retail epubs.\n", newEpubs)
+		h.Logger.Infof("Found %d retail epubs.\n", newEpubs)
 	} else {
-		fmt.Printf("Found %d non-retail epubs.\n", newEpubs)
+		h.Logger.Infof("Found %d non-retail epubs.\n", newEpubs)
 	}
 	return
 }
 
 // Refresh current DB
 func (l *Library) Refresh() (renamed int, err error) {
-	fmt.Println("Refreshing database...")
+	h.Logger.Info("Refreshing database...")
 
 	// scan for new epubs
 	allEpubs, allHashes, err := h.ListEpubsInDirectory(l.Config.LibraryRoot)
@@ -201,7 +201,7 @@ func (l *Library) Refresh() (renamed int, err error) {
 	for i, epub := range allEpubs {
 		_, err = l.FindByFilename(epub)
 		if err != nil { // no error == found Epub
-			fmt.Println("NEW EPUB " + epub + " , will be imported as non-retail.")
+			h.Logger.Info("NEW EPUB " + epub + " , will be imported as non-retail.")
 			newEpubs = append(newEpubs, epub)
 			newHashes = append(newHashes, allHashes[i])
 		}

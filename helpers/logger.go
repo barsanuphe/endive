@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/op/go-logging"
+	"launchpad.net/go-xdg"
 )
 
 // Logger provides a logger to both stdout and a log file (for debug).
@@ -16,6 +17,18 @@ var LogFile *os.File
 var format = logging.MustStringFormatter(
 	`%{time:15:04:05.000} | %{level:.1s} | %{shortfunc} ▶ %{message}`,
 )
+
+// GetEndiveLogger is the main logger, ensure the log file is in the correct XDG directory.
+func GetEndiveLogger(xdgPath string) (err error) {
+	logPath, err := xdg.Data.Find(xdgPath)
+	if err != nil {
+		logPath, err = xdg.Data.Ensure(xdgPath)
+		if err != nil {
+			return
+		}
+	}
+	return GetLogger(logPath)
+}
 
 // GetLogger returns a global logger
 func GetLogger(name string) (err error) {

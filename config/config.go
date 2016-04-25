@@ -13,7 +13,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/barsanuphe/endive/helpers"
+	h "github.com/barsanuphe/endive/helpers"
+
 	"github.com/spf13/viper"
 	"launchpad.net/go-xdg"
 )
@@ -23,6 +24,8 @@ const (
 	Endive           = "endive"
 	xdgConfigPath    = Endive + "/" + Endive + ".yaml"
 	databaseFilename = Endive + ".json"
+	// XdgLogPath is the path for the main log file.
+	XdgLogPath = Endive + "/" + Endive + ".log"
 )
 
 // Config holds all relevant information
@@ -46,14 +49,14 @@ func GetConfigPath() (configFile string, err error) {
 		if err != nil {
 			return
 		}
-		fmt.Println("Configuration file", xdgConfigPath, "created. Populate it.")
+		h.Logger.Info("Configuration file", xdgConfigPath, "created. Populate it.")
 	}
 	return
 }
 
 // Load configuration file using viper.
 func (c *Config) Load() (err error) {
-	fmt.Printf("Loading Config %s...\n", c.Filename)
+	h.Logger.Debugf("Loading Config %s...\n", c.Filename)
 	conf := viper.New()
 	conf.SetConfigType("yaml")
 	conf.SetConfigFile(c.Filename)
@@ -81,7 +84,7 @@ func (c *Config) Load() (err error) {
 	if c.GoodReadsAPIKey == "" {
 		c.GoodReadsAPIKey = os.Getenv("GR_API_KEY")
 		if c.GoodReadsAPIKey == "" {
-			fmt.Println("Warning: no GoodReads API key found! go to https://www.goodreads.com/api/keys to get one.")
+			h.Logger.Warning("Warning: no GoodReads API key found! go to https://www.goodreads.com/api/keys to get one.")
 		}
 	}
 
@@ -90,19 +93,21 @@ func (c *Config) Load() (err error) {
 
 // Check if the paths in the configuration file are valid, and if the EpubFilename Format is ok.
 func (c *Config) Check() (err error) {
-	fmt.Println("Checking Config...")
-	if !helpers.DirectoryExists(c.LibraryRoot) {
-		return errors.New("Library root " + c.LibraryRoot + " does not exist")
+	h.Logger.Debug("Checking Config...")
+	if !h.DirectoryExists(c.LibraryRoot) {
+		err = errors.New("Library root " + c.LibraryRoot + " does not exist")
+		h.Logger.Error(err.Error())
+		return err
 	}
 	// checking for sources, warnings only.
 	for _, source := range c.RetailSource {
-		if !helpers.DirectoryExists(source) {
-			fmt.Println("Warning: retail source " + source + " does not exist.")
+		if !h.DirectoryExists(source) {
+			h.Logger.Warning("Warning: retail source " + source + " does not exist.")
 		}
 	}
 	for _, source := range c.NonRetailSource {
-		if !helpers.DirectoryExists(source) {
-			fmt.Println("Warning: non-retail source " + source + " does not exist.")
+		if !h.DirectoryExists(source) {
+			h.Logger.Warning("Warning: non-retail source " + source + " does not exist.")
 		}
 	}
 	return
@@ -120,5 +125,6 @@ func (c *Config) ListAuthorAliases() (allAliases string) {
 // String displays all configuration information.
 func (c *Config) String() (err error) {
 	fmt.Println("Printing Config contents...")
+	// TODO
 	return
 }

@@ -441,7 +441,7 @@ func generateCLI(lb *l.Library) (app *cli.App) {
 func main() {
 	fmt.Println(chalk.Bold.TextStyle("\n# # # E N D I V E # # #\n"))
 
-	err := h.GetLogger(cfg.Endive)
+	err := h.GetEndiveLogger(cfg.XdgLogPath)
 	defer h.LogFile.Close()
 
 	// get library

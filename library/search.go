@@ -2,25 +2,23 @@ package library
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
-	"log"
 	"strconv"
 
 	b "github.com/barsanuphe/endive/book"
+	h "github.com/barsanuphe/endive/helpers"
+
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/analysis/language/en"
 )
 
 func buildIndexMapping() (*bleve.IndexMapping, error) {
 	// TODO index everything
-
 	// a generic reusable mapping for english text
 	textFieldMapping := bleve.NewTextFieldMapping()
 	textFieldMapping.Analyzer = en.AnalyzerName
 
 	epubMapping := bleve.NewDocumentMapping()
-
 	epubMapping.AddFieldMappingsAt("progress", textFieldMapping)
 	epubMapping.AddFieldMappingsAt("description", textFieldMapping)
 	epubMapping.AddFieldMappingsAt("language", textFieldMapping)
@@ -43,18 +41,18 @@ func buildIndexMapping() (*bleve.IndexMapping, error) {
 func openIndex() (index bleve.Index, isNew bool) {
 	index, err := bleve.Open(getIndexPath())
 	if err == bleve.ErrorIndexPathDoesNotExist {
-		log.Printf("Creating new index...")
+		h.Logger.Debug("Creating new index...")
 		// create a mapping
 		indexMapping, err := buildIndexMapping()
 		index, err = bleve.New(getIndexPath(), indexMapping)
 		if err != nil {
-			log.Fatal(err)
+			h.Logger.Error(err.Error())
 		}
 		isNew = true
 	} else if err == nil {
 		//log.Printf("Opening existing index...")
 	} else {
-		log.Fatal(err)
+		h.Logger.Error(err.Error())
 	}
 	return index, isNew
 }
@@ -72,7 +70,7 @@ func (ldb *DB) Index() (numIndexed uint64, err error) {
 	}
 	err = json.Unmarshal(jsonBytes, &ldb.Books)
 	if err != nil {
-		fmt.Print("Error:", err)
+		h.Logger.Error("Error:", err)
 	}
 
 	// index by filename
@@ -85,7 +83,7 @@ func (ldb *DB) Index() (numIndexed uint64, err error) {
 	if err != nil {
 		return
 	}
-	fmt.Println("Indexed: " + strconv.FormatUint(numIndexed, 10) + " epubs.")
+	h.Logger.Debug("Indexed: " + strconv.FormatUint(numIndexed, 10) + " epubs.")
 	return
 }
 
@@ -100,12 +98,12 @@ func (ldb *DB) Search(queryString string) (results []b.Book, err error) {
 	if isNew {
 		index.Close()
 		// indexing db
-		fmt.Println("New index, populating...")
+		h.Logger.Debug("New index, populating...")
 		numIndexed, err := ldb.Index()
 		if err != nil {
 			return nil, err
 		}
-		fmt.Println("Saved and indexed " + strconv.FormatUint(numIndexed, 10) + " epubs.")
+		h.Logger.Debug("Saved and indexed " + strconv.FormatUint(numIndexed, 10) + " epubs.")
 		// reopening
 		index, _ = openIndex()
 	}
@@ -113,7 +111,7 @@ func (ldb *DB) Search(queryString string) (results []b.Book, err error) {
 
 	searchResults, err := index.Search(search)
 	if err != nil {
-		fmt.Println(err)
+		h.Logger.Error(err.Error())
 		return
 	}
 	//fmt.Println(searchResults.Total)

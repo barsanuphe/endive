@@ -1,7 +1,6 @@
 package book
 
 import (
-	"fmt"
 	"path/filepath"
 
 	cfg "github.com/barsanuphe/endive/config"
@@ -60,10 +59,10 @@ func (e *Epub) Check() (hasChanged bool, err error) {
 
 // ReadMetadata from epub file
 func (e *Epub) ReadMetadata() (info Info, err error) {
-	fmt.Println("Reading metadata from " + e.FullPath())
+	h.Logger.Debugf("Reading metadata from %s\n", e.FullPath())
 	book, err := epubgo.Open(e.FullPath())
 	if err != nil {
-		fmt.Println("Error parsing EPUB")
+		h.Logger.Error("Error parsing EPUB")
 		return
 	}
 	defer book.Close()
@@ -71,7 +70,7 @@ func (e *Epub) ReadMetadata() (info Info, err error) {
 	// year
 	dateEvents, dateErr := book.MetadataElement("date")
 	if dateErr != nil || len(dateEvents) == 0 {
-		fmt.Println("Error parsing EPUB: no date found")
+		h.Logger.Error("Error parsing EPUB: no date found")
 	} else {
 		found := false
 		// try to find date associated with "publication" event
@@ -131,7 +130,7 @@ func (e *Epub) ReadMetadata() (info Info, err error) {
 	// TODO "source", "relation", "coverage", "rights", "meta",
 
 	if info.Refresh(e.Config) {
-		fmt.Println("Found author alias: " + info.Author())
+		h.Logger.Info("Found author alias: " + info.Author())
 	}
 
 	return

@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	h "github.com/barsanuphe/endive/helpers"
+
 	"launchpad.net/go-xdg"
 )
 
@@ -39,14 +40,14 @@ func GetKnownHashesPath() (hashesFile string, err error) {
 		if err != nil {
 			return
 		}
-		fmt.Println("Known hashes file", hashesFile, "created.")
+		h.Logger.Debug("Known hashes file", hashesFile, "created.")
 	}
 	return
 }
 
 // Load the known hashes.
 func (k *KnownHashes) Load() (err error) {
-	fmt.Println("Loading known hashes database.")
+	h.Logger.Debug("Loading known hashes database.")
 	hashesBytes, err := ioutil.ReadFile(k.Filename)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -75,7 +76,7 @@ func (k *KnownHashes) Save() (modified bool, err error) {
 			return modified, err
 		}
 		// writing db
-		fmt.Println("Saving known hashes database.")
+		h.Logger.Debug("Saving known hashes database.")
 		err = ioutil.WriteFile(k.Filename, hashesJSON, 0777)
 		if err != nil {
 			return modified, err
@@ -86,7 +87,6 @@ func (k *KnownHashes) Save() (modified bool, err error) {
 
 // Add a hash to the database.
 func (k *KnownHashes) Add(hash string) (added bool, err error) {
-	// TODO check if valid hash? verif taille par ex
 	if len(hash) != 64 {
 		return false, errors.New("SHA256 hash should be 64 characters long, not " + strconv.Itoa(len(hash)))
 	}

@@ -23,7 +23,7 @@ import (
 // TimeTrack helps track the time taken by a function.
 func TimeTrack(start time.Time, name string) {
 	elapsed := time.Since(start)
-	fmt.Printf("-- [%s in %s]\n", name, elapsed)
+	Logger.Debugf("-- %s in %s\n", name, elapsed)
 }
 
 // StringInSlice checks if a string is in a []string.

@@ -12,6 +12,7 @@ import (
 
 	b "github.com/barsanuphe/endive/book"
 	cfg "github.com/barsanuphe/endive/config"
+	h "github.com/barsanuphe/endive/helpers"
 
 	"launchpad.net/go-xdg"
 )
@@ -40,7 +41,7 @@ type DB struct {
 
 // Load current DB
 func (ldb *DB) Load() (err error) {
-	fmt.Println("Loading database...")
+	h.Logger.Debug("Loading database...")
 	bytes, err := ioutil.ReadFile(ldb.DatabaseFile)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -72,7 +73,7 @@ func (ldb *DB) Save() (hasSaved bool, err error) {
 	}
 
 	if !bytes.Equal(jsonEpub, jsonEpubOld) {
-		fmt.Println("Changes detected, saving database...")
+		h.Logger.Debug("Changes detected, saving database...")
 		// writing db
 		err = ioutil.WriteFile(ldb.DatabaseFile, jsonEpub, 0777)
 		if err != nil {
@@ -91,7 +92,7 @@ func (ldb *DB) Save() (hasSaved bool, err error) {
 		if err != nil {
 			return hasSaved, err
 		}
-		fmt.Println("Saved and indexed " + strconv.FormatUint(numIndexed, 10) + " epubs.")
+		h.Logger.Debug("Saved and indexed " + strconv.FormatUint(numIndexed, 10) + " epubs.")
 	}
 	return
 }
@@ -124,7 +125,7 @@ func (ldb *DB) Check() (err error) {
 			return err
 		}
 		if nonRetailChanged {
-			fmt.Println("Non-retail epub for book " + ldb.Books[i].ShortString() + " has changed, check if this is normal.")
+			h.Logger.Warning("Non-retail epub for book " + ldb.Books[i].ShortString() + " has changed, check if this is normal.")
 		}
 	}
 	return
