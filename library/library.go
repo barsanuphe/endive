@@ -149,6 +149,7 @@ func (l *Library) importEpubs(allEpubs []string, allHashes []string, isRetail bo
 			knownBook, err := l.FindByMetadata(info)
 			if err != nil {
 				// new Book
+				h.Logger.Debugf("Creating new book.")
 				bk := b.NewBookWithMetadata(l.generateID(), path, l.Config, isRetail, info)
 				imported, err = bk.Import(path, isRetail, hash)
 				if err != nil {
@@ -157,7 +158,7 @@ func (l *Library) importEpubs(allEpubs []string, allHashes []string, isRetail bo
 				l.Books = append(l.Books, *bk)
 			} else {
 				// add to existing book
-				h.Logger.Infof("Adding epub to " + knownBook.ShortString())
+				h.Logger.Debugf("Adding epub to " + knownBook.ShortString())
 				imported, err = knownBook.AddEpub(path, isRetail, hash)
 				if err != nil {
 					return err
@@ -178,9 +179,9 @@ func (l *Library) importEpubs(allEpubs []string, allHashes []string, isRetail bo
 		}
 	}
 	if isRetail {
-		h.Logger.Infof("Found %d retail epubs.\n", newEpubs)
+		h.Logger.Infof("Imported %d retail epubs.\n", newEpubs)
 	} else {
-		h.Logger.Infof("Found %d non-retail epubs.\n", newEpubs)
+		h.Logger.Infof("Imported %d non-retail epubs.\n", newEpubs)
 	}
 	return
 }

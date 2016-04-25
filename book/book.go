@@ -246,7 +246,7 @@ func (e *Book) AddEpub(path string, isRetail bool, hash string) (imported bool, 
 	// TODO tests
 	if isRetail {
 		if e.HasRetail() {
-			fmt.Println("Trying to import retail epub although retail version already exists.")
+			h.Logger.Info("Trying to import retail epub although retail version already exists.")
 			if e.RetailEpub.NeedsReplacement == "true" {
 				// replace retail
 				err = e.removeEpub(isRetail)
@@ -262,7 +262,7 @@ func (e *Book) AddEpub(path string, isRetail bool, hash string) (imported bool, 
 
 		if imported && e.HasNonRetail() {
 			// if a non-retail version existed, it is now trumped. Removing epub.
-			fmt.Println("Non-retail version trumped, removing.")
+			h.Logger.Warning("Non-retail version trumped, removing.")
 			// replace ,nonretail
 			err = e.removeEpub(!isRetail)
 			if err != nil {
@@ -271,13 +271,13 @@ func (e *Book) AddEpub(path string, isRetail bool, hash string) (imported bool, 
 		}
 	} else {
 		if e.HasRetail() {
-			fmt.Println("Trying to import non-retail epub although retail version exists, ignoring.")
+			h.Logger.Info("Trying to import non-retail epub although retail version exists, ignoring.")
 		} else {
 			if e.HasNonRetail() {
-				fmt.Println("Trying to import non-retail epub although a non-retail version already exists.")
+				h.Logger.Info("Trying to import non-retail epub although a non-retail version already exists.")
 				if e.NonRetailEpub.NeedsReplacement == "true" {
 					// replace ,nonretail
-					fmt.Println("Replacing non-retail version, flagged for replacement.")
+					h.Logger.Warning("Replacing non-retail version, flagged for replacement.")
 					err = e.removeEpub(isRetail)
 					if err != nil {
 						return
@@ -295,7 +295,7 @@ func (e *Book) AddEpub(path string, isRetail bool, hash string) (imported bool, 
 
 // Import an Epub to the Library
 func (e *Book) Import(path string, isRetail bool, hash string) (imported bool, err error) {
-	fmt.Println("Importing " + path)
+	h.Logger.Debug("Importing " + path)
 	// copy
 	dest := filepath.Join(e.Config.LibraryRoot, filepath.Base(path))
 	err = h.CopyFile(path, dest)
@@ -367,7 +367,7 @@ func (e *Book) Check() (retailHasChanged bool, nonRetailHasChanged bool, err err
 // SearchOnline tries to find metadata from online sources.
 func (e *Book) SearchOnline() (err error) {
 	if e.Config.GoodReadsAPIKey == "" {
-		fmt.Println("Goodreads API key not found, not getting online information.")
+		h.Logger.Error("Goodreads API key not found, not getting online information.")
 		return
 	}
 
@@ -381,7 +381,7 @@ func (e *Book) SearchOnline() (err error) {
 	onlineInfo := GetBook(id, e.Config.GoodReadsAPIKey)
 	// show diff between epub and GR versions, then ask what to do.
 	fmt.Println(e.Metadata.Diff(onlineInfo, "Local", "GoodReads"))
-	fmt.Printf("Accept in (B)ulk? Choose (F)ield by field? (S)earch again? (A)bort? ")
+	h.GreenBold("Accept in (B)ulk? Choose (F)ield by field? (S)earch again? (A)bort? ")
 
 	scanner := bufio.NewReader(os.Stdin)
 	choice, _ := scanner.ReadString('\n')
@@ -389,19 +389,19 @@ func (e *Book) SearchOnline() (err error) {
 	case "a", "A", "abort":
 		return errors.New("Abort")
 	case "b", "B", "Bulk":
-		fmt.Println("Accepting online version.")
+		h.Logger.Info("Accepting online version.")
 		e.Metadata = onlineInfo
 	case "f", "F", "Field":
-		fmt.Println("Going through every field.")
+		h.Logger.Info("Going through every field.")
 		err = e.Metadata.Merge(onlineInfo)
 		if err != nil {
 			return err
 		}
 	case "s", "S", "Search":
-		fmt.Println("Searching again.")
+		h.Logger.Info("Searching again.")
 		// TODO GetBookIDByQuery but show hits instead of choosing automatically
 	default:
-		fmt.Println("What was that?")
+		h.Logger.Info("What was that?")
 		// TODO ask again
 	}
 	return
