@@ -1,7 +1,11 @@
 package book
 
 import (
+	"errors"
+	"fmt"
 	"path/filepath"
+	"regexp"
+	"strings"
 
 	cfg "github.com/barsanuphe/endive/config"
 	h "github.com/barsanuphe/endive/helpers"
@@ -70,7 +74,7 @@ func (e *Epub) ReadMetadata() (info Info, err error) {
 	// year
 	dateEvents, nonFatalErr := book.MetadataElement("date")
 	if nonFatalErr != nil || len(dateEvents) == 0 {
-		h.Logger.Error("Error parsing EPUB: no date found")
+		h.Logger.Debug("Error parsing EPUB: no date found")
 	} else {
 		found := false
 		// try to find date associated with "publication" event
@@ -124,7 +128,13 @@ func (e *Epub) ReadMetadata() (info Info, err error) {
 			info.Tags.Add(tag)
 		}
 	}
-	// TODO !!!! identifier (isbn)
+	// ISBN
+	nonFatalErr = e.findISBN(book, &info)
+	if nonFatalErr != nil {
+		h.Logger.Warningf("ISBN could not be found in %s!!", e.FullPath())
+	} else {
+		fmt.Println("FOUND ISBN " + info.ISBN)
+	}
 
 	// TODO show other included data:"publisher", "contributor", "type", "format",
 	// TODO "source", "relation", "coverage", "rights", "meta",
@@ -132,6 +142,64 @@ func (e *Epub) ReadMetadata() (info Info, err error) {
 	if info.Refresh(e.Config) {
 		h.Logger.Info("Found author alias: " + info.Author())
 	}
+	return
+}
 
+func (e *Epub) findISBN(book *epubgo.Epub, i *Info) (err error) {
+	// get the identifier
+	identifiers, nonFatalErr := book.MetadataElement("identifier")
+	if nonFatalErr == nil && len(identifiers) != 0 {
+		// try to find isbn
+		for _, el := range identifiers {
+			// try to find isbn in content
+			isbn, err := cleanISBN(el.Content)
+			if err == nil {
+				i.ISBN = isbn
+				return err
+			}
+			// try to find isbn in the attributes
+			// it shouldn't be there, but retail epubs have awful metadata
+			for _, evt := range el.Attr {
+				isbn, err = cleanISBN(evt)
+				if err == nil {
+					i.ISBN = isbn
+					return err
+				}
+			}
+		}
+
+		// try getting source
+		sources, nonFatalErr := book.MetadataElement("source")
+		if nonFatalErr == nil && len(sources) != 0 {
+			// try to find isbn
+			for _, el := range sources {
+				// clean results
+				isbn, err := cleanISBN(el.Content)
+				if err == nil {
+					i.ISBN = isbn
+					return err
+				}
+			}
+		}
+	}
+	// if no valid result, return err
+	h.Logger.Debugf("ISBN not found in %s", e.FullPath())
+	return errors.New("ISBN not found in epub")
+}
+
+func cleanISBN(full string) (isbn string, err error) {
+	// cleanup string, only keep numbers
+	re := regexp.MustCompile("[0-9]+")
+	isbn = strings.Join(re.FindAllString(full, -1), "")
+	// check validity
+	if len(isbn) != 13 {
+		// if start of isbn detected, try to salvage the situation
+		if len(isbn) > 13 && (strings.HasPrefix(isbn, "978") || strings.HasPrefix(isbn, "979")) {
+			isbn = isbn[:13]
+		} else {
+			isbn = ""
+			err = errors.New("ISBN-13 not found")
+		}
+	}
 	return
 }

@@ -37,6 +37,12 @@ func StringInSlice(a string, list []string) (index int, isIn bool) {
 	return -1, false
 }
 
+// CaseInsensitiveContains checks if a substring is in a string, regardless of case.
+func CaseInsensitiveContains(s, substr string) bool {
+	s, substr = strings.ToLower(s), strings.ToLower(substr)
+	return strings.Contains(s, substr)
+}
+
 // TabulateRows of map[string]int.
 func TabulateRows(rows [][]string, firstHeader string, secondHeader string) (table string) {
 	if len(rows) == 0 {
@@ -52,7 +58,6 @@ func TabulateRows(rows [][]string, firstHeader string, secondHeader string) (tab
 	}
 	w, _ := termbox.Size()
 	termbox.Close()
-
 	t.SetMaxCellSize((w - 15) / 2)
 	t.SetWrapStrings(true)
 	return t.Render("simple")
