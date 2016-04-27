@@ -22,7 +22,7 @@ func buildIndexMapping() (*bleve.IndexMapping, error) {
 	epubMapping.AddFieldMappingsAt("progress", textFieldMapping)
 	epubMapping.AddFieldMappingsAt("description", textFieldMapping)
 	epubMapping.AddFieldMappingsAt("language", textFieldMapping)
-	epubMapping.AddFieldMappingsAt("creator", textFieldMapping)
+	epubMapping.AddFieldMappingsAt("author", textFieldMapping)
 	epubMapping.AddFieldMappingsAt("title", textFieldMapping)
 	epubMapping.AddFieldMappingsAt("year", textFieldMapping)
 	epubMapping.AddFieldMappingsAt("isbn", textFieldMapping)

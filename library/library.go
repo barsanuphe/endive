@@ -256,8 +256,6 @@ func (l *Library) RunQuery(query string) (results string, err error) {
 		"tags:", "metadata.tags.name:",
 	)
 	query = r.Replace(query)
-	fmt.Println(query)
-
 	hits, err := l.Search(query)
 	if err != nil {
 		return
