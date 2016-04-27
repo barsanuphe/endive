@@ -138,13 +138,14 @@ func (e *Book) generateNewName(fileTemplate string, isRetail bool) (newName stri
 		"$t", "{{$t}}",
 		"$y", "{{$y}}",
 		"$l", "{{$l}}",
+		"$i", "{{$i}}",
 	)
 
 	// replace with all valid epub parameters
-	tmpl := fmt.Sprintf(`{{$a := "%s"}}{{$y := "%s"}}{{$t := "%s"}}{{$l := "%s"}}%s`,
-		h.CleanForPath(e.Metadata.Author()),
-		e.Metadata.Year,
-		h.CleanForPath(e.Metadata.Title()), e.Metadata.Language, r.Replace(fileTemplate))
+	tmpl := fmt.Sprintf(`{{$a := "%s"}}{{$y := "%s"}}{{$t := "%s"}}{{$l := "%s"}}{{$i := "%s"}}%s`,
+		h.CleanForPath(e.Metadata.Author()), e.Metadata.Year,
+		h.CleanForPath(e.Metadata.Title()), e.Metadata.Language,
+		e.Metadata.ISBN, r.Replace(fileTemplate))
 
 	var doc bytes.Buffer
 	// NOTE: use html/template for html output
