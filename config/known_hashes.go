@@ -33,8 +33,6 @@ func GetKnownHashesPath() (hashesFile string, err error) {
 		if err != nil {
 			return
 		}
-		fmt.Println(hashesFile)
-		fmt.Println(xdgHashesPath)
 		// making sure it's a valid JSON file for next load
 		err = ioutil.WriteFile(hashesFile, []byte("{}"), 0777)
 		if err != nil {

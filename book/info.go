@@ -17,7 +17,7 @@ type Info struct {
 	ImageURL      string   `json:"image_url" xml:"image_url"`
 	NumPages      string   `json:"num_pages" xml:"num_pages"`
 	Authors       []string `json:"authors" xml:"authors>author>name"`
-	ISBN          string   `json:"isbn" xml:"isbn"`
+	ISBN          string   `json:"isbn" xml:"isbn13"`
 	Year          string   `json:"year" xml:"work>original_publication_year"`
 	Description   string   `json:"description" xml:"description"`
 	Series        Series   `json:"series" xml:"series_works>series_work"`
@@ -100,7 +100,11 @@ func (i *Info) Refresh(c cfg.Config) (hasChanged bool) {
 
 // IsSimilar checks if metadata is similar to known Info.
 func (i *Info) IsSimilar(o Info) (isSimilar bool) {
-	// TODO do much better, try with isbn if available on both sides
+	// TODO tests
+	// check isbn
+	if i.ISBN != "" && o.ISBN != "" && i.ISBN == o.ISBN {
+		return true
+	}
 	// similar == same author/title, for now
 	if i.Author() == o.Author() && i.Title() == o.Title() {
 		return true

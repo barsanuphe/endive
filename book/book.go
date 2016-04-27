@@ -370,15 +370,25 @@ func (e *Book) SearchOnline() (err error) {
 		h.Logger.Error("Goodreads API key not found, not getting online information.")
 		return
 	}
-
 	// TODO tests
-	// TODO: if e.Metadata.ISBN exists, GetBookIDByISBN(e.Metadata.ISBN, e.Config.GoodReadsAPIKey)
-	// TODO: if unsure, show hits
-	id := GetBookIDByQuery(e.Metadata.Author(), e.Metadata.Title(), e.Config.GoodReadsAPIKey)
+
+	var g RemoteLibraryAPI
+	g = GoodReads{}
+	id := ""
+	if e.Metadata.ISBN != "" {
+		id = g.GetBookIDByISBN(e.Metadata.ISBN, e.Config.GoodReadsAPIKey)
+	}
+	// if no ISBN or nothing was found
+	if id == "" {
+		// TODO: if unsure, show hits
+		id = g.GetBookIDByQuery(e.Metadata.Author(), e.Metadata.Title(), e.Config.GoodReadsAPIKey)
+	}
+	// if still nothing was found...
 	if id == "" {
 		return errors.New("Could not find online data for " + e.ShortString())
 	}
-	onlineInfo := GetBook(id, e.Config.GoodReadsAPIKey)
+	// get book info
+	onlineInfo := g.GetBook(id, e.Config.GoodReadsAPIKey)
 	// show diff between epub and GR versions, then ask what to do.
 	fmt.Println(e.Metadata.Diff(onlineInfo, "Local", "GoodReads"))
 

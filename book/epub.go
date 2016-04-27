@@ -2,7 +2,6 @@ package book
 
 import (
 	"errors"
-	"fmt"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -132,8 +131,6 @@ func (e *Epub) ReadMetadata() (info Info, err error) {
 	nonFatalErr = e.findISBN(book, &info)
 	if nonFatalErr != nil {
 		h.Logger.Warningf("ISBN could not be found in %s!!", e.FullPath())
-	} else {
-		fmt.Println("FOUND ISBN " + info.ISBN)
 	}
 
 	// TODO show other included data:"publisher", "contributor", "type", "format",
