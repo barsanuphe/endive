@@ -10,12 +10,14 @@ import (
 	h "github.com/barsanuphe/endive/helpers"
 )
 
+// RemoteLibraryAPI is the interface for accessing remote library information.
 type RemoteLibraryAPI interface {
 	GetBook(id, key string) Info
 	GetBookIDByQuery(author, title, key string) (id string)
 	GetBookIDByISBN(isbn, key string) (id string)
 }
 
+// GoodReads implements RemoteLibraryAPI and retrieves information from goodreads.com.
 type GoodReads struct {
 }
 
