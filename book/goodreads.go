@@ -10,6 +10,15 @@ import (
 	h "github.com/barsanuphe/endive/helpers"
 )
 
+type RemoteLibraryAPI interface {
+	GetBook(id, key string) Info
+	GetBookIDByQuery(author, title, key string) (id string)
+	GetBookIDByISBN(isbn, key string) (id string)
+}
+
+type GoodReads struct {
+}
+
 const apiRoot = "https://www.goodreads.com/"
 
 // response is the top xml element in goodreads response.
@@ -32,7 +41,7 @@ type work struct {
 }
 
 // GetBook returns a GoodreadsBook from its Goodreads ID
-func GetBook(id, key string) Info {
+func (g GoodReads) GetBook(id, key string) Info {
 	defer h.TimeTrack(time.Now(), "Getting Book info")
 	uri := apiRoot + "book/show/" + id + ".xml?key=" + key
 	r := response{}
@@ -48,18 +57,18 @@ func makeSearchQuery(parts ...string) (query string) {
 }
 
 // GetBookIDByQuery gets a Goodreads ID from a query
-func GetBookIDByQuery(author, title, key string) (id string) {
-	defer h.TimeTrack(time.Now(), "Getting Book ID")
+func (g GoodReads) GetBookIDByQuery(author, title, key string) (id string) {
+	defer h.TimeTrack(time.Now(), "Getting Book ID by query")
 
 	uri := apiRoot + "search/index.xml?key=" + key + "&q=" + makeSearchQuery(author, title)
 	r := response{}
 	h.GetXMLData(uri, &r)
 	// parsing results
-	hits, err := strconv.Atoi(r.Search.ResultsNumber)
+	numberOfHits, err := strconv.Atoi(r.Search.ResultsNumber)
 	if err != nil {
 		fmt.Println("error")
 	}
-	if hits != 0 {
+	if numberOfHits != 0 {
 		// TODO: if more than 1 hit, give the user a choice, as in beets import.
 		for _, work := range r.Search.Works {
 			if work.Author == author && work.Title == title {
@@ -73,8 +82,22 @@ func GetBookIDByQuery(author, title, key string) (id string) {
 }
 
 // GetBookIDByISBN gets a Goodreads ID from an ISBN
-func GetBookIDByISBN(isbn, key string) (id string) {
-	defer h.TimeTrack(time.Now(), "Getting Book ID")
-	// TODO
+func (g GoodReads) GetBookIDByISBN(isbn, key string) (id string) {
+	defer h.TimeTrack(time.Now(), "Getting Book ID by ISBN")
+
+	uri := apiRoot + "search/index.xml?key=" + key + "&q=" + isbn
+	r := response{}
+	h.GetXMLData(uri, &r)
+	// parsing results
+	numberOfHits, err := strconv.Atoi(r.Search.ResultsNumber)
+	if err != nil {
+		fmt.Println("error")
+	}
+	if numberOfHits != 0 {
+		id = r.Search.Works[0].ID
+		if numberOfHits > 1 {
+			fmt.Println("Got more than 1 hit while searching by ISBN! Returned first hit.")
+		}
+	}
 	return
 }

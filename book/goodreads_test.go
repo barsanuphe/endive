@@ -1,7 +1,6 @@
 package book
 
 import (
-	"fmt"
 	"os"
 	"testing"
 )
@@ -12,6 +11,7 @@ var grBooks = []struct {
 	expectedID        string
 	expectedYear      string
 	expectedFullTitle string
+	isbn              string
 }{
 	{
 		"Scott Lynch",
@@ -19,6 +19,7 @@ var grBooks = []struct {
 		"8074907",
 		"2016",
 		"Scott Lynch (2016) The Thorn of Emberlain [Gentleman Bastard (#4)]",
+		"9780575079588",
 	},
 	{
 		"George Orwell",
@@ -26,6 +27,7 @@ var grBooks = []struct {
 		"7613",
 		"1945",
 		"George Orwell (1945) Animal Farm: A Fairy Story",
+		"9780452284241",
 	},
 }
 
@@ -38,15 +40,15 @@ func TestGoodReads(t *testing.T) {
 		t.FailNow()
 	}
 
+	g := GoodReads{}
 	for _, book := range grBooks {
 		// getting book_id
-		bookID := GetBookIDByQuery(book.author, book.title, key)
+		bookID := g.GetBookIDByQuery(book.author, book.title, key)
 		if bookID != book.expectedID {
 			t.Errorf("Bad book id, got %s, expected %s.", bookID, book.expectedID)
 		}
 		// getting book information from book_id
-		b := GetBook(bookID, key)
-		fmt.Println(b.Tags)
+		b := g.GetBook(bookID, key)
 		if b.Author() != book.author {
 			t.Errorf("Bad author, got %s, expected %s.", b.Author(), book.author)
 		}
@@ -58,6 +60,12 @@ func TestGoodReads(t *testing.T) {
 		}
 		if b.String() != book.expectedFullTitle {
 			t.Errorf("Bad title, got %s, expected %s.", b.String(), book.expectedFullTitle)
+		}
+
+		// getting book_id by isbn
+		bookID = g.GetBookIDByISBN(book.isbn, key)
+		if bookID != book.expectedID {
+			t.Errorf("Bad book id, got %s, expected %s.", bookID, book.expectedID)
 		}
 	}
 
