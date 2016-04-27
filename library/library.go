@@ -22,7 +22,6 @@ import (
 	b "github.com/barsanuphe/endive/book"
 	cfg "github.com/barsanuphe/endive/config"
 	h "github.com/barsanuphe/endive/helpers"
-	"github.com/bndr/gotabulate"
 )
 
 // Library manages Epubs
@@ -226,6 +225,12 @@ func (l *Library) Refresh() (renamed int, err error) {
 		}
 	}
 
+	// refreshing index
+	_, err = l.Index()
+	if err != nil {
+		return
+	}
+
 	// remove all empty dirs
 	err = h.DeleteEmptyFolders(l.Config.LibraryRoot)
 	return
@@ -280,9 +285,5 @@ func (l *Library) TabulateList(books []b.Book) (table string) {
 		}
 		rows = append(rows, []string{strconv.Itoa(res.ID), res.Metadata.Author(), res.Metadata.Title(), res.Metadata.Year, relativePath})
 	}
-	t := gotabulate.Create(rows)
-	t.SetHeaders([]string{"ID", "Author", "Title", "Year", "Filename"})
-	t.SetEmptyString("N/A")
-	t.SetAlign("left")
-	return t.Render("simple")
+	return h.TabulateRows(rows, "ID", "Author", "Title", "Year", "Filename")
 }

@@ -179,7 +179,7 @@ func (e *Book) refreshEpub(epub Epub, isRetail bool) (wasRenamed bool, newName s
 
 	if epub.Filename != newName {
 		origin := epub.FullPath()
-		fmt.Println("Renaming " + origin + " to: " + newName)
+		h.Logger.Info("Renaming " + origin + " to: " + newName)
 		// move to c.LibraryRoot + new name
 
 		destination := filepath.Join(e.Config.LibraryRoot, newName)
@@ -199,7 +199,7 @@ func (e *Book) refreshEpub(epub Epub, isRetail bool) (wasRenamed bool, newName s
 
 // Refresh the filenames of the Epubs associated with this Book.
 func (e *Book) Refresh() (wasRenamed []bool, newName []string, err error) {
-	fmt.Println("Refreshing Epub " + e.ShortString())
+	h.Logger.Debug("Refreshing Epub " + e.ShortString())
 	// metadata is blank, run GetMetadata
 	if hasMetadata := e.Metadata.HasAny(); !hasMetadata {
 		// FIXME: should probably test EpubMetadata then Metadata

@@ -139,8 +139,8 @@ Note that search is powered by [bleve](https://github.com/blevesearch/bleve),
 and therefore uses its
 [syntax](http://www.blevesearch.com/docs/Query-String-Query/).
 
-Available fields are: `author`, `title`, `year`, `language`, `tags`, and
-probably a few more.
+Available fields are: `author`, `title`, `year`, `language`, `tags`, `series`,
+and probably a few more.
 
 For other commands, see:
 

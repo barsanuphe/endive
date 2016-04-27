@@ -44,12 +44,12 @@ func CaseInsensitiveContains(s, substr string) bool {
 }
 
 // TabulateRows of map[string]int.
-func TabulateRows(rows [][]string, firstHeader string, secondHeader string) (table string) {
+func TabulateRows(rows [][]string, headers ...string) (table string) {
 	if len(rows) == 0 {
 		return
 	}
 	t := gotabulate.Create(rows)
-	t.SetHeaders([]string{firstHeader, secondHeader})
+	t.SetHeaders(headers)
 	t.SetEmptyString("N/A")
 	t.SetAlign("left")
 	// wrapping
@@ -58,7 +58,7 @@ func TabulateRows(rows [][]string, firstHeader string, secondHeader string) (tab
 	}
 	w, _ := termbox.Size()
 	termbox.Close()
-	t.SetMaxCellSize((w - 15) / 2)
+	t.SetMaxCellSize(w / len(headers))
 	t.SetWrapStrings(true)
 	return t.Render("simple")
 }
