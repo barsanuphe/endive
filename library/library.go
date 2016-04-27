@@ -94,7 +94,7 @@ func (l *Library) ImportRetail() (err error) {
 		allEpubs = append(allEpubs, epubs...)
 		allHashes = append(allHashes, hashes...)
 	}
-	return l.importEpubs(allEpubs, allHashes, true)
+	return l.ImportEpubs(allEpubs, allHashes, true)
 }
 
 // ImportNonRetail imports epubs from the Non-Retail source.
@@ -113,11 +113,11 @@ func (l *Library) ImportNonRetail() (err error) {
 		allEpubs = append(allEpubs, epubs...)
 		allHashes = append(allHashes, hashes...)
 	}
-	return l.importEpubs(allEpubs, allHashes, false)
+	return l.ImportEpubs(allEpubs, allHashes, false)
 }
 
-// importEpubs, retail or not.
-func (l *Library) importEpubs(allEpubs []string, allHashes []string, isRetail bool) (err error) {
+// ImportEpubs files that are retail, or not.
+func (l *Library) ImportEpubs(allEpubs []string, allHashes []string, isRetail bool) (err error) {
 	// force reload if it has changed
 	err = l.KnownHashes.Load()
 	if err != nil {
@@ -208,7 +208,7 @@ func (l *Library) Refresh() (renamed int, err error) {
 		}
 	}
 	// import as non-retail
-	err = l.importEpubs(allEpubs, allHashes, false)
+	err = l.ImportEpubs(allEpubs, allHashes, false)
 	if err != nil {
 		return
 	}

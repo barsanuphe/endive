@@ -194,3 +194,36 @@ func CalculateSHA256(filename string) (hash string, err error) {
 	hash = hex.EncodeToString(hashBytes.Sum(result))
 	return
 }
+
+// AbsoluteFileExists checks if an absolute path is an existing file.
+func AbsoluteFileExists(path string) (res bool) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return
+	}
+	if info.Mode().IsRegular() {
+		return true
+	}
+	return
+}
+
+// FileExists checks if a path is valid and returns its absolute path
+func FileExists(path string) (absolutePath string, err error) {
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return
+	}
+	candidate := ""
+	if filepath.IsAbs(path) {
+		candidate = path
+	} else {
+		candidate = filepath.Join(currentDir, path)
+	}
+
+	if AbsoluteFileExists(candidate) {
+		absolutePath = candidate
+	} else {
+		err = errors.New("File does not exist")
+	}
+	return
+}

@@ -172,24 +172,46 @@ func search(lb *l.Library, c *cli.Context) {
 }
 
 func importEpubs(lb *l.Library, c *cli.Context, isRetail bool) {
-	var err error
-	if isRetail {
-		if len(lb.Config.RetailSource) == 0 {
-			fmt.Println("No retail source found in configuration file!")
+	if len(c.Args()) >= 1 {
+		// check valid path
+		validPaths := []string{}
+		validHashes := []string{}
+		for _, path := range c.Args() {
+			validPath, err := h.FileExists(path)
+			if err == nil && filepath.Ext(validPath) == ".epub" {
+				validPaths = append(validPaths, validPath)
+				validHash, err := h.CalculateSHA256(path)
+				if err != nil {
+					return
+				}
+				validHashes = append(validHashes, validHash)
+			}
+		}
+		// import valid paths
+		err := lb.ImportEpubs(validPaths, validHashes, isRetail)
+		if err != nil {
 			return
 		}
-		fmt.Println("Importing retail epubs...")
-		err = lb.ImportRetail()
 	} else {
-		if len(lb.Config.NonRetailSource) == 0 {
-			fmt.Println("No non-retail source found in configuration file!")
-			return
+		var err error
+		if isRetail {
+			if len(lb.Config.RetailSource) == 0 {
+				fmt.Println("No retail source found in configuration file!")
+				return
+			}
+			fmt.Println("Importing retail epubs...")
+			err = lb.ImportRetail()
+		} else {
+			if len(lb.Config.NonRetailSource) == 0 {
+				fmt.Println("No non-retail source found in configuration file!")
+				return
+			}
+			fmt.Println("Importing non-retail epubs...")
+			err = lb.ImportNonRetail()
 		}
-		fmt.Println("Importing non-retail epubs...")
-		err = lb.ImportNonRetail()
-	}
-	if err != nil {
-		panic(err)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
