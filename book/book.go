@@ -184,7 +184,6 @@ func (e *Book) RefreshEpub(epub Epub, isRetail bool) (wasRenamed bool, newName s
 		origin := epub.FullPath()
 		h.Logger.Info("Renaming " + origin + " to: " + newName)
 		// move to c.LibraryRoot + new name
-
 		destination := filepath.Join(e.Config.LibraryRoot, newName)
 		// if parent directory does not exist, create
 		err = os.MkdirAll(filepath.Dir(destination), os.ModePerm)

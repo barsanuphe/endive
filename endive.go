@@ -419,7 +419,7 @@ func generateCLI(lb *l.Library) (app *cli.App) {
 		},
 		{
 			Name:     "tag",
-			Aliases: []string{"tags"},
+			Aliases:  []string{"tags"},
 			Category: "tags",
 			Usage:    "manage tags in the collection",
 			Subcommands: []cli.Command{
@@ -500,6 +500,6 @@ func main() {
 	defer lb.Save()
 
 	// generate CLI interface and run it
-	app := generateCLI(&lb)
+	app := generateCLI(lb)
 	app.Run(os.Args)
 }

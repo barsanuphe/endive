@@ -32,7 +32,7 @@ type Library struct {
 }
 
 // OpenLibrary constucts a valid new Library
-func OpenLibrary() (l Library, err error) {
+func OpenLibrary() (l *Library, err error) {
 	// config
 	configPath, err := cfg.GetConfigPath()
 	if err != nil {
@@ -62,7 +62,7 @@ func OpenLibrary() (l Library, err error) {
 		return
 	}
 
-	l = Library{Config: c, KnownHashes: h}
+	l = &Library{Config: c, KnownHashes: h}
 	l.DatabaseFile = c.DatabaseFile
 	err = l.Load()
 	if err != nil {
@@ -174,7 +174,7 @@ func (l *Library) ImportEpubs(allEpubs []string, allHashes []string, isRetail bo
 				newEpubs++
 			}
 		} else {
-			h.Logger.Infof("Ignoring already imported epub " + filepath.Base(path))
+			h.Logger.Debugf("Ignoring already imported epub " + filepath.Base(path))
 		}
 	}
 	if isRetail {
@@ -223,12 +223,6 @@ func (l *Library) Refresh() (renamed int, err error) {
 		if wasRenamed[1] {
 			renamed++
 		}
-	}
-
-	// refreshing index
-	_, err = l.Index()
-	if err != nil {
-		return
 	}
 
 	// remove all empty dirs

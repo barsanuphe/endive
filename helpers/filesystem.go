@@ -77,7 +77,7 @@ func FileExists(path string) (absolutePath string, err error) {
 func DeleteEmptyFolders(path string) (err error) {
 	defer TimeTrack(time.Now(), "Scanning files")
 
-	fmt.Printf("Scanning for empty directories.\n\n")
+	Logger.Debugf("Scanning for empty directories.\n\n")
 	deletedDirectories := 0
 	deletedDirectoriesThisTime := 0
 	atLeastOnce := false
@@ -98,7 +98,7 @@ func DeleteEmptyFolders(path string) (err error) {
 					panic(err)
 				}
 				if isEmpty {
-					fmt.Println("Removing empty directory ", path)
+					Logger.Debugf("Removing empty directory ", path)
 					if err := os.Remove(path); err == nil {
 						deletedDirectories++
 						deletedDirectoriesThisTime++
@@ -112,7 +112,7 @@ func DeleteEmptyFolders(path string) (err error) {
 		}
 	}
 
-	fmt.Printf("\n### Removed %d albums.\n", deletedDirectories)
+	Logger.Debugf("\n### Removed %d albums.\n", deletedDirectories)
 	return
 }
 

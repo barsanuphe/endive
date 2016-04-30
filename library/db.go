@@ -60,6 +60,7 @@ func (ldb *DB) Load() (err error) {
 
 // Save current DB
 func (ldb *DB) Save() (hasSaved bool, err error) {
+	h.Logger.Debug("Determining if database should be saved...")
 	jsonEpub, err := json.Marshal(ldb.Books)
 	if err != nil {
 		fmt.Println(err)
@@ -80,6 +81,7 @@ func (ldb *DB) Save() (hasSaved bool, err error) {
 			return
 		}
 		hasSaved = true
+
 		// remove old index
 		err = os.RemoveAll(getIndexPath())
 		if err != nil {
