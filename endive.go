@@ -22,10 +22,22 @@ import (
 	h "github.com/barsanuphe/endive/helpers"
 	l "github.com/barsanuphe/endive/library"
 
-	"github.com/bndr/gotabulate"
 	"github.com/codegangsta/cli"
 	"github.com/ttacon/chalk"
 )
+
+func checkPort(c *cli.Context) (port int, err error) {
+	if len(c.Args()) < 1 {
+		err = errors.New("Not enough arguments")
+		return
+	}
+	port, err = strconv.Atoi(c.Args()[0])
+	if err != nil {
+		err = errors.New("Argument must be a valid port number")
+		return
+	}
+	return
+}
 
 func checkArgsWithID(l *l.Library, args []string) (book *b.Book, other []string, err error) {
 	if len(args) < 1 {
@@ -62,6 +74,9 @@ func showInfo(lb *l.Library, c *cli.Context) {
 	rows = append(rows, []string{"Author", book.Metadata.Author()})
 	rows = append(rows, []string{"Title", book.Metadata.Title()})
 	rows = append(rows, []string{"Publication Year", book.Metadata.Year})
+	if book.Metadata.ISBN != "" {
+		rows = append(rows, []string{"ISBN", book.Metadata.ISBN})
+	}
 	if len(book.Metadata.Tags) != 0 {
 		rows = append(rows, []string{"Tags", book.Metadata.Tags.String()})
 	}
@@ -76,22 +91,22 @@ func showInfo(lb *l.Library, c *cli.Context) {
 		available += "non-retail"
 	}
 	rows = append(rows, []string{"Available versions", available})
-
-	t := gotabulate.Create(rows)
-	t.SetHeaders([]string{"Info", "Book"})
-	t.SetEmptyString("N/A")
-	t.SetAlign("left")
-	fmt.Println(t.Render("simple"))
+	fmt.Println(h.TabulateRows(rows, "Info", "Book"))
 }
 
 func listTags(lb *l.Library, c *cli.Context) (err error) {
 	book, _, err := checkArgsWithID(lb, c.Args())
 	if err != nil {
-		fmt.Println("Error parsing arguments: " + err.Error())
-		return
+		// list all tags
+		tags := lb.ListTags()
+		fmt.Println(h.TabulateMap(tags, "Tag", "# of Books"))
+
+	} else {
+		// if ID, list tags of ID
+		var rows [][]string
+		rows = append(rows, []string{book.ShortString(), book.Metadata.Tags.String()})
+		fmt.Println(h.TabulateRows(rows, "Book", "Tags"))
 	}
-	fmt.Println(book.ShortString())
-	fmt.Println(book.Metadata.Tags.String())
 	return
 }
 
@@ -120,11 +135,16 @@ func removeTags(lb *l.Library, c *cli.Context) {
 func listSeries(lb *l.Library, c *cli.Context) {
 	book, _, err := checkArgsWithID(lb, c.Args())
 	if err != nil {
-		fmt.Println("Error parsing arguments: " + err.Error())
-		return
+		// list all series
+		series := lb.ListSeries()
+		fmt.Println(h.TabulateMap(series, "Series", "# of Books"))
+	} else {
+		// if ID, list series of ID
+		var rows [][]string
+		rows = append(rows, []string{book.ShortString(), book.Metadata.Series.String()})
+		fmt.Println(h.TabulateRows(rows, "Book", "Series"))
 	}
-	fmt.Println(book.ShortString())
-	fmt.Println(book.Metadata.Series.String())
+	return
 }
 
 func removeSeries(lb *l.Library, c *cli.Context) {
@@ -250,8 +270,13 @@ func generateCLI(lb *l.Library) (app *cli.App) {
 			Aliases: []string{"s"},
 			Usage:   "serve over http",
 			Action: func(c *cli.Context) {
-				// TODO get port as argument
-				fmt.Println("Serving...")
+				port, err := checkPort(c)
+				if err != nil {
+					fmt.Println(err.Error())
+					return
+				}
+				fmt.Printf("Serving on port %d...\n", port)
+				// TODO
 			},
 		},
 		{
@@ -352,17 +377,15 @@ func generateCLI(lb *l.Library) (app *cli.App) {
 					Aliases: []string{"t"},
 					Usage:   "list tags",
 					Action: func(c *cli.Context) {
-						tags := lb.ListTags()
-						fmt.Println(h.TabulateMap(tags, "Tag", "# of Books"))
+						listTags(lb, c)
 					},
 				},
 				{
 					Name:    "series",
-					Aliases: []string{"c"},
+					Aliases: []string{"s"},
 					Usage:   "list series.",
 					Action: func(c *cli.Context) {
-						// TODO
-						fmt.Println("Listing series...")
+						listSeries(lb, c)
 					},
 				},
 				{
@@ -396,6 +419,7 @@ func generateCLI(lb *l.Library) (app *cli.App) {
 		},
 		{
 			Name:     "tag",
+			Aliases: []string{"tags"},
 			Category: "tags",
 			Usage:    "manage tags in the collection",
 			Subcommands: []cli.Command{
@@ -417,7 +441,7 @@ func generateCLI(lb *l.Library) (app *cli.App) {
 				},
 				{
 					Name:    "list",
-					Aliases: []string{"c"},
+					Aliases: []string{"ls"},
 					Usage:   "list tags for a book.",
 					Action: func(c *cli.Context) {
 						listTags(lb, c)
@@ -433,7 +457,7 @@ func generateCLI(lb *l.Library) (app *cli.App) {
 				{
 					Name:    "add",
 					Aliases: []string{"a"},
-					Usage:   "add series to book with: ID seriesname seriesindex",
+					Usage:   "add (or modify index of) a series to a book with: ID seriesname seriesindex",
 					Action: func(c *cli.Context) {
 						addSeries(lb, c)
 					},
@@ -441,7 +465,7 @@ func generateCLI(lb *l.Library) (app *cli.App) {
 				{
 					Name:    "remove",
 					Aliases: []string{"r"},
-					Usage:   "remove series from book.",
+					Usage:   "remove series from book with: ID seriesname.",
 					Action: func(c *cli.Context) {
 						removeSeries(lb, c)
 					},
