@@ -33,8 +33,6 @@ func GetEndiveLogger(xdgPath string) (err error) {
 // GetLogger returns a global logger
 func GetLogger(name string) (err error) {
 	Logger = logging.MustGetLogger(name)
-
-	// TODO set log file in XDG dir
 	fileName := name
 	LogFile, err = os.OpenFile(fileName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {

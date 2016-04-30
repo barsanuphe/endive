@@ -12,6 +12,18 @@ import (
 	"time"
 )
 
+// DirectoryExists checks if a directory exists.
+func DirectoryExists(path string) (res bool) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return
+	}
+	if info.IsDir() {
+		return true
+	}
+	return
+}
+
 // IsDirectoryEmpty checks if files are present in directory.
 func IsDirectoryEmpty(path string) (bool, error) {
 	f, err := os.Open(path)
@@ -26,6 +38,39 @@ func IsDirectoryEmpty(path string) (bool, error) {
 		return true, nil
 	}
 	return false, err
+}
+
+// AbsoluteFileExists checks if an absolute path is an existing file.
+func AbsoluteFileExists(path string) (res bool) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return
+	}
+	if info.Mode().IsRegular() {
+		return true
+	}
+	return
+}
+
+// FileExists checks if a path is valid and returns its absolute path
+func FileExists(path string) (absolutePath string, err error) {
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return
+	}
+	candidate := ""
+	if filepath.IsAbs(path) {
+		candidate = path
+	} else {
+		candidate = filepath.Join(currentDir, path)
+	}
+
+	if AbsoluteFileExists(candidate) {
+		absolutePath = candidate
+	} else {
+		err = errors.New("File does not exist")
+	}
+	return
 }
 
 // DeleteEmptyFolders deletes empty folders that may appear after sorting albums.
@@ -96,25 +141,17 @@ func ListEpubsInDirectory(root string) (epubPaths []string, hashes []string, err
 
 // CleanForPath makes sure a string can be used as part of a path
 func CleanForPath(md string) string {
+	// if it starts with a dot, remove it so it does not become
+	// a hidden file
+	if md[0] == '.' {
+		md = md[1:]
+	}
 	// clean characters which would be problematic in a filename
-	// TODO: check if other characters need to be added
 	r := strings.NewReplacer(
 		"/", "-",
 		"\\", "-",
 	)
 	return r.Replace(md)
-}
-
-// DirectoryExists checks if a directory exists.
-func DirectoryExists(path string) (res bool) {
-	info, err := os.Stat(path)
-	if err != nil {
-		return
-	}
-	if info.IsDir() {
-		return true
-	}
-	return
 }
 
 // CopyFile copies a file from src to dst. If src and dst files exist, and are
@@ -192,38 +229,5 @@ func CalculateSHA256(filename string) (hash string, err error) {
 		return
 	}
 	hash = hex.EncodeToString(hashBytes.Sum(result))
-	return
-}
-
-// AbsoluteFileExists checks if an absolute path is an existing file.
-func AbsoluteFileExists(path string) (res bool) {
-	info, err := os.Stat(path)
-	if err != nil {
-		return
-	}
-	if info.Mode().IsRegular() {
-		return true
-	}
-	return
-}
-
-// FileExists checks if a path is valid and returns its absolute path
-func FileExists(path string) (absolutePath string, err error) {
-	currentDir, err := os.Getwd()
-	if err != nil {
-		return
-	}
-	candidate := ""
-	if filepath.IsAbs(path) {
-		candidate = path
-	} else {
-		candidate = filepath.Join(currentDir, path)
-	}
-
-	if AbsoluteFileExists(candidate) {
-		absolutePath = candidate
-	} else {
-		err = errors.New("File does not exist")
-	}
 	return
 }
