@@ -162,14 +162,6 @@ func (ldb *DB) FindByFilename(filename string) (result *b.Book, err error) {
 	return &b.Book{}, errors.New("Could not find book with epub " + filename)
 }
 
-// SearchJSON current DB and output as JSON
-func (ldb *DB) SearchJSON() (jsonOutput string, err error) {
-	// TODO Search() then get JSON output from each result Epub
-	// TODO OR --- the opposite. bleve can return JSON, Search has to parse it and locate the relevant Epub objects
-	fmt.Println("Searching database with JSON output...")
-	return
-}
-
 // ListNonRetailOnly among known epubs.
 func (ldb *DB) ListNonRetailOnly() (nonretail []b.Book) {
 	for _, book := range ldb.Books {
@@ -211,6 +203,17 @@ func (ldb *DB) ListTags() (tags map[string]int) {
 	return
 }
 
+// ListSeries associated with known epubs.
+func (ldb *DB) ListSeries() (series map[string]int) {
+	series = make(map[string]int)
+	for _, book := range ldb.Books {
+		for _, s := range book.Metadata.Series {
+			series[s.Name]++
+		}
+	}
+	return
+}
+
 // ListUntagged among known epubs.
 func (ldb *DB) ListUntagged() (untagged []b.Book) {
 	for _, book := range ldb.Books {
@@ -218,11 +221,5 @@ func (ldb *DB) ListUntagged() (untagged []b.Book) {
 			untagged = append(untagged, book)
 		}
 	}
-	return
-}
-
-// ListWithTag among known epubs.
-func (ldb *DB) ListWithTag(tag string) (tagged []b.Book, err error) {
-	// TODO
 	return
 }

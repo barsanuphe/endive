@@ -166,7 +166,7 @@ func (l *Library) ImportEpubs(allEpubs []string, allHashes []string, isRetail bo
 
 			if imported {
 				// add hash to known hashes
-				// TODO otherwise it'll pop up every other time
+				// NOTE: otherwise it'll pop up every other time
 				added, err := l.KnownHashes.Add(hash)
 				if !added || err != nil {
 					return err
@@ -243,9 +243,31 @@ func (l *Library) ExportToEReader(epubs []b.Book) (err error) {
 }
 
 // DuplicateRetailEpub copies a retail epub to make a non-retail version.
-func (l *Library) DuplicateRetailEpub(id int) (nonRetailEpub b.Book, err error) {
-	// TODO find epub from ID
-	// TODO copy file
+func (l *Library) DuplicateRetailEpub(id int) (nonRetailEpub *b.Book, err error) {
+	// TODO tests
+	// find book from ID
+	book, err := l.FindByID(id)
+	if err != nil {
+		return &b.Book{}, err
+	}
+	if !book.HasRetail() {
+		return &b.Book{}, errors.New("Book has no retail epub")
+	}
+	if book.HasNonRetail() {
+		return &b.Book{}, errors.New("Book already has non-retail epub")
+	}
+	// copy file
+	targetFilename := filepath.Join(filepath.Dir(book.RetailEpub.FullPath()), "copy.epub")
+	err = h.CopyFile(book.RetailEpub.FullPath(), targetFilename)
+	if err != nil {
+		return &b.Book{}, err
+	}
+	// create new Epub and refresh to get correct name
+	book.NonRetailEpub = b.Epub{Filename: targetFilename, NeedsReplacement: "false", Config: l.Config, Hash: book.RetailEpub.Hash}
+	_, _, err = book.RefreshEpub(book.NonRetailEpub, false)
+	if err != nil {
+		return book, err
+	}
 	return
 }
 
