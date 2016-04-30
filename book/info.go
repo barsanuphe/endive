@@ -3,6 +3,7 @@ package book
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	cfg "github.com/barsanuphe/endive/config"
@@ -11,7 +12,7 @@ import (
 
 // Info contains all of the known book metadata.
 type Info struct {
-	ID            string   `json:"-" xml:"id"` // TODO see if useful to even parse from xml
+	ID            string   `json:"-" xml:"id"`
 	MainTitle     string   `json:"title" xml:"title"`
 	OriginalTitle string   `json:"original_title" xml:"work>original_title"`
 	ImageURL      string   `json:"image_url" xml:"image_url"`
@@ -36,9 +37,8 @@ func (i *Info) String() string {
 
 // HasAny checks if metadata was parsed.
 func (i *Info) HasAny() (hasInfo bool) {
-	// TODO: better check
-	// if Info does not have a title, chances are it's empty.
-	if i.Title() != "" {
+	// if Info does not have a title and author, chances are it's empty.
+	if i.Title() != "" && i.Author() != "" {
 		return true
 	}
 	return
@@ -115,7 +115,6 @@ func (i *Info) IsSimilar(o Info) (isSimilar bool) {
 // Diff returns differences between Infos.
 func (i *Info) Diff(o Info, firstHeader, secondHeader string) (diff string) {
 	var rows [][]string
-	// TODO
 	rows = append(rows, []string{i.String(), o.String()})
 	rows = append(rows, []string{i.Author(), o.Author()})
 	rows = append(rows, []string{i.Title(), o.Title()})
@@ -124,6 +123,7 @@ func (i *Info) Diff(o Info, firstHeader, secondHeader string) (diff string) {
 	rows = append(rows, []string{i.Tags.String(), o.Tags.String()})
 	rows = append(rows, []string{i.Series.String(), o.Series.String()})
 	rows = append(rows, []string{i.Language, o.Language})
+	rows = append(rows, []string{i.ISBN, o.ISBN})
 	return h.TabulateRows(rows, firstHeader, secondHeader)
 }
 
@@ -141,8 +141,11 @@ func (i *Info) Merge(o Info) (err error) {
 			i.Authors = o.Authors
 		}
 		if index == -1 && userInput != "" {
-			// TODO trim
 			i.Authors = strings.Split(userInput, ",")
+			// trim spaces
+			for j := range i.Authors {
+				i.Authors[j] = strings.TrimSpace(i.Authors[j])
+			}
 		}
 	}
 	if i.Title() != o.Title() {
@@ -198,10 +201,23 @@ func (i *Info) Merge(o Info) (err error) {
 			i.Series = o.Series
 		}
 		if index == -1 && userInput != "" {
-			// TODO do better, what about position?
 			i.Series = Series{}
 			for _, s := range strings.Split(userInput, ",") {
-				i.Series.Add(s, 0)
+				// split again name:index
+				parts := strings.Split(s, ":")
+				switch len(parts) {
+				case 1:
+					i.Series.Add(strings.TrimSpace(s), 0)
+				case 2:
+					index, err := strconv.ParseFloat(parts[1], 32)
+					if err != nil {
+						h.Logger.Warning("Could not parse series " + s)
+					} else {
+						i.Series.Add(strings.TrimSpace(parts[0]), float32(index))
+					}
+				default:
+					h.Logger.Warning("Could not parse series " + s)
+				}
 			}
 		}
 	}

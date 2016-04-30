@@ -47,13 +47,12 @@ type Book struct {
 	Review   string `json:"review"`
 }
 
-// NewBook constucts a valid new Epub
-// TODO remove
+// NewBook constructs a valid new Epub
 func NewBook(id int, filename string, c cfg.Config, isRetail bool) *Book {
 	return NewBookWithMetadata(id, filename, c, isRetail, Info{})
 }
 
-// NewBookWithMetadata constucts a valid new Epub
+// NewBookWithMetadata constructs a valid new Epub
 func NewBookWithMetadata(id int, filename string, c cfg.Config, isRetail bool, i Info) *Book {
 	f := Epub{Filename: filename, Config: c, NeedsReplacement: "false"}
 	if isRetail {
@@ -131,21 +130,25 @@ func (e *Book) generateNewName(fileTemplate string, isRetail bool) (newName stri
 	if fileTemplate == "" {
 		return "", errors.New("Empty filename template")
 	}
-
-	// TODO add all replacements
+	// TODO add tags?
 	r := strings.NewReplacer(
 		"$a", "{{$a}}",
 		"$t", "{{$t}}",
 		"$y", "{{$y}}",
 		"$l", "{{$l}}",
 		"$i", "{{$i}}",
+		"$s", "{{$s}}",
 	)
+	seriesString := ""
+	if len(e.Metadata.Series) != 0 {
+		seriesString = "[" + e.Metadata.Series.String() + "]"
+	}
 
 	// replace with all valid epub parameters
-	tmpl := fmt.Sprintf(`{{$a := "%s"}}{{$y := "%s"}}{{$t := "%s"}}{{$l := "%s"}}{{$i := "%s"}}%s`,
+	tmpl := fmt.Sprintf(`{{$a := "%s"}}{{$y := "%s"}}{{$t := "%s"}}{{$l := "%s"}}{{$i := "%s"}}{{$s := "%s"}}%s`,
 		h.CleanForPath(e.Metadata.Author()), e.Metadata.Year,
 		h.CleanForPath(e.Metadata.Title()), e.Metadata.Language,
-		e.Metadata.ISBN, r.Replace(fileTemplate))
+		e.Metadata.ISBN, seriesString, r.Replace(fileTemplate))
 
 	var doc bytes.Buffer
 	// NOTE: use html/template for html output
@@ -154,7 +157,7 @@ func (e *Book) generateNewName(fileTemplate string, isRetail bool) (newName stri
 	if err != nil {
 		return
 	}
-	newName = doc.String()
+	newName = strings.TrimSpace(doc.String())
 	if isRetail {
 		newName += " [retail]"
 	}
@@ -165,8 +168,8 @@ func (e *Book) generateNewName(fileTemplate string, isRetail bool) (newName stri
 	return
 }
 
-// refreshEpub one specific epub associated with this Book
-func (e *Book) refreshEpub(epub Epub, isRetail bool) (wasRenamed bool, newName string, err error) {
+// RefreshEpub one specific epub associated with this Book
+func (e *Book) RefreshEpub(epub Epub, isRetail bool) (wasRenamed bool, newName string, err error) {
 	// do nothing if file does not exist
 	if epub.Filename == "" {
 		err = errors.New("Does not exist")
@@ -202,7 +205,6 @@ func (e *Book) Refresh() (wasRenamed []bool, newName []string, err error) {
 	h.Logger.Debug("Refreshing Epub " + e.ShortString())
 	// metadata is blank, run GetMetadata
 	if hasMetadata := e.Metadata.HasAny(); !hasMetadata {
-		// FIXME: should probably test EpubMetadata then Metadata
 		info, ok := e.MainEpub().ReadMetadata()
 		if ok != nil {
 			err = ok
@@ -215,11 +217,11 @@ func (e *Book) Refresh() (wasRenamed []bool, newName []string, err error) {
 		fmt.Println("Found author alias: " + e.Metadata.Author())
 	}
 	// refresh both epubs
-	wasRenamedR, newNameR, errR := e.refreshEpub(e.RetailEpub, true)
+	wasRenamedR, newNameR, errR := e.RefreshEpub(e.RetailEpub, true)
 	if wasRenamedR {
 		e.RetailEpub.Filename = newNameR
 	}
-	wasRenamedNR, newNameNR, errNR := e.refreshEpub(e.NonRetailEpub, false)
+	wasRenamedNR, newNameNR, errNR := e.RefreshEpub(e.NonRetailEpub, false)
 	if wasRenamedNR {
 		e.NonRetailEpub.Filename = newNameNR
 	}
@@ -393,12 +395,12 @@ func (e *Book) SearchOnline() (err error) {
 	// show diff between epub and GR versions, then ask what to do.
 	fmt.Println(e.Metadata.Diff(onlineInfo, "Local", "GoodReads"))
 
-	fmt.Printf(h.GreenBold("Accept in (B)ulk? Choose (F)ield by field? (S)earch again? (A)bort? "))
+	fmt.Printf(h.GreenBold("Accept in (B)ulk? Choose (F)ield by field? (K)eep original? "))
 	scanner := bufio.NewReader(os.Stdin)
 	choice, _ := scanner.ReadString('\n')
 	switch strings.TrimSpace(choice) {
-	case "a", "A", "abort":
-		return errors.New("Abort")
+	case "k", "K", "keep":
+		h.Logger.Info("Keeping epub version.")
 	case "b", "B", "Bulk":
 		h.Logger.Info("Accepting online version.")
 		e.Metadata = onlineInfo
@@ -408,9 +410,6 @@ func (e *Book) SearchOnline() (err error) {
 		if err != nil {
 			return err
 		}
-	case "s", "S", "Search":
-		h.Logger.Info("Searching again.")
-		// TODO GetBookIDByQuery but show hits instead of choosing automatically
 	default:
 		h.Logger.Info("What was that?")
 		// TODO ask again

@@ -56,7 +56,7 @@ func (t *Tags) Add(tags ...Tag) (added bool) {
 func (t *Tags) AddFromNames(tags ...string) (added bool) {
 	newTags := Tags{}
 	for _, tag := range tags {
-		newTags = append(newTags, Tag{Name: tag})
+		newTags = append(newTags, Tag{Name: strings.TrimSpace(tag)})
 	}
 	return t.Add(newTags...)
 }
@@ -116,7 +116,7 @@ func (t *Tags) Clean() {
 			cleanTags.Add(tag)
 		}
 	}
-	// TODO see if this is wise
+	// NOTE: this limit is completely arbitrary
 	// only keep top10 tags, since they are ordered by popularity and will be increasingly wrong.
 	if len(cleanTags) > 10 {
 		cleanTags = cleanTags[:10]
