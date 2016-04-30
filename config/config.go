@@ -115,7 +115,6 @@ func (c *Config) Check() (err error) {
 
 // ListAuthorAliases from the configuration file.
 func (c *Config) ListAuthorAliases() (allAliases string) {
-	fmt.Println("Listing Author aliases...")
 	for mainalias, aliases := range c.AuthorAliases {
 		allAliases += mainalias + " => " + strings.Join(aliases, ", ") + "\n"
 	}
@@ -123,8 +122,20 @@ func (c *Config) ListAuthorAliases() (allAliases string) {
 }
 
 // String displays all configuration information.
-func (c *Config) String() (err error) {
+func (c *Config) String() string {
 	fmt.Println("Printing Config contents...")
-	// TODO
-	return
+	var rows [][]string
+	rows = append(rows, []string{"Library directory", c.LibraryRoot})
+	rows = append(rows, []string{"Database file", c.DatabaseFile})
+	rows = append(rows, []string{"Epub filename format", c.EpubFilenameFormat})
+	if c.GoodReadsAPIKey != "" {
+		rows = append(rows, []string{"Goodreads API Key", "present"})
+	}
+	rows = append(rows, []string{"E-Reader mount point", c.EReaderMountPoint})
+	rows = append(rows, []string{"Retail sources", strings.Join(c.RetailSource, ", ")})
+	rows = append(rows, []string{"Non-Retail sources", strings.Join(c.NonRetailSource, ", ")})
+	for mainalias, aliases := range c.AuthorAliases {
+		rows = append(rows, []string{"Author alias: " + mainalias, strings.Join(aliases, ", ")})
+	}
+	return h.TabulateRows(rows, "Config", "Value")
 }
