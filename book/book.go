@@ -202,33 +202,68 @@ func (e *Book) RefreshEpub(epub Epub, isRetail bool) (wasRenamed bool, newName s
 // Refresh the filenames of the Epubs associated with this Book.
 func (e *Book) Refresh() (wasRenamed []bool, newName []string, err error) {
 	h.Logger.Debug("Refreshing Epub " + e.ShortString())
+
 	// metadata is blank, run GetMetadata
 	if hasMetadata := e.Metadata.HasAny(); !hasMetadata {
-		info, ok := e.MainEpub().ReadMetadata()
-		if ok != nil {
-			err = ok
+		_, exists := h.FileExists(e.MainEpub().FullPath())
+		if exists == nil {
+			info, ok := e.MainEpub().ReadMetadata()
+			if ok != nil {
+				err = ok
+				return
+			}
+			e.Metadata = info
+		} else {
+			err = errors.New("Missing main epub for " + e.ShortString())
 			return
 		}
-		e.Metadata = info
 	}
 	// refresh Metadata
 	if e.Metadata.Refresh(e.Config) {
 		fmt.Println("Found author alias: " + e.Metadata.Author())
 	}
+
 	// refresh both epubs
-	wasRenamedR, newNameR, errR := e.RefreshEpub(e.RetailEpub, true)
-	if wasRenamedR {
-		e.RetailEpub.Filename = newNameR
+	var wasRenamedR, wasRenamedNR bool
+	var newNameR, newNameNR string
+	var errR, errNR error
+	if e.HasRetail() {
+		_, exists := h.FileExists(e.RetailEpub.FullPath())
+		if exists == nil {
+			wasRenamedR, newNameR, errR = e.RefreshEpub(e.RetailEpub, true)
+			if wasRenamedR {
+				e.RetailEpub.Filename = newNameR
+			}
+		} else {
+			fmt.Println("MISSING EPUB " + e.RetailEpub.FullPath())
+			e.RetailEpub = Epub{}
+		}
 	}
-	wasRenamedNR, newNameNR, errNR := e.RefreshEpub(e.NonRetailEpub, false)
-	if wasRenamedNR {
-		e.NonRetailEpub.Filename = newNameNR
+	if e.HasNonRetail() {
+		_, exists := h.FileExists(e.NonRetailEpub.FullPath())
+		if exists == nil {
+			wasRenamedNR, newNameNR, errNR = e.RefreshEpub(e.NonRetailEpub, false)
+			if wasRenamedNR {
+				e.NonRetailEpub.Filename = newNameNR
+			}
+		} else {
+			fmt.Println("MISSING EPUB " + e.NonRetailEpub.FullPath())
+			e.NonRetailEpub = Epub{}
+		}
 	}
+
+	// preparing output
 	wasRenamed = []bool{wasRenamedR, wasRenamedNR}
 	newName = []string{newNameR, newNameNR}
-	// TODO do better
-	if errR != nil && errNR != nil {
-		err = errors.New(errR.Error() + errNR.Error())
+	if errR != nil || errNR != nil {
+		errorMsg := ""
+		if errR != nil {
+			errorMsg += errR.Error()
+		}
+		if errNR != nil {
+			errorMsg += errNR.Error()
+		}
+		err = errors.New(errorMsg)
 	}
 	return
 }
@@ -241,6 +276,11 @@ func (e *Book) HasRetail() (hasRetail bool) {
 // HasNonRetail checks if a non-retail epub is available.
 func (e *Book) HasNonRetail() (hasNonRetail bool) {
 	return e.NonRetailEpub.Filename != ""
+}
+
+// HasEpub checks if the book has at least one epub
+func (e *Book) HasEpub() bool {
+	return e.HasRetail() || e.HasNonRetail()
 }
 
 // AddEpub to the Library

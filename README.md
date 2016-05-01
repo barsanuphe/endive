@@ -51,7 +51,7 @@ To get as faithful as possible information about epub files, **Endive** relies
 on getting information from Goodreads.
 Since this means using the Goodreads API, you must have an account and request
 [an API Key](https://www.goodreads.com/api/keys)
-([terms and conditions here](https://www.goodreads.com/api/terms)).
+([terms and conditions](https://www.goodreads.com/api/terms)).
 
 See the configuration instructions to find out what to do with that key.
 
@@ -60,6 +60,7 @@ See the configuration instructions to find out what to do with that key.
 If you have a working Go installation, just run:
 
     $ go get -u github.com/barsanuphe/endive
+    $ go install ...endive
 
 ## Testing
 

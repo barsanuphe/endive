@@ -164,6 +164,26 @@ func (ldb *DB) FindByFilename(filename string) (result *b.Book, err error) {
 	return &b.Book{}, errors.New("Could not find book with epub " + filename)
 }
 
+// RemoveByID a book from the db
+func (ldb *DB) RemoveByID(id int) (err error) {
+	var found bool
+	removeIndex := -1
+	for i := range ldb.Books {
+		if ldb.Books[i].ID == id {
+			found = true
+			removeIndex = i
+			break
+		}
+	}
+	if found {
+		h.Logger.Info("REMOVING from db " + ldb.Books[removeIndex].ShortString())
+		ldb.Books = append((ldb.Books)[:removeIndex], (ldb.Books)[removeIndex+1:]...)
+	} else {
+		err = errors.New("Did not find book with ID " + strconv.Itoa(id))
+	}
+	return
+}
+
 // ListNonRetailOnly among known epubs.
 func (ldb *DB) ListNonRetailOnly() (nonretail []b.Book) {
 	for _, book := range ldb.Books {

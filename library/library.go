@@ -211,17 +211,30 @@ func (l *Library) Refresh() (renamed int, err error) {
 	if err != nil {
 		return
 	}
-
+	// refresh all books
+	deletedBooks := []int{}
 	for i := range l.Books {
 		wasRenamed, _, err := l.Books[i].Refresh()
 		if err != nil {
 			return renamed, err
+		}
+		if !l.Books[i].HasEpub() {
+			// mark for deletion
+			deletedBooks = append(deletedBooks, l.Books[i].ID)
 		}
 		if wasRenamed[0] {
 			renamed++
 		}
 		if wasRenamed[1] {
 			renamed++
+		}
+	}
+
+	// remove empty books
+	for _, id := range deletedBooks {
+		err := l.RemoveByID(id)
+		if err != nil {
+			return renamed, err
 		}
 	}
 
