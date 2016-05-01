@@ -128,13 +128,12 @@ List epubs in english written by (Charles) Stross:
     # # # E N D I V E # # #
 
     Searching for 'language:en +author:stross'...
-    -------  -------------------  -------------------------  ---------  ----------------------------------------------------------------------------
-     ID       Author               Title                      Year       Filename
-    -------  -------------------  -------------------------  ---------  ----------------------------------------------------------------------------
-     2        Charles Stross       The Apocalypse Codex       2012       Charles Stross/Charles Stross (2012) The Apocalypse Codex [retail].epub
-
-     24       Charles Stross       The Hidden Family          2005       Charles Stross/Charles Stross (2005) The Hidden Family [retail].epub
-    -------  -------------------  -------------------------  ---------  ----------------------------------------------------------------------------
+    ┏━━━━━━━┳━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+    ┃ ID    ┃ Author            ┃ Title                   ┃ Year    ┃ Filename                                                       ┃
+    ┡━━━━━━━╇━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+    │ 0     │ Charles Stross    │ The Apocalypse Codex    │ 2012    │ Charles Stross/9781101581131. Charles Stross (2012) The Apo    │
+    │       │                   │                         │         │ calypse Codex [Laundry Files (#4)] [retail].epub               │
+    └───────┴───────────────────┴─────────────────────────┴─────────┴────────────────────────────────────────────────────────────────┘
 
 Note that search is powered by [bleve](https://github.com/blevesearch/bleve),
 and therefore uses its
