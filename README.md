@@ -157,6 +157,6 @@ For other commands, see:
 | Search          | [github.com/blevesearch/bleve](https://github.com/blevesearch/bleve) |
 | CLI             | [github.com/codegangsta/cli](https://github.com/codegangsta/cli)     |
 | Color output    | [github.com/ttacon/chalk](https://github.com/ttacon/chalk)           |
-| Tables output   | [github.com/bndr/gotabulate](https://github.com/bndr/gotabulate)     |
+| Tables output   | [github.com/barsanuphe/gotabulate](https://github.com/barsanuphe/gotabulate), forked from [github.com/bndr/gotabulate](https://github.com/bndr/gotabulate)     |
 | XDG directories | [launchpad.net/go-xdg](https://launchpad.net/go-xdg)                 |
 | YAML Parser     | [github.com/spf13/viper](https://github.com/spf13/viper)             |

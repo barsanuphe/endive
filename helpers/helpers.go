@@ -52,7 +52,7 @@ func TabulateRows(rows [][]string, headers ...string) (table string) {
 	t.SetEmptyString("N/A")
 	t.SetAlign("left")
 	t.SetAutoSize(true)
-	return t.Render("grid")
+	return t.Render("border")
 }
 
 // TabulateMap of map[string]int.
