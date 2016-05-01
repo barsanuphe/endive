@@ -16,8 +16,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bndr/gotabulate"
-	"github.com/nsf/termbox-go"
+	"github.com/barsanuphe/gotabulate"
 	"github.com/ttacon/chalk"
 )
 
@@ -52,15 +51,8 @@ func TabulateRows(rows [][]string, headers ...string) (table string) {
 	t.SetHeaders(headers)
 	t.SetEmptyString("N/A")
 	t.SetAlign("left")
-	// wrapping
-	if err := termbox.Init(); err != nil {
-		panic(err)
-	}
-	w, _ := termbox.Size()
-	termbox.Close()
-	t.SetMaxCellSize(w / len(headers))
-	t.SetWrapStrings(true)
-	return t.Render("simple")
+	t.SetAutoSize(true)
+	return t.Render("grid")
 }
 
 // TabulateMap of map[string]int.
