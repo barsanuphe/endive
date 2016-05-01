@@ -8,7 +8,7 @@ import (
 
 // tagAliases defines redundant tags and a main alias for them.
 var tagAliases = map[string][]string{
-	"science-fiction": []string{"sci-fi", "scifi-fantasy", "scifi", "science fiction", "sciencefiction", "sci-fi-fantasy"},
+	"science-fiction": []string{"sf", "sci-fi", "scifi-fantasy", "scifi", "science fiction", "sciencefiction", "sci-fi-fantasy"},
 	"fantasy":         []string{"fantasy-sci-fi", "fantasy-scifi", "fantasy-fiction"},
 	"dystopia":        []string{"dystopian"},
 }
@@ -21,7 +21,7 @@ var forbiddenTags = []string{
 	"star", "release", "wait", "soon", "wish", "published", "want",
 	"tbr", "series", "finish", "to-", "not-", "library", "audible",
 	"coming", "anticipated", "default", "recommended", "-list", "sequel",
-	"general", "have",
+	"general", "have", "bundle",
 }
 
 // Tag holds the name of a tag.
