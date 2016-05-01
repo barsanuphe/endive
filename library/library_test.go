@@ -30,7 +30,7 @@ func TestLibrarySearch(t *testing.T) {
 	c := cfg.Config{}
 	k := cfg.KnownHashes{}
 	ldb := DB{DatabaseFile: "../test/endive.json"}
-	l := Library{c, k, ldb}
+	l := Library{Config: c, KnownHashes: k, DB: ldb}
 
 	err := l.Load()
 	if err != nil {

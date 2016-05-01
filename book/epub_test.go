@@ -37,7 +37,7 @@ func TestEpubFlagReplacement(t *testing.T) {
 	}
 }
 
-// TestEpubRetail tests for Check
+// TestEpubCheck tests for Check
 func TestEpubCheck(t *testing.T) {
 	fmt.Println("+ Testing Epub.SetRetail()...")
 	e := NewBook(0, epubs[0].filename, standardTestConfig, isRetail)

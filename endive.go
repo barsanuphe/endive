@@ -91,6 +91,16 @@ func showInfo(lb *l.Library, c *cli.Context) {
 		available += "non-retail"
 	}
 	rows = append(rows, []string{"Available versions", available})
+	rows = append(rows, []string{"Progress", book.Progress})
+	if book.ReadDate != "" {
+		rows = append(rows, []string{"Read Date", book.ReadDate})
+	}
+	if book.Rating != "" {
+		rows = append(rows, []string{"Rating", book.Rating})
+	}
+	if book.Review != "" {
+		rows = append(rows, []string{"Review", book.Review})
+	}
 	fmt.Println(h.TabulateRows(rows, "Info", "Book"))
 }
 
