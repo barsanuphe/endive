@@ -178,9 +178,9 @@ func (l *Library) ImportEpubs(allEpubs []string, allHashes []string, isRetail bo
 		}
 	}
 	if isRetail {
-		h.Logger.Infof("Imported %d retail epubs.\n", newEpubs)
+		h.Logger.Debugf("Imported %d retail epubs.\n", newEpubs)
 	} else {
-		h.Logger.Infof("Imported %d non-retail epubs.\n", newEpubs)
+		h.Logger.Debugf("Imported %d non-retail epubs.\n", newEpubs)
 	}
 	return
 }

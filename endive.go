@@ -364,6 +364,14 @@ func generateCLI(lb *l.Library) (app *cli.App) {
 			Usage:    "list epubs in the collection",
 			Subcommands: []cli.Command{
 				{
+					Name:    "books",
+					Aliases: []string{"b"},
+					Usage:   "list all books.",
+					Action: func(c *cli.Context) {
+						fmt.Println(lb.TabulateList(lb.Books))
+					},
+				},
+				{
 					Name:    "untagged",
 					Aliases: []string{"u"},
 					Usage:   "list untagged epubs.",

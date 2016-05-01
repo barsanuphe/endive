@@ -141,7 +141,7 @@ func (e *Book) generateNewName(fileTemplate string, isRetail bool) (newName stri
 	)
 	seriesString := ""
 	if len(e.Metadata.Series) != 0 {
-		seriesString = "[" + e.Metadata.Series.String() + "]"
+		seriesString = h.CleanForPath("[" + e.Metadata.Series.String() + "]")
 	}
 
 	// replace with all valid epub parameters
@@ -165,6 +165,11 @@ func (e *Book) generateNewName(fileTemplate string, isRetail bool) (newName stri
 	if filepath.Ext(newName) != ".epub" {
 		newName += ".epub"
 	}
+	// making sure the final filename is valid
+	filename := filepath.Base(newName)
+	if filename != h.CleanForPath(filename) {
+		newName = filepath.Join(filepath.Dir(newName), strings.TrimSpace(h.CleanForPath(filename)))
+	}
 	return
 }
 
@@ -182,7 +187,7 @@ func (e *Book) RefreshEpub(epub Epub, isRetail bool) (wasRenamed bool, newName s
 
 	if epub.Filename != newName {
 		origin := epub.FullPath()
-		h.Logger.Info("Renaming " + origin + " to: " + newName)
+		h.Logger.Info("Renaming: \n\t" + origin + "\n   =>\n\t" + newName)
 		// move to c.LibraryRoot + new name
 		destination := filepath.Join(e.Config.LibraryRoot, newName)
 		// if parent directory does not exist, create
@@ -220,7 +225,7 @@ func (e *Book) Refresh() (wasRenamed []bool, newName []string, err error) {
 	}
 	// refresh Metadata
 	if e.Metadata.Refresh(e.Config) {
-		fmt.Println("Found author alias: " + e.Metadata.Author())
+		h.Logger.Debug("Found author alias: " + e.Metadata.Author())
 	}
 
 	// refresh both epubs
@@ -235,7 +240,7 @@ func (e *Book) Refresh() (wasRenamed []bool, newName []string, err error) {
 				e.RetailEpub.Filename = newNameR
 			}
 		} else {
-			fmt.Println("MISSING EPUB " + e.RetailEpub.FullPath())
+			h.Logger.Warning("MISSING EPUB " + e.RetailEpub.FullPath())
 			e.RetailEpub = Epub{}
 		}
 	}
@@ -247,7 +252,7 @@ func (e *Book) Refresh() (wasRenamed []bool, newName []string, err error) {
 				e.NonRetailEpub.Filename = newNameNR
 			}
 		} else {
-			fmt.Println("MISSING EPUB " + e.NonRetailEpub.FullPath())
+			h.Logger.Warning("MISSING EPUB " + e.NonRetailEpub.FullPath())
 			e.NonRetailEpub = Epub{}
 		}
 	}
@@ -432,9 +437,9 @@ func (e *Book) SearchOnline() (err error) {
 	// get book info
 	onlineInfo := g.GetBook(id, e.Config.GoodReadsAPIKey)
 	// show diff between epub and GR versions, then ask what to do.
-	fmt.Println(e.Metadata.Diff(onlineInfo, "Local", "GoodReads"))
+	fmt.Println(e.Metadata.Diff(onlineInfo, "Epub Metadata", "GoodReads"))
 
-	fmt.Printf(h.GreenBold("Accept in (B)ulk? Choose (F)ield by field? (K)eep original? "))
+	fmt.Printf(h.GreenBold("Accept Goodreads metadata in (B)ulk? (F)ield by field? Or (K)eep original? "))
 	scanner := bufio.NewReader(os.Stdin)
 	choice, _ := scanner.ReadString('\n')
 	switch strings.TrimSpace(choice) {
