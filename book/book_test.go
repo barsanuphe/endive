@@ -9,6 +9,8 @@ import (
 
 	cfg "github.com/barsanuphe/endive/config"
 	h "github.com/barsanuphe/endive/helpers"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var epubs = []struct {
@@ -79,90 +81,68 @@ func TestMain(m *testing.M) {
 // TestBookJSON tests both JSON() and FromJSON().
 func TestBookJSON(t *testing.T) {
 	fmt.Println("+ Testing Book.JSON()...")
+	assert := assert.New(t)
 	for i, testEpub := range epubs {
 		e := NewBook(i, testEpub.filename, standardTestConfig, isRetail)
 		info, err := e.MainEpub().ReadMetadata()
-		if err != nil {
-			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.FullPath(), err)
-		}
+		assert.Nil(err, fmt.Sprintf("Error getting Metadata for %s, got %s, expected nil", e.FullPath(), err))
 		e.EpubMetadata = info
 		e.Metadata = info
+
 		err = e.RetailEpub.GetHash()
-		if err != nil {
-			t.Errorf("Error getting Hash for epub %s", e.FullPath())
-		}
+		assert.Nil(err, "Error getting hash for "+e.FullPath())
+
 		jsonString, err := e.JSON()
-		if err != nil {
-			t.Errorf("Error exporting epub %s to JSON string", e.FullPath())
-		}
-		if jsonString != testEpub.expectedJSONString {
-			t.Errorf("JSON(%s) returned:\n%s\nexpected:\n%s!", testEpub.filename, jsonString, testEpub.expectedJSONString)
-		}
+		assert.Nil(err, "Error exporting epub to JSON string: "+e.FullPath())
+		assert.Equal(jsonString, testEpub.expectedJSONString, "JSON strings are different")
+
 		// recreating new Epub object from Json string
 		f := Book{}
 		f.FromJSON([]byte(jsonString))
 		// comparing a few fields
-		if e.Metadata.Title() != f.Metadata.Title() {
-			t.Errorf("Error rebuilt Epub and original are different")
-		}
+		assert.Equal(e.Metadata.Title(), f.Metadata.Title(), "Error rebuilt Epub and original are different")
+
 		// exporting again to compare
 		jsonString2, err := f.JSON()
-		if err != nil {
-			t.Errorf("Error exporting rebuilt Epub to JSON string")
-		}
-		if jsonString != jsonString2 {
-			t.Errorf("Error rebuilt Epub and original are different")
-		}
+		assert.Nil(err, "Error exporting rebuilt Epub to JSON string")
+		assert.Equal(jsonString, jsonString2, "JSON strings are different")
 	}
 }
 
 func TestBookNewName(t *testing.T) {
 	fmt.Println("+ Testing Book.generateNewName()...")
+	assert := assert.New(t)
 	for i, testEpub := range epubs {
 		e := NewBook(i, testEpub.filename, standardTestConfig, !isRetail)
 		info, err := e.MainEpub().ReadMetadata()
-		if err != nil {
-			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.FullPath(), err)
-		}
+		assert.Nil(err, "Error getting Metadata for  "+e.FullPath())
 		e.EpubMetadata = info
 		e.Metadata = info
 
 		newName1, err := e.generateNewName("$a $y $t", !isRetail)
-		if err != nil {
-			t.Errorf("Error generating new name")
-		}
-		if newName1 != testEpub.expectedFormat1 {
-			t.Errorf("Error getting new name, expected %s, got %s", testEpub.expectedFormat1, newName1)
-		}
+		assert.Nil(err, "Error generating new name")
+		assert.Equal(newName1, testEpub.expectedFormat1, "Error getting new name")
+
 		newName2, err := e.generateNewName("$l/$a/$y. [$a] ($t)", !isRetail)
-		if err != nil {
-			t.Errorf("Error generating new name")
-		}
-		if newName2 != testEpub.expectedFormat2 {
-			t.Errorf("Error getting new name, expected %s, got %s", testEpub.expectedFormat2, newName2)
-		}
+		assert.Nil(err, "Error generating new name")
+		assert.Equal(newName2, testEpub.expectedFormat2, "Error getting new name")
 
 		e = NewBook(10+i, testEpub.filename, standardTestConfig, isRetail)
 		info, err = e.MainEpub().ReadMetadata()
-		if err != nil {
-			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.FullPath(), err)
-		}
+		assert.Nil(err, "Error getting Metadata for  "+e.FullPath())
 		e.EpubMetadata = info
 		e.Metadata = info
 
 		newName1, err = e.generateNewName("$a $y $t", isRetail)
-		if err != nil {
-			t.Errorf("Error generating new name")
-		}
-		if newName1 != testEpub.expectedFormat1Retail {
-			t.Errorf("Error getting new name, expected %s, got %s", testEpub.expectedFormat1Retail, newName1)
-		}
+		assert.Nil(err, "Error generating new name")
+		assert.Equal(newName1, testEpub.expectedFormat1Retail, "Error getting new name")
 	}
 }
 
 func TestBookRefresh(t *testing.T) {
 	fmt.Println("+ Testing Book.Refresh()...")
 	cfg := cfg.Config{EpubFilenameFormat: "$a $y $t", LibraryRoot: parentDir}
+	assert := assert.New(t)
 	for i, testEpub := range epubs {
 		// copy testEpub.filename
 		epubFilename := filepath.Base(testEpub.filename)
@@ -170,54 +150,34 @@ func TestBookRefresh(t *testing.T) {
 		tempCopy := filepath.Join(parentDir, epubDir, "temp_"+epubFilename)
 
 		err := h.CopyFile(filepath.Join(parentDir, testEpub.filename), tempCopy)
-		if err != nil {
-			t.Errorf("Error copying %s to %s", testEpub.filename, tempCopy)
-		}
+		assert.Nil(err, "Error copying")
 
 		// creating Epub object
 		e := NewBook(i, tempCopy, cfg, isRetail)
 		info, err := e.MainEpub().ReadMetadata()
-		if err != nil {
-			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.FullPath(), err)
-		}
+		assert.Nil(err, "Error getting Metadata")
 		e.EpubMetadata = info
 		e.Metadata = info
 
 		// refresh
 		wasRenamed, newName, err := e.Refresh()
-		if err != nil {
-			t.Errorf("Error generating new name: " + err.Error())
-		}
-		if !wasRenamed[0] {
-			t.Errorf("Error renaming %s", tempCopy)
-		}
-		if wasRenamed[1] {
-			t.Errorf("Error: should not have rename non-existant non-retail epub.")
-		}
-		if newName[0] != testEpub.expectedFormat1Retail {
-			t.Errorf("Error renaming %s, got %s, expected %s", tempCopy, newName[0], testEpub.expectedFormat1Retail)
-		}
+		assert.Nil(err, "Error generating new name")
+		assert.True(wasRenamed[0], "Error renaming "+tempCopy)
+		assert.False(wasRenamed[1], "Error: should not have rename non-existant non-retail epub.")
+		assert.Equal(newName[0], testEpub.expectedFormat1Retail, "Error renaming %s "+tempCopy)
 
 		// getting epub path relative to parent dir (ie simulated library root) for comparison
 		filename, err := filepath.Rel(parentDir, e.FullPath())
-		if err != nil {
-			t.Errorf("Error getting relative path: " + err.Error())
-		}
-		if newName[0] != filename {
-			t.Errorf("Error setting new name %s, got %s, expected %s", tempCopy, newName[0], filename)
-		}
+		assert.Nil(err, "Error getting relative path")
+		assert.Equal(newName[0], filename, "Error setting new name")
 
 		//  cleanup
 		if err != nil || !wasRenamed[0] {
 			err = os.Remove(tempCopy)
-			if err != nil {
-				t.Errorf("Error removing temp copy %s", tempCopy)
-			}
+			assert.Nil(err, "Error removing temp copy "+tempCopy)
 		} else {
 			err = os.Remove(filepath.Join(parentDir, newName[0]))
-			if err != nil {
-				t.Errorf("Error removing temp copy %s", newName[0])
-			}
+			assert.Nil(err, "Error removing temp copy "+newName[0])
 		}
 	}
 }
@@ -225,68 +185,49 @@ func TestBookRefresh(t *testing.T) {
 // TestBookSetReadDate tests for SetReadDate and SetReadDateToday
 func TestBookSetReadDate(t *testing.T) {
 	fmt.Println("+ Testing Book.SetReadDate()...")
+	assert := assert.New(t)
 	for i, testEpub := range epubs {
-		e := NewBook(i, testEpub.filename, standardTestConfig, isRetail)
-
-		err := e.SetReadDateToday()
-		if err != nil {
-			t.Errorf("Error setting read date")
-		}
-
 		currentDate := time.Now().Local().Format("2006-01-02")
-		if e.ReadDate != currentDate {
-			t.Errorf("Error setting read date, expected %s, got %s", currentDate, e.ReadDate)
-		}
+		e := NewBook(i, testEpub.filename, standardTestConfig, isRetail)
+		err := e.SetReadDateToday()
+		assert.Nil(err, "Error setting read date")
+		assert.Equal(e.ReadDate, currentDate, "Error setting read date")
 	}
 }
 
 // TestBookProgress tests for SetProgress
 func TestBookProgress(t *testing.T) {
 	fmt.Println("+ Testing Book.TestEpubProgress()...")
+	assert := assert.New(t)
 	e := NewBook(0, epubs[0].filename, standardTestConfig, isRetail)
 
 	err := e.SetProgress("Shortlisted")
-	if err != nil {
-		t.Errorf("Error setting progress Shortlisted")
-	}
-	if e.Progress != "shortlisted" {
-		t.Errorf("Error setting progress, expected %s, got %s", "shortlisted", e.Progress)
-	}
+	assert.Nil(err, "Error setting progress Shortlisted")
+	assert.Equal(e.Progress, "shortlisted", "Error setting progress")
 
 	err = e.SetProgress("mhiuh")
-	if err == nil {
-		t.Errorf("Error setting progress should have failed")
-	}
-	if e.Progress != "shortlisted" {
-		t.Errorf("Error setting progress, expected %s, got %s", "shortlisted", e.Progress)
-	}
+	assert.NotNil(err, "Error setting progress should have failed")
+	assert.Equal(e.Progress, "shortlisted", "Error setting progress")
 }
 
 // TestBookSearchOnline tests for SearchOnline
 func TestBookSearchOnline(t *testing.T) {
 	fmt.Println("+ Testing Book.SearchOnline()...")
+	assert := assert.New(t)
 	// get GR api key
 	key := os.Getenv("GR_API_KEY")
-	if len(key) == 0 {
-		t.Error("Cannot get Goodreads API key")
-		t.FailNow()
-	}
+	require.NotEqual(t, len(key), 0, "Cannot get Goodreads API key")
 	standardTestConfig.GoodReadsAPIKey = key
 
 	for i, testEpub := range epubs {
 		fmt.Println(testEpub.filename)
 		e := NewBook(i, testEpub.filename, standardTestConfig, isRetail)
 		info, err := e.MainEpub().ReadMetadata()
-		if err != nil {
-			t.Errorf("Error getting Metadata for %s, got %s, expected nil", e.FullPath(), err)
-		}
+		assert.Nil(err, "Error getting Metadata for  "+e.FullPath())
 		e.EpubMetadata = info
 		e.Metadata = info
 
 		err = e.SearchOnline()
-		if err != nil {
-			t.Errorf("Error searching online")
-		}
-
+		assert.Nil(err, "Error searching online")
 	}
 }

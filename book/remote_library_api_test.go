@@ -3,6 +3,9 @@ package book
 import (
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var grBooks = []struct {
@@ -35,38 +38,24 @@ var grBooks = []struct {
 func TestGoodReads(t *testing.T) {
 	// make sure it is set
 	key := os.Getenv("GR_API_KEY")
-	if len(key) == 0 {
-		t.Error("Cannot get Goodreads API key")
-		t.FailNow()
-	}
-
+	require.NotEqual(t, len(key), 0, "Cannot get Goodreads API key")
 	g := GoodReads{}
+	assert := assert.New(t)
 	for _, book := range grBooks {
 		// getting book_id
 		bookID := g.GetBookIDByQuery(book.author, book.title, key)
-		if bookID != book.expectedID {
-			t.Errorf("Bad book id, got %s, expected %s.", bookID, book.expectedID)
-		}
+		assert.Equal(bookID, book.expectedID, "Bad book id")
 		// getting book information from book_id
 		b := g.GetBook(bookID, key)
-		if b.Author() != book.author {
-			t.Errorf("Bad author, got %s, expected %s.", b.Author(), book.author)
-		}
+		assert.Equal(b.Author(), book.author, "Bad author")
 		if b.MainTitle != book.title && b.OriginalTitle != book.title {
 			t.Errorf("Bad title, got %s / %s, expected %s.", b.MainTitle, b.OriginalTitle, book.title)
 		}
-		if b.Year != book.expectedYear {
-			t.Errorf("Bad year, got %s, expected %s.", b.Year, book.expectedYear)
-		}
-		if b.String() != book.expectedFullTitle {
-			t.Errorf("Bad title, got %s, expected %s.", b.String(), book.expectedFullTitle)
-		}
+		assert.Equal(b.Year, book.expectedYear, "Bad year")
+		assert.Equal(b.String(), book.expectedFullTitle, "Bad title")
 
 		// getting book_id by isbn
 		bookID = g.GetBookIDByISBN(book.isbn, key)
-		if bookID != book.expectedID {
-			t.Errorf("Bad book id, got %s, expected %s.", bookID, book.expectedID)
-		}
+		assert.Equal(bookID, book.expectedID, "Bad book id")
 	}
-
 }
