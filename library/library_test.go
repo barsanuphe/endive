@@ -2,12 +2,13 @@ package library
 
 import (
 	"fmt"
-	"testing"
-
 	"os"
+	"testing"
 
 	cfg "github.com/barsanuphe/endive/config"
 	h "github.com/barsanuphe/endive/helpers"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMain(m *testing.M) {
@@ -31,16 +32,12 @@ func TestLibrarySearch(t *testing.T) {
 	k := cfg.KnownHashes{}
 	ldb := DB{DatabaseFile: "../test/endive.json"}
 	l := Library{Config: c, KnownHashes: k, DB: ldb}
+	assert := assert.New(t)
 
 	err := l.Load()
-	if err != nil {
-		t.Errorf("Error loading epubs from database: " + err.Error())
-	}
+	assert.Nil(err, "Error loading epubs from database")
 	results, err := l.RunQuery("language:fr")
-	if err != nil {
-		t.Errorf("Error running query: " + err.Error())
-	}
+	assert.Nil(err, "Error running query")
 	fmt.Println(results)
 	// TODO search all fields to check replacements
-
 }

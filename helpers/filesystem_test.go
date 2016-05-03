@@ -5,6 +5,9 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var epubs = []struct {
@@ -23,86 +26,55 @@ var epubs = []struct {
 
 func TestHelpersListEpubs(t *testing.T) {
 	fmt.Println("+ Testing Helpers/ListEpubs()...")
+	assert := assert.New(t)
+	// getting test directory
 	testDir, err := os.Getwd()
-	if err != nil {
-		t.Errorf("Error getting current directory: %s", err.Error())
-	}
-	// go up, down to test
+	require.Nil(t, err, "Error getting current directory")
 	testDir = filepath.Join(filepath.Dir(testDir), "test")
-
-	epubsPaths, hashes, err := ListEpubsInDirectory(testDir)
-	if err != nil {
-
-		t.Errorf("Error listing epubs: %s", err.Error())
-	}
-
 	// using epubs as defined in epub_test
-	if len(epubsPaths) != len(hashes) {
-		t.Errorf("Error listing epubs: paths and hashes should have same length.")
-	}
-	if len(epubsPaths) != len(epubs) {
-		t.Errorf("Error listing epubs: expected 2 epubs, got %d.", len(epubsPaths))
-	}
-
+	epubsPaths, hashes, err := ListEpubsInDirectory(testDir)
+	assert.Nil(err, "Error listing epubs")
+	assert.Equal(len(epubsPaths), len(hashes), "Error listing epubs: paths and hashes should have same length.")
+	assert.Equal(len(epubsPaths), len(epubs), "Error listing epubs: expected 2 epubs, got %d.", len(epubsPaths))
 	for i, path := range epubsPaths {
 		relativePath, err := filepath.Rel(testDir, path)
-		if err != nil {
-			t.Errorf("Error: %s", err.Error())
-		}
-		if epubs[i].filename != relativePath {
-			t.Errorf("Error:  expected %s, got %s.", epubs[i].filename, relativePath)
-		}
-		if epubs[i].expectedSha256 != hashes[i] {
-			t.Errorf("Error:  expected %s, got %s.", epubs[i].expectedSha256, hashes[i])
-		}
+		assert.Nil(err)
+		assert.Equal(epubs[i].filename, relativePath, "Error getting path")
+		assert.Equal(epubs[i].expectedSha256, hashes[i], "Error getting hash")
 	}
 }
 
 func TestHelpersIsDirEmpty(t *testing.T) {
 	fmt.Println("+ Testing Helpers/Filesystem...")
+	assert := assert.New(t)
 	// testing on non-empty dir
 	currentdir, err := os.Getwd()
-	if err != nil {
-		t.Errorf("Could not get current directory")
-	}
+	require.Nil(t, err, "Error getting current directory")
 	isEmpty, err := IsDirectoryEmpty(currentdir)
-	if err != nil {
-		t.Errorf("Error opening current directory")
-	}
-	if isEmpty {
-		t.Errorf("Current directory is not empty")
-	}
-	if !DirectoryExists(currentdir) {
-		t.Errorf("Current directory exists")
-	}
+	assert.Nil(err, "Error opening current directory")
+	assert.False(isEmpty, "Current directory is not empty")
+	exists := DirectoryExists(currentdir)
+	assert.True(exists, "Current directory exists")
+
 	// testing on non existing dir
 	nonExistingDir := filepath.Join(currentdir, "doesnotexist")
 	isEmpty, err = IsDirectoryEmpty(nonExistingDir)
-	if err == nil {
-		t.Errorf("Non existing directory should have triggered error")
-	}
-	if DirectoryExists(nonExistingDir) {
-		t.Errorf("Directory does not exist")
-	}
+	assert.NotNil(err, "Non existing directory should have triggered error")
+	exists = DirectoryExists(nonExistingDir)
+	assert.False(exists, "Directory does not exist")
+
 	// testing on empty dir
 	err = os.Mkdir(nonExistingDir, 0755)
-	if err != nil {
-		t.Errorf("Could not get create directory")
-	}
+	require.Nil(t, err, "Could not get create directory")
 	isEmpty, err = IsDirectoryEmpty(nonExistingDir)
-	if err != nil {
-		t.Errorf("Existing directory should not have triggered error")
-	}
-	if !isEmpty {
-		t.Errorf("Directory should be empty")
-	}
-	if !DirectoryExists(nonExistingDir) {
-		t.Errorf("Directory now exists")
-	}
+	assert.Nil(err, "Non existing directory should not have triggered error")
+	assert.True(isEmpty, "Directory should be empty")
+	exists = DirectoryExists(nonExistingDir)
+	assert.True(exists, "Directory now exists")
+
+	// cleanup
 	err = os.Remove(nonExistingDir)
-	if err != nil {
-		t.Errorf("Could not get remove directory")
-	}
+	require.Nil(t, err, "Could not remove directory")
 }
 
 var paths = []struct {
@@ -122,64 +94,44 @@ var paths = []struct {
 func TestHelpersCleanForPath(t *testing.T) {
 	fmt.Println("+ Testing Helpers/CleanForPath()...")
 	for _, el := range paths {
-		if CleanForPath(el.path) != el.expectedCleanPath {
-			t.Errorf("Error cleaning path, got %s, expected %s", CleanForPath(el.path), el.expectedCleanPath)
-		}
+		assert.Equal(t, CleanForPath(el.path), el.expectedCleanPath, "Error cleaning path")
 	}
 }
 
 func TestHelpersCopy(t *testing.T) {
 	fmt.Println("+ Testing Helpers/Copy()...")
-
-	// go up, down to test
-	currentDir, err := os.Getwd()
-	if err != nil {
-		t.Errorf("Could not get current directory")
-		t.FailNow()
-	}
-	testDir := filepath.Join(filepath.Dir(currentDir), "test")
+	assert := assert.New(t)
+	// getting test directory
+	testDir, err := os.Getwd()
+	require.Nil(t, err, "Error getting current directory")
+	testDir = filepath.Join(filepath.Dir(testDir), "test")
 
 	for _, el := range epubs {
 		// copy file to _test
 		origFilename := filepath.Join(testDir, el.filename)
 		copyFilename := filepath.Join(testDir, el.filename+"_test")
 		err := CopyFile(origFilename, copyFilename)
-		if err != nil {
-			t.Errorf("Could not copy file %s: %s", origFilename, err.Error())
-		}
+		require.Nil(t, err, "Could not copy file "+origFilename)
 		// check copy exists
 		absolutePath, err := FileExists(copyFilename)
-		if err != nil {
-			t.Errorf("Copy file %s should exist, got %s", copyFilename, err.Error())
-		}
-		if absolutePath != copyFilename {
-			t.Errorf("Copy path should be %s, got %s", copyFilename, absolutePath)
-		}
+		assert.Nil(err, "Copy file %s should exist", copyFilename)
+		assert.Equal(absolutePath, copyFilename, "Getting copy path")
 		// check copy hash
 		copyHash, err := CalculateSHA256(copyFilename)
-		if err != nil {
-			t.Errorf("Could not get hash from copy file %s, got %s", copyFilename, err.Error())
-		}
-		if copyHash != el.expectedSha256 {
-			t.Errorf("Copy hash %s different from source %s", copyHash, el.expectedSha256)
-		}
-		// delete _test
+		assert.Nil(err, "Could not get hash from copy file %s", copyFilename)
+		assert.Equal(copyHash, el.expectedSha256, "Copy hash %s different from source %s", copyHash, el.expectedSha256)
+		// cleanup
 		err = os.Remove(copyFilename)
-		if err != nil {
-			t.Errorf("Copy file %s could not be removed, got %s", copyFilename, err.Error())
-		}
+		require.Nil(t, err, "Copy file %s could not be removed", copyFilename)
 	}
 }
 
 func TestHelpersDeleteFolders(t *testing.T) {
 	fmt.Println("+ Testing Helpers/DeleteEmptyFolders()...")
-	// go up, down to test
-	/*currentDir, err := os.Getwd()
-	if err != nil {
-		t.Errorf("Could not get current directory")
-		t.FailNow()
-	}
-	testDir := filepath.Join(filepath.Dir(currentDir), "test")*/
+	/*// getting test directory
+	testDir, err := os.Getwd()
+	require.Nil(err, "Error getting current directory")
+	testDir = filepath.Join(filepath.Dir(testDir), "test")*/
 	// TODO
 	// create folders
 	// test

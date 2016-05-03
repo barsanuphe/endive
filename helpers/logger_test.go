@@ -6,12 +6,16 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestHelpersLogger(t *testing.T) {
 	fmt.Println("+ Testing Helpers/GetLogger()...")
 	logFilename := "../test/testing"
 	err := GetLogger(logFilename)
+	assert.Nil(t, err)
 	defer LogFile.Close()
 
 	Logger.Error("Error")
@@ -29,12 +33,9 @@ func TestHelpersLogger(t *testing.T) {
 	}
 	// checking 3 lines were written + 1 for setup + 1 return at end of file
 	lines := strings.Split(string(output), "\n")
-	if len(lines) != 5 {
-		t.Errorf("Error checking log file: wrong number of lines: %d", len(lines))
-	}
+	assert.Equal(t, len(lines), 5, "Error checking log file: wrong number of lines")
+
 	// remove log file
 	err = os.Remove(logFilename)
-	if err != nil {
-		t.Errorf("Error removing test log file")
-	}
+	require.Nil(t, err, "Error removing test log file")
 }
