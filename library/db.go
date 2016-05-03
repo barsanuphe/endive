@@ -245,3 +245,13 @@ func (ldb *DB) ListUntagged() (untagged []b.Book) {
 	}
 	return
 }
+
+// ListByProgress returns a slice of Books with the given reading progress.
+func (ldb *DB) ListByProgress(progress string) (filteredList []b.Book) {
+	for _, book := range ldb.Books {
+		if book.Progress == progress {
+			filteredList = append(filteredList, book)
+		}
+	}
+	return
+}
