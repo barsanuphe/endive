@@ -19,6 +19,8 @@ import (
 	"strings"
 	"time"
 
+	"os"
+
 	b "github.com/barsanuphe/endive/book"
 	cfg "github.com/barsanuphe/endive/config"
 	h "github.com/barsanuphe/endive/helpers"
@@ -244,8 +246,32 @@ func (l *Library) Refresh() (renamed int, err error) {
 }
 
 // ExportToEReader selected epubs.
-func (l *Library) ExportToEReader(epubs []b.Book) (err error) {
-	// TODO
+func (l *Library) ExportToEReader() (err error) {
+	if !h.DirectoryExists(l.Config.EReaderMountPoint) {
+		return errors.New("E-Reader mount point does not exist")
+	}
+	// TODO check what we want to export, really.
+	// copy files with progress == shortlisted
+	h.Logger.Info("Exporting shortlisted books.")
+	shortListed := l.ListByProgress("shortlisted")
+	if len(shortListed) != 0 {
+		for _, book := range shortListed {
+			destination := filepath.Join(l.Config.EReaderMountPoint, filepath.Base(book.MainEpub().FullPath()))
+			if !h.DirectoryExists(filepath.Dir(destination)) {
+				err = os.MkdirAll(filepath.Dir(destination), 0777)
+				if err != nil {
+					return err
+				}
+			}
+			if _, exists := h.FileExists(destination); exists != nil {
+				h.Logger.Info(" - Exporting " + book.ShortString())
+				err = h.CopyFile(book.MainEpub().FullPath(), destination)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
 	return
 }
 

@@ -57,6 +57,23 @@ func checkArgsWithID(l *l.Library, args []string) (book *b.Book, other []string,
 	return
 }
 
+func markRead(lb *l.Library, c *cli.Context) {
+	book, args, err := checkArgsWithID(lb, c.Args())
+	if err != nil {
+		fmt.Println("Error parsing arguments: " + err.Error())
+		return
+	}
+	if len(args) >= 1 {
+		// TODO check rating format
+		book.Rating = args[0]
+	}
+	if len(args) == 2 {
+		book.Review = args[1]
+	}
+	book.SetReadDateToday()
+	book.SetProgress("read")
+}
+
 func showInfo(lb *l.Library, c *cli.Context) {
 	book, _, err := checkArgsWithID(lb, c.Args())
 	if err != nil {
@@ -318,8 +335,29 @@ func generateCLI(lb *l.Library) (app *cli.App) {
 			Aliases: []string{"x"},
 			Usage:   "export to E-Reader",
 			Action: func(c *cli.Context) {
-				// TODO
-				fmt.Println("Exporting...")
+				// TODO export with search ?
+				fmt.Println("Exporting selection to E-Reader...")
+			},
+			Subcommands: []cli.Command{
+				{
+					Name:    "all",
+					Aliases: []string{"books"},
+					Usage:   "export everything.",
+					Action: func(c *cli.Context) {
+						fmt.Println("Exporting everything to E-Reader...")
+						// TODO
+					},
+				},
+				{
+					Name:    "shortlisted",
+					Aliases: []string{"unread", "reading", "read"},
+					Usage:   "export books according to their reading progress",
+					Action: func(c *cli.Context) {
+						usedAlias := c.Parent().Args().First()
+						fmt.Printf("Exporting selection (progress %s) to E-Reader...\n", usedAlias)
+						// TODO
+					},
+				},
 			},
 		},
 		{
@@ -337,6 +375,30 @@ func generateCLI(lb *l.Library) (app *cli.App) {
 			},
 		},
 		{
+			Name:    "metadata",
+			Aliases: []string{"md"},
+			Usage:   "edit book metadata",
+			Subcommands: []cli.Command{
+				{
+					Name:    "refresh",
+					Aliases: []string{"r"},
+					Usage:   "reload metadata from epub and online sources (overwrites previous changes).",
+					Action: func(c *cli.Context) {
+						// TODO
+						// ask confirmation
+					},
+				},
+				{
+					Name:    "edit",
+					Aliases: []string{"modify"},
+					Usage:   "edit metadata field using book ID: metadata edit ID field values",
+					Action: func(c *cli.Context) {
+						// TODO
+					},
+				},
+			},
+		},
+		{
 			Name:    "refresh",
 			Aliases: []string{"r"},
 			Usage:   "refresh library",
@@ -347,6 +409,14 @@ func generateCLI(lb *l.Library) (app *cli.App) {
 					panic(err)
 				}
 				fmt.Println("Refresh done, renamed " + strconv.Itoa(renamed) + " epubs.")
+			},
+		},
+		{
+			Name:    "read",
+			Aliases: []string{"rd"},
+			Usage:   "mark as read: read ID [rating [review]]",
+			Action: func(c *cli.Context) {
+				markRead(lb, c)
 			},
 		},
 		{
