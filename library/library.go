@@ -16,7 +16,6 @@ import (
 	"fmt"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"time"
 
 	"os"
@@ -246,16 +245,13 @@ func (l *Library) Refresh() (renamed int, err error) {
 }
 
 // ExportToEReader selected epubs.
-func (l *Library) ExportToEReader() (err error) {
+func (l *Library) ExportToEReader(books []b.Book) (err error) {
 	if !h.DirectoryExists(l.Config.EReaderMountPoint) {
-		return errors.New("E-Reader mount point does not exist")
+		return errors.New("E-Reader mount point does not exist: " + l.Config.EReaderMountPoint)
 	}
-	// TODO check what we want to export, really.
-	// copy files with progress == shortlisted
-	h.Logger.Info("Exporting shortlisted books.")
-	shortListed := l.ListByProgress("shortlisted")
-	if len(shortListed) != 0 {
-		for _, book := range shortListed {
+	h.Logger.Info("Exporting books.")
+	if len(books) != 0 {
+		for _, book := range books {
 			destination := filepath.Join(l.Config.EReaderMountPoint, filepath.Base(book.MainEpub().FullPath()))
 			if !h.DirectoryExists(filepath.Dir(destination)) {
 				err = os.MkdirAll(filepath.Dir(destination), 0777)
@@ -304,19 +300,9 @@ func (l *Library) DuplicateRetailEpub(id int) (nonRetailEpub *b.Book, err error)
 	return
 }
 
-// RunQuery and print the results
-func (l *Library) RunQuery(query string) (results string, err error) {
-	// remplace fields for simpler queries
-	r := strings.NewReplacer(
-		"author:", "metadata.authors:",
-		"title:", "metadata.title:",
-		"year:", "metadata.year:",
-		"language:", "metadata.language:",
-		"series:", "metadata.series.seriesname:",
-		"tags:", "metadata.tags.name:",
-	)
-	query = r.Replace(query)
-	hits, err := l.Search(query)
+// Search and print the results
+func (l *Library) Search(query string) (results string, err error) {
+	hits, err := l.RunQuery(query)
 	if err != nil {
 		return
 	}

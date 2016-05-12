@@ -144,7 +144,7 @@ func (ldb *DB) FindByID(id int) (result *b.Book, err error) {
 }
 
 // FindByMetadata among known Books
-func (ldb *DB) FindByMetadata(i b.Info) (result *b.Book, err error) {
+func (ldb *DB) FindByMetadata(i b.Metadata) (result *b.Book, err error) {
 	// TODO tests
 	for j, book := range ldb.Books {
 		if book.Metadata.IsSimilar(i) || book.EpubMetadata.IsSimilar(i) {

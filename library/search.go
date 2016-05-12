@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"strconv"
+	"strings"
 
 	b "github.com/barsanuphe/endive/book"
 	h "github.com/barsanuphe/endive/helpers"
@@ -87,10 +88,10 @@ func (ldb *DB) Index() (numIndexed uint64, err error) {
 	return
 }
 
-// Search current DB
-func (ldb *DB) Search(queryString string) (results []b.Book, err error) {
+// RunQuery on current DB
+func (ldb *DB) RunQuery(queryString string) (results []b.Book, err error) {
 	// TODO make sure the index is up to date
-
+	queryString = ldb.prepareQuery(queryString)
 	query := bleve.NewQueryStringQuery(queryString)
 	search := bleve.NewSearchRequest(query)
 	// open index
@@ -126,4 +127,18 @@ func (ldb *DB) Search(queryString string) (results []b.Book, err error) {
 		}
 	}
 	return
+}
+
+// prepareQuery before search
+func (ldb *DB) prepareQuery(queryString string) (newQuery string) {
+	// replace fields for simpler queries
+	r := strings.NewReplacer(
+		"author:", "metadata.authors:",
+		"title:", "metadata.title:",
+		"year:", "metadata.year:",
+		"language:", "metadata.language:",
+		"series:", "metadata.series.seriesname:",
+		"tags:", "metadata.tags.name:",
+	)
+	return r.Replace(queryString)
 }
