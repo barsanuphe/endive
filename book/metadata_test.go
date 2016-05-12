@@ -34,7 +34,7 @@ func TestInfo(t *testing.T) {
 		assert.True(hasMetadata, "Error, should have metadata")
 
 		// testing IsSimilar
-		o := Info{}
+		o := Metadata{}
 		assert.False(e.Metadata.IsSimilar(o), "Error: metadata should not be similar.")
 
 		// copying manually

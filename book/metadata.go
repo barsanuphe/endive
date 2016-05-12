@@ -10,8 +10,8 @@ import (
 	h "github.com/barsanuphe/endive/helpers"
 )
 
-// Info contains all of the known book metadata.
-type Info struct {
+// Metadata contains all of the known book metadata.
+type Metadata struct {
 	ID            string   `json:"-" xml:"id"`
 	MainTitle     string   `json:"title" xml:"title"`
 	OriginalTitle string   `json:"original_title" xml:"work>original_title"`
@@ -28,7 +28,7 @@ type Info struct {
 }
 
 // String returns a representation of a GoodreadsBook
-func (i *Info) String() string {
+func (i *Metadata) String() string {
 	if len(i.Series) != 0 {
 		return fmt.Sprintf("%s (%s) %s [%s]", i.Author(), i.Year, i.Title(), i.MainSeries().String())
 	}
@@ -36,24 +36,24 @@ func (i *Info) String() string {
 }
 
 // HasAny checks if metadata was parsed.
-func (i *Info) HasAny() (hasInfo bool) {
-	// if Info does not have a title and author, chances are it's empty.
+func (i *Metadata) HasAny() (hasMetadata bool) {
+	// if Metadata does not have a title and author, chances are it's empty.
 	if i.Title() != "" && i.Author() != "" {
 		return true
 	}
 	return
 }
 
-// Title returns Info's main title.
-func (i *Info) Title() string {
+// Title returns Metadata's main title.
+func (i *Metadata) Title() string {
 	if i.OriginalTitle != "" {
 		return i.OriginalTitle
 	}
 	return i.MainTitle
 }
 
-// Clean cleans up the Info
-func (i *Info) Clean() {
+// Clean cleans up the Metadata
+func (i *Metadata) Clean() {
 	// default year
 	if i.Year == "" {
 		i.Year = "XXXX"
@@ -66,8 +66,8 @@ func (i *Info) Clean() {
 	}
 }
 
-// Author returns Info's main author.
-func (i *Info) Author() (author string) {
+// Author returns Metadata's main author.
+func (i *Metadata) Author() (author string) {
 	author = "Unknown"
 	if len(i.Authors) != 0 {
 		author = i.Authors[0]
@@ -75,16 +75,16 @@ func (i *Info) Author() (author string) {
 	return
 }
 
-// MainSeries return the main Series of Info.
-func (i *Info) MainSeries() SingleSeries {
+// MainSeries return the main Series of Metadata.
+func (i *Metadata) MainSeries() SingleSeries {
 	if len(i.Series) != 0 {
 		return i.Series[0]
 	}
 	return SingleSeries{}
 }
 
-// Refresh updates Info fields, using the configuration file.
-func (i *Info) Refresh(c cfg.Config) (hasChanged bool) {
+// Refresh updates Metadata fields, using the configuration file.
+func (i *Metadata) Refresh(c cfg.Config) (hasChanged bool) {
 	// for now, only taking into account author aliases
 	for j, author := range i.Authors {
 		for mainalias, aliases := range c.AuthorAliases {
@@ -98,8 +98,8 @@ func (i *Info) Refresh(c cfg.Config) (hasChanged bool) {
 	return
 }
 
-// IsSimilar checks if metadata is similar to known Info.
-func (i *Info) IsSimilar(o Info) (isSimilar bool) {
+// IsSimilar checks if metadata is similar to known Metadata.
+func (i *Metadata) IsSimilar(o Metadata) (isSimilar bool) {
 	// TODO tests
 	// check isbn
 	if i.ISBN != "" && o.ISBN != "" && i.ISBN == o.ISBN {
@@ -112,8 +112,8 @@ func (i *Info) IsSimilar(o Info) (isSimilar bool) {
 	return
 }
 
-// Diff returns differences between Infos.
-func (i *Info) Diff(o Info, firstHeader, secondHeader string) (diff string) {
+// Diff returns differences between Metadatas.
+func (i *Metadata) Diff(o Metadata, firstHeader, secondHeader string) (diff string) {
 	var rows [][]string
 	rows = append(rows, []string{i.String(), o.String()})
 	rows = append(rows, []string{i.Author(), o.Author()})
@@ -127,8 +127,8 @@ func (i *Info) Diff(o Info, firstHeader, secondHeader string) (diff string) {
 	return h.TabulateRows(rows, firstHeader, secondHeader)
 }
 
-// Merge with another Info.
-func (i *Info) Merge(o Info) (err error) {
+// Merge with another Metadata.
+func (i *Metadata) Merge(o Metadata) (err error) {
 	// TODO tests
 	// TODO all fields
 	if i.Author() != o.Author() {
