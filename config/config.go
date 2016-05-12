@@ -79,7 +79,7 @@ func (c *Config) Load() (err error) {
 	if c.EpubFilenameFormat == "" {
 		c.EpubFilenameFormat = "$a [$y] $t"
 	}
-	c.EReaderMountPoint = conf.GetString("ereader_target")
+	c.EReaderMountPoint = conf.GetString("ereader_root")
 	c.GoodReadsAPIKey = conf.GetString("goodreads_api_key")
 	if c.GoodReadsAPIKey == "" {
 		c.GoodReadsAPIKey = os.Getenv("GR_API_KEY")
