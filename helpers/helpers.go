@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/barsanuphe/gotabulate"
-	"github.com/ttacon/chalk"
 )
 
 // TimeTrack helps track the time taken by a function.
@@ -120,12 +119,35 @@ func YesOrNo(question string) (yes bool) {
 	return
 }
 
-// BlueBold outputs a string in blue bold.
-func BlueBold(in string) string {
-	return chalk.Bold.TextStyle(chalk.Blue.Color(in))
+// AskForNewValue from user
+func AskForNewValue(field, oldValue string) (newValue string, err error) {
+	fmt.Printf(BlueBold("Modifying %s: previous value: %s\n"), field, oldValue)
+	fmt.Println(BlueBold("Enter new value: "))
+	scanner := bufio.NewReader(os.Stdin)
+	choice, err := scanner.ReadString('\n')
+	if err != nil {
+		return "", err
+	}
+	newValue = strings.TrimSpace(choice)
+	return
 }
 
-// GreenBold outputs a string in green bold.
-func GreenBold(in string) string {
-	return chalk.Bold.TextStyle(chalk.Green.Color(in))
+// AssignNewValue from candidates or from user input
+func AssignNewValue(field, oldValue string, candidates []string) (newValue string, err error) {
+	if len(candidates) == 0 {
+		desc, err := AskForNewValue(field, oldValue)
+		if err != nil {
+			return "", err
+		}
+		if YesOrNo("Confirm") {
+			candidates = append(candidates, desc)
+		} else {
+			return "", errors.New("No new value")
+		}
+	}
+	// cleanup
+	newValue = strings.TrimSpace(candidates[0])
+	// show old_value => new_value
+	Logger.Infof("Changing %s: \n%s\n\t=>\n%s\n", field, oldValue, newValue)
+	return
 }
