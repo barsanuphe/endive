@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -38,8 +39,8 @@ type Book struct {
 	RetailEpub    Epub `json:"retail"`
 	NonRetailEpub Epub `json:"nonretail"`
 	// metadata
-	EpubMetadata Info `json:"epub_metadata"`
-	Metadata     Info `json:"metadata"`
+	EpubMetadata Metadata `json:"epub_metadata"`
+	Metadata     Metadata `json:"metadata"`
 	// user info
 	Progress string `json:"progress"`
 	ReadDate string `json:"readdate"`
@@ -49,11 +50,11 @@ type Book struct {
 
 // NewBook constructs a valid new Epub
 func NewBook(id int, filename string, c cfg.Config, isRetail bool) *Book {
-	return NewBookWithMetadata(id, filename, c, isRetail, Info{})
+	return NewBookWithMetadata(id, filename, c, isRetail, Metadata{})
 }
 
 // NewBookWithMetadata constructs a valid new Epub
-func NewBookWithMetadata(id int, filename string, c cfg.Config, isRetail bool, i Info) *Book {
+func NewBookWithMetadata(id int, filename string, c cfg.Config, isRetail bool, i Metadata) *Book {
 	f := Epub{Filename: filename, Config: c, NeedsReplacement: "false"}
 	if isRetail {
 		return &Book{ID: id, RetailEpub: f, Config: c, EpubMetadata: i, Metadata: i, Progress: "unread"}
@@ -77,6 +78,49 @@ func (e *Book) String() (desc string) {
 		tags += " ]"
 	}
 	return e.FullPath() + ":\t" + e.Metadata.Author() + " (" + e.Metadata.Year + ") " + e.Metadata.Title() + " [" + e.Metadata.Language + "] " + tags
+}
+
+// ShowInfo returns a table with relevant information about a book.
+func (e *Book) ShowInfo() (desc string) {
+	relativePath, err := filepath.Rel(e.Config.LibraryRoot, e.FullPath())
+	if err != nil {
+		panic(err)
+	}
+	var rows [][]string
+	rows = append(rows, []string{"ID", strconv.Itoa(e.ID)})
+	rows = append(rows, []string{"Filename", relativePath})
+	rows = append(rows, []string{"Author", e.Metadata.Author()})
+	rows = append(rows, []string{"Title", e.Metadata.Title()})
+	rows = append(rows, []string{"Publication Year", e.Metadata.Year})
+	if e.Metadata.ISBN != "" {
+		rows = append(rows, []string{"ISBN", e.Metadata.ISBN})
+	}
+	rows = append(rows, []string{"Description", e.Metadata.Description})
+	if len(e.Metadata.Tags) != 0 {
+		rows = append(rows, []string{"Tags", e.Metadata.Tags.String()})
+	}
+	if len(e.Metadata.Series) != 0 {
+		rows = append(rows, []string{"Series", e.Metadata.Series.String()})
+	}
+	available := ""
+	if e.HasRetail() {
+		available += "retail "
+	}
+	if e.HasNonRetail() {
+		available += "non-retail"
+	}
+	rows = append(rows, []string{"Available versions", available})
+	rows = append(rows, []string{"Progress", e.Progress})
+	if e.ReadDate != "" {
+		rows = append(rows, []string{"Read Date", e.ReadDate})
+	}
+	if e.Rating != "" {
+		rows = append(rows, []string{"Rating", e.Rating})
+	}
+	if e.Review != "" {
+		rows = append(rows, []string{"Review", e.Review})
+	}
+	return h.TabulateRows(rows, "Info", "Book")
 }
 
 // FullPath of the main Epub of a Book.
@@ -200,6 +244,35 @@ func (e *Book) RefreshEpub(epub Epub, isRetail bool) (wasRenamed bool, newName s
 			return
 		}
 		wasRenamed = true
+	}
+	return
+}
+
+// ForceMetadataRefresh overwrites current Metadata
+func (e *Book) ForceMetadataRefresh() (err error) {
+	_, exists := h.FileExists(e.MainEpub().FullPath())
+	if exists == nil {
+		info, ok := e.MainEpub().ReadMetadata()
+		if ok != nil {
+			err = ok
+			return
+		}
+		e.EpubMetadata = info
+		e.Metadata = info
+	} else {
+		err = errors.New("Missing main epub for " + e.ShortString())
+		return
+	}
+	// refresh Metadata
+	if e.Metadata.Refresh(e.Config) {
+		h.Logger.Debug("Found author alias: " + e.Metadata.Author())
+	}
+
+	// get online data
+	err = e.SearchOnline()
+	if err != nil {
+		h.Logger.Warning(err.Error())
+		return
 	}
 	return
 }
@@ -418,7 +491,6 @@ func (e *Book) SearchOnline() (err error) {
 		return
 	}
 	// TODO tests
-
 	var g RemoteLibraryAPI
 	g = GoodReads{}
 	id := ""
@@ -432,6 +504,7 @@ func (e *Book) SearchOnline() (err error) {
 	}
 	// if still nothing was found...
 	if id == "" {
+		// TODO ask for user input
 		return errors.New("Could not find online data for " + e.ShortString())
 	}
 	// get book info
@@ -457,6 +530,103 @@ func (e *Book) SearchOnline() (err error) {
 	default:
 		h.Logger.Info("What was that?")
 		// TODO ask again
+	}
+	return
+}
+
+// EditField in current Metadata associated with the Book.
+func (e *Book) EditField(args ...string) (err error) {
+	if len(args) == 0 {
+		// TODO complete interactive edit
+	} else {
+		field := strings.ToLower(args[0])
+		values := []string{}
+		if len(args) > 1 {
+			values = args[1:]
+		}
+
+		switch field {
+		// TODO
+		case "tags", "tag":
+			// TODO
+		case "series":
+			// TODO
+		case "author", "authors":
+			// TODO
+		case "year":
+			newValue, err := h.AssignNewValue(field, e.Metadata.Year, values)
+			if err != nil {
+				return err
+			}
+			// TODO check it's a valid date!
+			e.Metadata.Year = newValue
+		case "language":
+			newValue, err := h.AssignNewValue(field, e.Metadata.Language, values)
+			if err != nil {
+				return err
+			}
+			newValue, err = cleanLanguage(newValue)
+			if err != nil {
+				return err
+			}
+			e.Metadata.Language = newValue
+		case "isbn":
+			newValue, err := h.AssignNewValue(field, e.Metadata.ISBN, values)
+			if err != nil {
+				return err
+			}
+			// check it's a valid ISBN
+			isbn, err := cleanISBN(newValue)
+			if err != nil {
+				return err
+			}
+			e.Metadata.ISBN = isbn
+		case "title":
+			newValue, err := h.AssignNewValue(field, e.Metadata.MainTitle, values)
+			if err != nil {
+				return err
+			}
+			e.Metadata.MainTitle = newValue
+			e.Metadata.OriginalTitle = newValue
+		case "description":
+			newValue, err := h.AssignNewValue(field, e.Metadata.Description, values)
+			if err != nil {
+				return err
+			}
+			e.Metadata.Description = newValue
+		case "progress":
+			newValue, err := h.AssignNewValue(field, e.Progress, values)
+			if err != nil {
+				return err
+			}
+			// TODO check it's a valid reading progress!
+			e.Progress = newValue
+		case "read_date", "readdate":
+			newValue, err := h.AssignNewValue(field, e.ReadDate, values)
+			if err != nil {
+				return err
+			}
+			// TODO check it's a valid date!
+			e.ReadDate = newValue
+		case "rating":
+			newValue, err := h.AssignNewValue(field, e.Rating, values)
+			if err != nil {
+				return err
+			}
+			e.Rating = newValue
+		case "review":
+			newValue, err := h.AssignNewValue(field, e.Review, values)
+			if err != nil {
+				return err
+			}
+			e.Review = newValue
+
+		// TODO all fields
+
+		default:
+			h.Logger.Debug("Unknown field: " + field)
+			return errors.New("Unknown field: " + field)
+		}
 	}
 	return
 }
