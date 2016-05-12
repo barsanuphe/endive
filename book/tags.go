@@ -1,28 +1,6 @@
 package book
 
-import (
-	"strings"
-
-	h "github.com/barsanuphe/endive/helpers"
-)
-
-// tagAliases defines redundant tags and a main alias for them.
-var tagAliases = map[string][]string{
-	"science-fiction": []string{"sf", "sci-fi", "scifi-fantasy", "scifi", "science fiction", "sciencefiction", "sci-fi-fantasy"},
-	"fantasy":         []string{"fantasy-sci-fi", "fantasy-scifi", "fantasy-fiction"},
-	"dystopia":        []string{"dystopian"},
-}
-
-// TODO: names of months, dates
-// remove shelf names that are obviously not genres
-var forbiddenTags = []string{
-	"own", "school", "favorite", "favourite", "book", "adult",
-	"read", "kindle", "borrowed", "classic", "novel", "buy",
-	"star", "release", "wait", "soon", "wish", "published", "want",
-	"tbr", "series", "finish", "to-", "not-", "library", "audible",
-	"coming", "anticipated", "default", "recommended", "-list", "sequel",
-	"general", "have", "bundle",
-}
+import "strings"
 
 // Tag holds the name of a tag.
 type Tag struct {
@@ -92,34 +70,11 @@ func (t *Tags) Has(o Tag) (isIn bool, index int) {
 }
 
 // Clean a list of tags.
-func (t *Tags) Clean() {
-	cleanTags := Tags{}
-	for _, tag := range *t {
-		clean := true
-		// reducing to main alias
-		for mainalias, aliasList := range tagAliases {
-			_, isIn := h.StringInSlice(tag.Name, aliasList)
-			if isIn {
-				tag.Name = mainalias
-				break
-			}
-		}
-		// checking if not forbidden
-		for _, ft := range forbiddenTags {
-			if strings.Contains(tag.Name, ft) {
-				clean = false
-				break
-			}
-		}
-		// adding if not already present
-		if clean {
-			cleanTags.Add(tag)
-		}
-	}
-	// NOTE: this limit is completely arbitrary
-	// only keep top10 tags, since they are ordered by popularity and will be increasingly wrong.
-	if len(cleanTags) > 10 {
-		cleanTags = cleanTags[:10]
+func (t *Tags) Clean() (err error) {
+	cleanTags, err := cleanTags(*t)
+	if err != nil {
+		return err
 	}
 	*t = cleanTags
+	return
 }

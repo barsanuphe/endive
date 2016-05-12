@@ -12,7 +12,7 @@ import (
 
 // RemoteLibraryAPI is the interface for accessing remote library information.
 type RemoteLibraryAPI interface {
-	GetBook(id, key string) Info
+	GetBook(id, key string) Metadata
 	GetBookIDByQuery(author, title, key string) (id string)
 	GetBookIDByISBN(isbn, key string) (id string)
 }
@@ -25,7 +25,7 @@ const apiRoot = "https://www.goodreads.com/"
 
 // response is the top xml element in goodreads response.
 type response struct {
-	Book   Info          `xml:"book"`
+	Book   Metadata      `xml:"book"`
 	Search searchResults `xml:"search"`
 }
 
@@ -43,7 +43,7 @@ type work struct {
 }
 
 // GetBook returns a GoodreadsBook from its Goodreads ID
-func (g GoodReads) GetBook(id, key string) Info {
+func (g GoodReads) GetBook(id, key string) Metadata {
 	defer h.TimeTrack(time.Now(), "Getting Book info")
 	uri := apiRoot + "book/show/" + id + ".xml?key=" + key
 	r := response{}

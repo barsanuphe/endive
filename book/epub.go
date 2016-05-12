@@ -3,8 +3,6 @@ package book
 import (
 	"errors"
 	"path/filepath"
-	"regexp"
-	"strings"
 
 	cfg "github.com/barsanuphe/endive/config"
 	h "github.com/barsanuphe/endive/helpers"
@@ -61,7 +59,7 @@ func (e *Epub) Check() (hasChanged bool, err error) {
 }
 
 // ReadMetadata from epub file
-func (e *Epub) ReadMetadata() (info Info, err error) {
+func (e *Epub) ReadMetadata() (info Metadata, err error) {
 	h.Logger.Debugf("Reading metadata from %s\n", e.FullPath())
 	book, err := epubgo.Open(e.FullPath())
 	if err != nil {
@@ -142,7 +140,7 @@ func (e *Epub) ReadMetadata() (info Info, err error) {
 	return
 }
 
-func (e *Epub) findISBN(book *epubgo.Epub, i *Info) (err error) {
+func (e *Epub) findISBN(book *epubgo.Epub, i *Metadata) (err error) {
 	// get the identifier
 	identifiers, nonFatalErr := book.MetadataElement("identifier")
 	if nonFatalErr == nil && len(identifiers) != 0 {
@@ -182,21 +180,4 @@ func (e *Epub) findISBN(book *epubgo.Epub, i *Info) (err error) {
 	// if no valid result, return err
 	h.Logger.Debugf("ISBN not found in %s", e.FullPath())
 	return errors.New("ISBN not found in epub")
-}
-
-func cleanISBN(full string) (isbn string, err error) {
-	// cleanup string, only keep numbers
-	re := regexp.MustCompile("[0-9]+")
-	isbn = strings.Join(re.FindAllString(full, -1), "")
-	// check validity
-	if len(isbn) != 13 {
-		// if start of isbn detected, try to salvage the situation
-		if len(isbn) > 13 && (strings.HasPrefix(isbn, "978") || strings.HasPrefix(isbn, "979")) {
-			isbn = isbn[:13]
-		} else {
-			isbn = ""
-			err = errors.New("ISBN-13 not found")
-		}
-	}
-	return
 }

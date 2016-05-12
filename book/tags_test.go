@@ -29,7 +29,7 @@ func TestTags(t *testing.T) {
 	isIn, _ = e.Metadata.Tags.Has(tag2)
 	assert.True(isIn, "Error: expected to have tag2.")
 	// check string()
-	assert.Equal(e.Metadata.Tags.String(), tag1.Name+", "+tag2.Name, "Error generating String()")
+	assert.Equal(tag1.Name+", "+tag2.Name, e.Metadata.Tags.String(), "Error generating String()")
 	// adding more tags
 	added = e.Metadata.Tags.Add(tag3, tag4)
 	assert.True(added, "Error: book should have more tags now.")
