@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/op/go-logging"
+	"github.com/ttacon/chalk"
 	"launchpad.net/go-xdg"
 )
 
@@ -30,6 +31,13 @@ func GetEndiveLogger(xdgPath string) (err error) {
 	return GetLogger(logPath)
 }
 
+// CloseEndiveLogFile correctly ends logging.
+func CloseEndiveLogFile() {
+	if LogFile != nil {
+		LogFile.Close()
+	}
+}
+
 // GetLogger returns a global logger
 func GetLogger(name string) (err error) {
 	Logger = logging.MustGetLogger(name)
@@ -39,19 +47,77 @@ func GetLogger(name string) (err error) {
 		fmt.Printf("error opening file: %v", err)
 		return
 	}
-
-	// stdout logger
-	stdout := logging.NewLogBackend(os.Stdout, "", 0)
-	// show everything but DEBUG on stdout
-	stdoutLeveled := logging.AddModuleLevel(stdout)
-	stdoutLeveled.SetLevel(logging.INFO, "")
-
 	// file log: everything
 	fileLog := logging.NewLogBackend(LogFile, "", 0)
 	fileLogFormatter := logging.NewBackendFormatter(fileLog, format)
-
-	// Set the backends to be used.
-	logging.SetBackend(stdoutLeveled, fileLogFormatter)
-	Logger.Debug("Logger set up.")
+	logging.SetBackend(fileLogFormatter)
+	Debug("Logger set up.")
 	return
+}
+
+// BlueBold outputs a string in blue bold.
+func BlueBold(in string) string {
+	return chalk.Bold.TextStyle(chalk.Blue.Color(in))
+}
+
+// GreenBold outputs a string in green bold.
+func GreenBold(in string) string {
+	return chalk.Bold.TextStyle(chalk.Green.Color(in))
+}
+
+// RedBold outputs a string in red bold.
+func RedBold(in string) string {
+	return chalk.Bold.TextStyle(chalk.Red.Color(in))
+}
+
+// Red outputs a string in red.
+func Red(in string) string {
+	return chalk.Red.Color(in)
+}
+
+// Debug message logging
+func Debug(msg string, args ...interface{}) {
+	msg = fmt.Sprintf(msg, args...)
+	if Logger != nil {
+		Logger.Debug(msg)
+	}
+}
+
+// Warning message logging.
+func Warning(msg string, args ...interface{}) {
+	msg = fmt.Sprintf(msg, args...)
+	fmt.Println(Red("WARNING: " + msg))
+	if Logger != nil {
+		Logger.Warning(msg)
+	}
+}
+
+// Error message logging.
+func Error(msg string, args ...interface{}) {
+	msg = fmt.Sprintf(msg, args...)
+	fmt.Println(RedBold("ERROR: " + msg))
+	if Logger != nil {
+		Logger.Error(msg)
+	}
+}
+
+// Info message logging
+func Info(msg string, args ...interface{}) {
+	msg = fmt.Sprintf(msg, args...)
+	fmt.Println(msg)
+	if Logger != nil {
+		Logger.Info(msg)
+	}
+}
+
+// Choice message logging
+func Choice(msg string, args ...interface{}) {
+	msg = fmt.Sprintf(msg, args...)
+	fmt.Println(BlueBold(msg))
+}
+
+// Title message logging
+func Title(msg string, args ...interface{}) {
+	msg = fmt.Sprintf(msg, args...)
+	fmt.Println(GreenBold(msg))
 }
