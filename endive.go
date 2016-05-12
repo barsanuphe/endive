@@ -57,6 +57,32 @@ func checkArgsWithID(l *l.Library, args []string) (book *b.Book, other []string,
 	return
 }
 
+func editMetadata(lb *l.Library, c *cli.Context) {
+	book, args, err := checkArgsWithID(lb, c.Args())
+	if err != nil {
+		fmt.Println("Error parsing arguments: " + err.Error())
+		return
+	}
+	if err := book.EditField(args...); err != nil {
+		h.Error("Error editing metadata for book ID#%d", book.ID)
+	}
+}
+
+func refreshMetadata(lb *l.Library, c *cli.Context) {
+	book, _, err := checkArgsWithID(lb, c.Args())
+	if err != nil {
+		fmt.Println("Error parsing arguments: " + err.Error())
+		return
+	}
+	// ask confirmation
+	if h.YesOrNo("Confirm refreshing metadata for " + book.ShortString()) {
+		err := book.ForceMetadataRefresh()
+		if err != nil {
+			h.Error("Error reinitializing metadata for book ID#%d", book.ID)
+		}
+	}
+}
+
 func markRead(lb *l.Library, c *cli.Context) {
 	book, args, err := checkArgsWithID(lb, c.Args())
 	if err != nil {
@@ -80,45 +106,7 @@ func showInfo(lb *l.Library, c *cli.Context) {
 		fmt.Println("Error parsing arguments: " + err.Error())
 		return
 	}
-	relativePath, err := filepath.Rel(lb.Config.LibraryRoot, book.FullPath())
-	if err != nil {
-		panic(err)
-	}
-
-	var rows [][]string
-	rows = append(rows, []string{"ID", strconv.Itoa(book.ID)})
-	rows = append(rows, []string{"Filename", relativePath})
-	rows = append(rows, []string{"Author", book.Metadata.Author()})
-	rows = append(rows, []string{"Title", book.Metadata.Title()})
-	rows = append(rows, []string{"Publication Year", book.Metadata.Year})
-	if book.Metadata.ISBN != "" {
-		rows = append(rows, []string{"ISBN", book.Metadata.ISBN})
-	}
-	if len(book.Metadata.Tags) != 0 {
-		rows = append(rows, []string{"Tags", book.Metadata.Tags.String()})
-	}
-	if len(book.Metadata.Series) != 0 {
-		rows = append(rows, []string{"Series", book.Metadata.Series.String()})
-	}
-	available := ""
-	if book.HasRetail() {
-		available += "retail "
-	}
-	if book.HasNonRetail() {
-		available += "non-retail"
-	}
-	rows = append(rows, []string{"Available versions", available})
-	rows = append(rows, []string{"Progress", book.Progress})
-	if book.ReadDate != "" {
-		rows = append(rows, []string{"Read Date", book.ReadDate})
-	}
-	if book.Rating != "" {
-		rows = append(rows, []string{"Rating", book.Rating})
-	}
-	if book.Review != "" {
-		rows = append(rows, []string{"Review", book.Review})
-	}
-	fmt.Println(h.TabulateRows(rows, "Info", "Book"))
+	fmt.Println(book.ShowInfo())
 }
 
 func listTags(lb *l.Library, c *cli.Context) (err error) {
@@ -209,7 +197,7 @@ func search(lb *l.Library, c *cli.Context) {
 	} else {
 		query := strings.Join(c.Args(), " ")
 		fmt.Println("Searching for '" + query + "'...")
-		results, err := lb.RunQuery(query)
+		results, err := lb.Search(query)
 		if err != nil {
 			fmt.Println(err.Error())
 			panic(err)
@@ -335,8 +323,17 @@ func generateCLI(lb *l.Library) (app *cli.App) {
 			Aliases: []string{"x"},
 			Usage:   "export to E-Reader",
 			Action: func(c *cli.Context) {
-				// TODO export with search ?
 				fmt.Println("Exporting selection to E-Reader...")
+				query := strings.Join(c.Args(), " ")
+				books, err := lb.RunQuery(query)
+				if err != nil {
+					h.Error("Error filtering books for export to e-reader")
+					return
+				}
+				err = lb.ExportToEReader(books)
+				if err != nil {
+					h.Error("Error exporting books to e-reader: %s", err.Error())
+				}
 			},
 			Subcommands: []cli.Command{
 				{
@@ -345,17 +342,10 @@ func generateCLI(lb *l.Library) (app *cli.App) {
 					Usage:   "export everything.",
 					Action: func(c *cli.Context) {
 						fmt.Println("Exporting everything to E-Reader...")
-						// TODO
-					},
-				},
-				{
-					Name:    "shortlisted",
-					Aliases: []string{"unread", "reading", "read"},
-					Usage:   "export books according to their reading progress",
-					Action: func(c *cli.Context) {
-						usedAlias := c.Parent().Args().First()
-						fmt.Printf("Exporting selection (progress %s) to E-Reader...\n", usedAlias)
-						// TODO
+						err := lb.ExportToEReader(lb.Books)
+						if err != nil {
+							h.Error("Error exporting books to e-reader: %s", err.Error())
+						}
 					},
 				},
 			},
@@ -384,8 +374,7 @@ func generateCLI(lb *l.Library) (app *cli.App) {
 					Aliases: []string{"r"},
 					Usage:   "reload metadata from epub and online sources (overwrites previous changes).",
 					Action: func(c *cli.Context) {
-						// TODO
-						// ask confirmation
+						refreshMetadata(lb, c)
 					},
 				},
 				{
@@ -393,7 +382,7 @@ func generateCLI(lb *l.Library) (app *cli.App) {
 					Aliases: []string{"modify"},
 					Usage:   "edit metadata field using book ID: metadata edit ID field values",
 					Action: func(c *cli.Context) {
-						// TODO
+						editMetadata(lb, c)
 					},
 				},
 			},
@@ -576,7 +565,7 @@ func main() {
 	fmt.Println(chalk.Bold.TextStyle("\n# # # E N D I V E # # #\n"))
 
 	err := h.GetEndiveLogger(cfg.XdgLogPath)
-	defer h.LogFile.Close()
+	defer h.CloseEndiveLogFile()
 
 	// get library
 	lb, err := l.OpenLibrary()
