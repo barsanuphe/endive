@@ -18,10 +18,10 @@ func TestHelpersLogger(t *testing.T) {
 	assert.Nil(t, err)
 	defer LogFile.Close()
 
-	Logger.Error("Error")
-	Logger.Infof("Test %d%% complete", 50)
+	Error("Error")
+	Infof("Test %d%% complete", 50)
 	// should not be displayed
-	Logger.Debug("Debug")
+	Debug("Debug")
 
 	// checking log file
 	output, err := ioutil.ReadFile(logFilename)

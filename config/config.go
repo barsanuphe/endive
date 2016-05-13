@@ -49,14 +49,14 @@ func GetConfigPath() (configFile string, err error) {
 		if err != nil {
 			return
 		}
-		h.Logger.Info("Configuration file", xdgConfigPath, "created. Populate it.")
+		h.Infof("Configuration file %s created. Populate it.", xdgConfigPath)
 	}
 	return
 }
 
 // Load configuration file using viper.
 func (c *Config) Load() (err error) {
-	h.Logger.Debugf("Loading Config %s...\n", c.Filename)
+	h.Debugf("Loading Config %s...\n", c.Filename)
 	conf := viper.New()
 	conf.SetConfigType("yaml")
 	conf.SetConfigFile(c.Filename)
@@ -84,7 +84,7 @@ func (c *Config) Load() (err error) {
 	if c.GoodReadsAPIKey == "" {
 		c.GoodReadsAPIKey = os.Getenv("GR_API_KEY")
 		if c.GoodReadsAPIKey == "" {
-			h.Logger.Warning("Warning: no GoodReads API key found! go to https://www.goodreads.com/api/keys to get one.")
+			h.Warning("Warning: no GoodReads API key found! go to https://www.goodreads.com/api/keys to get one.")
 		}
 	}
 
@@ -93,21 +93,21 @@ func (c *Config) Load() (err error) {
 
 // Check if the paths in the configuration file are valid, and if the EpubFilename Format is ok.
 func (c *Config) Check() (err error) {
-	h.Logger.Debug("Checking Config...")
+	h.Debug("Checking Config...")
 	if !h.DirectoryExists(c.LibraryRoot) {
 		err = errors.New("Library root " + c.LibraryRoot + " does not exist")
-		h.Logger.Error(err.Error())
+		h.Error(err.Error())
 		return err
 	}
 	// checking for sources, warnings only.
 	for _, source := range c.RetailSource {
 		if !h.DirectoryExists(source) {
-			h.Logger.Warning("Warning: retail source " + source + " does not exist.")
+			h.Warning("Warning: retail source " + source + " does not exist.")
 		}
 	}
 	for _, source := range c.NonRetailSource {
 		if !h.DirectoryExists(source) {
-			h.Logger.Warning("Warning: non-retail source " + source + " does not exist.")
+			h.Warning("Warning: non-retail source " + source + " does not exist.")
 		}
 	}
 	return

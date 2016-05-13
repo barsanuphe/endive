@@ -42,18 +42,18 @@ func buildIndexMapping() (*bleve.IndexMapping, error) {
 func openIndex() (index bleve.Index, isNew bool) {
 	index, err := bleve.Open(getIndexPath())
 	if err == bleve.ErrorIndexPathDoesNotExist {
-		h.Logger.Debug("Creating new index...")
+		h.Debug("Creating new index...")
 		// create a mapping
 		indexMapping, err := buildIndexMapping()
 		index, err = bleve.New(getIndexPath(), indexMapping)
 		if err != nil {
-			h.Logger.Error(err.Error())
+			h.Error(err.Error())
 		}
 		isNew = true
 	} else if err == nil {
 		//log.Printf("Opening existing index...")
 	} else {
-		h.Logger.Error(err.Error())
+		h.Error(err.Error())
 	}
 	return index, isNew
 }
@@ -71,7 +71,7 @@ func (ldb *DB) Index() (numIndexed uint64, err error) {
 	}
 	err = json.Unmarshal(jsonBytes, &ldb.Books)
 	if err != nil {
-		h.Logger.Error("Error:", err)
+		h.Errorf("Error: %s", err.Error())
 	}
 
 	// index by filename
@@ -84,7 +84,7 @@ func (ldb *DB) Index() (numIndexed uint64, err error) {
 	if err != nil {
 		return
 	}
-	h.Logger.Debug("Indexed: " + strconv.FormatUint(numIndexed, 10) + " epubs.")
+	h.Debug("Indexed: " + strconv.FormatUint(numIndexed, 10) + " epubs.")
 	return
 }
 
@@ -99,12 +99,12 @@ func (ldb *DB) RunQuery(queryString string) (results []b.Book, err error) {
 	if isNew {
 		index.Close()
 		// indexing db
-		h.Logger.Debug("New index, populating...")
+		h.Debug("New index, populating...")
 		numIndexed, err := ldb.Index()
 		if err != nil {
 			return nil, err
 		}
-		h.Logger.Debug("Saved and indexed " + strconv.FormatUint(numIndexed, 10) + " epubs.")
+		h.Debug("Saved and indexed " + strconv.FormatUint(numIndexed, 10) + " epubs.")
 		// reopening
 		index, _ = openIndex()
 	}
@@ -112,7 +112,7 @@ func (ldb *DB) RunQuery(queryString string) (results []b.Book, err error) {
 
 	searchResults, err := index.Search(search)
 	if err != nil {
-		h.Logger.Error(err.Error())
+		h.Error(err.Error())
 		return
 	}
 	//fmt.Println(searchResults.Total)

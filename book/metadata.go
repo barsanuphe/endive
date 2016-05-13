@@ -1,7 +1,6 @@
 package book
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -27,7 +26,7 @@ type Metadata struct {
 	Language      string   `json:"language" xml:"language_code"`
 }
 
-// String returns a representation of a GoodreadsBook
+// String returns a representation of Metadata
 func (i *Metadata) String() string {
 	if len(i.Series) != 0 {
 		return fmt.Sprintf("%s (%s) %s [%s]", i.Author(), i.Year, i.Title(), i.MainSeries().String())
@@ -164,15 +163,15 @@ func (i *Metadata) Merge(o Metadata) (err error) {
 			i.OriginalTitle = userInput
 		}
 	}
-	i.Year, err = chooseFieldVersion("Publication year", i.Year, o.Year)
+	i.Year, err = h.ChooseVersion("Publication year", i.Year, o.Year)
 	if err != nil {
 		return
 	}
-	i.Description, err = chooseFieldVersion("Description", i.Description, o.Description)
+	i.Description, err = h.ChooseVersion("Description", cleanHTML(i.Description), cleanHTML(o.Description))
 	if err != nil {
 		return
 	}
-	i.Language, err = chooseFieldVersion("Language", i.Language, o.Language)
+	i.Language, err = h.ChooseVersion("Language", i.Language, o.Language)
 	if err != nil {
 		return
 	}
@@ -211,17 +210,17 @@ func (i *Metadata) Merge(o Metadata) (err error) {
 				case 2:
 					index, err := strconv.ParseFloat(parts[1], 32)
 					if err != nil {
-						h.Logger.Warning("Could not parse series " + s)
+						h.Warning("Could not parse series " + s)
 					} else {
 						i.Series.Add(strings.TrimSpace(parts[0]), float32(index))
 					}
 				default:
-					h.Logger.Warning("Could not parse series " + s)
+					h.Warning("Could not parse series " + s)
 				}
 			}
 		}
 	}
-	i.ISBN, err = chooseFieldVersion("ISBN", i.ISBN, o.ISBN)
+	i.ISBN, err = h.ChooseVersion("ISBN", i.ISBN, o.ISBN)
 	if err != nil {
 		return
 	}
@@ -229,29 +228,5 @@ func (i *Metadata) Merge(o Metadata) (err error) {
 	i.ImageURL = o.ImageURL
 	i.NumPages = o.NumPages
 	i.AverageRating = o.AverageRating
-	return
-}
-
-func chooseFieldVersion(title, local, remote string) (choice string, err error) {
-	fmt.Printf("* %s: \n", title)
-	if local == remote {
-		return local, err
-	}
-	index, userInput, err := h.Choose(local, remote)
-	if err != nil {
-		// in case of error, return original version
-		return local, err
-	}
-	switch index {
-	case -1:
-		if userInput != "" {
-			return userInput, err
-		}
-		return local, errors.New("Empty user input")
-	case 0:
-		return local, err
-	case 1:
-		return remote, err
-	}
 	return
 }

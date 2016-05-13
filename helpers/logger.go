@@ -10,7 +10,7 @@ import (
 )
 
 // Logger provides a logger to both stdout and a log file (for debug).
-var Logger *logging.Logger
+var logger *logging.Logger
 
 // LogFile is the pointer to the log file, to be closed by the main function.
 var LogFile *os.File
@@ -40,7 +40,7 @@ func CloseEndiveLogFile() {
 
 // GetLogger returns a global logger
 func GetLogger(name string) (err error) {
-	Logger = logging.MustGetLogger(name)
+	logger = logging.MustGetLogger(name)
 	fileName := name
 	LogFile, err = os.OpenFile(fileName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
@@ -76,10 +76,17 @@ func Red(in string) string {
 }
 
 // Debug message logging
-func Debug(msg string, args ...interface{}) {
+func Debug(msg string) {
+	if logger != nil {
+		logger.Debug(msg)
+	}
+}
+
+// Debugf message logging
+func Debugf(msg string, args ...interface{}) {
 	msg = fmt.Sprintf(msg, args...)
-	if Logger != nil {
-		Logger.Debug(msg)
+	if logger != nil {
+		logger.Debug(msg)
 	}
 }
 
@@ -87,26 +94,42 @@ func Debug(msg string, args ...interface{}) {
 func Warning(msg string, args ...interface{}) {
 	msg = fmt.Sprintf(msg, args...)
 	fmt.Println(Red("WARNING: " + msg))
-	if Logger != nil {
-		Logger.Warning(msg)
+	if logger != nil {
+		logger.Warning(msg)
 	}
 }
 
 // Error message logging.
-func Error(msg string, args ...interface{}) {
-	msg = fmt.Sprintf(msg, args...)
+func Error(msg string) {
 	fmt.Println(RedBold("ERROR: " + msg))
-	if Logger != nil {
-		Logger.Error(msg)
+	if logger != nil {
+		logger.Error(msg)
+	}
+}
+
+// Errorf message logging
+func Errorf(msg string, args ...interface{}) {
+	msg = fmt.Sprintf(msg, args...)
+	fmt.Printf(RedBold("ERROR: " + msg))
+	if logger != nil {
+		logger.Error(msg)
 	}
 }
 
 // Info message logging
-func Info(msg string, args ...interface{}) {
+func Info(msg string) {
+	fmt.Println(msg)
+	if logger != nil {
+		logger.Info(msg)
+	}
+}
+
+// Infof message logging
+func Infof(msg string, args ...interface{}) {
 	msg = fmt.Sprintf(msg, args...)
 	fmt.Println(msg)
-	if Logger != nil {
-		Logger.Info(msg)
+	if logger != nil {
+		logger.Info(msg)
 	}
 }
 

@@ -22,7 +22,7 @@ import (
 // TimeTrack helps track the time taken by a function.
 func TimeTrack(start time.Time, name string) {
 	elapsed := time.Since(start)
-	Logger.Debugf("-- %s in %s\n", name, elapsed)
+	logger.Debugf("-- %s in %s\n", name, elapsed)
 }
 
 // StringInSlice checks if a string is in a []string.
@@ -132,22 +132,50 @@ func AskForNewValue(field, oldValue string) (newValue string, err error) {
 	return
 }
 
-// AssignNewValue from candidates or from user input
-func AssignNewValue(field, oldValue string, candidates []string) (newValue string, err error) {
+// AssignNewValues from candidates or from user input
+func AssignNewValues(field, oldValue string, candidates []string) (newValues []string, err error) {
 	if len(candidates) == 0 {
 		desc, err := AskForNewValue(field, oldValue)
 		if err != nil {
-			return "", err
+			return []string{}, err
 		}
 		if YesOrNo("Confirm") {
 			candidates = append(candidates, desc)
 		} else {
-			return "", errors.New("No new value")
+			return []string{}, errors.New("No new value")
 		}
 	}
 	// cleanup
-	newValue = strings.TrimSpace(candidates[0])
+	for i := range candidates {
+		candidates[i] = strings.TrimSpace(candidates[i])
+	}
+	newValues = candidates
 	// show old_value => new_value
-	Logger.Infof("Changing %s: \n%s\n\t=>\n%s\n", field, oldValue, newValue)
+	logger.Infof("Changing %s: \n%s\n\t=>\n%s\n", field, oldValue, strings.Join(newValues, "|"))
+	return
+}
+
+// ChooseVersion among two choices
+func ChooseVersion(title, local, remote string) (choice string, err error) {
+	fmt.Printf("* %s: \n", title)
+	if local == remote {
+		return local, err
+	}
+	index, userInput, err := Choose(local, remote)
+	if err != nil {
+		// in case of error, return original version
+		return local, err
+	}
+	switch index {
+	case -1:
+		if userInput != "" {
+			return userInput, err
+		}
+		return local, errors.New("Empty user input")
+	case 0:
+		return local, err
+	case 1:
+		return remote, err
+	}
 	return
 }

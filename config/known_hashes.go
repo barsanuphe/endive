@@ -38,14 +38,14 @@ func GetKnownHashesPath() (hashesFile string, err error) {
 		if err != nil {
 			return
 		}
-		h.Logger.Debug("Known hashes file", hashesFile, "created.")
+		h.Debugf("Known hashes file %s created.", hashesFile)
 	}
 	return
 }
 
 // Load the known hashes.
 func (k *KnownHashes) Load() (err error) {
-	h.Logger.Debug("Loading known hashes database.")
+	h.Debug("Loading known hashes database.")
 	hashesBytes, err := ioutil.ReadFile(k.Filename)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -74,7 +74,7 @@ func (k *KnownHashes) Save() (modified bool, err error) {
 			return modified, err
 		}
 		// writing db
-		h.Logger.Debug("Saving known hashes database.")
+		h.Debug("Saving known hashes database.")
 		err = ioutil.WriteFile(k.Filename, hashesJSON, 0777)
 		if err != nil {
 			return modified, err

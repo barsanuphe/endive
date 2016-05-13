@@ -80,7 +80,7 @@ func OpenLibrary() (l *Library, err error) {
 
 // ImportRetail imports epubs from the Retail source.
 func (l *Library) ImportRetail() (err error) {
-	h.Logger.Debug("Importing retail epubs...")
+	h.Debug("Importing retail epubs...")
 	defer h.TimeTrack(time.Now(), "Imported")
 
 	// checking all defined sources
@@ -99,7 +99,7 @@ func (l *Library) ImportRetail() (err error) {
 
 // ImportNonRetail imports epubs from the Non-Retail source.
 func (l *Library) ImportNonRetail() (err error) {
-	h.Logger.Debug("Importing non-retail epubs...")
+	h.Debug("Importing non-retail epubs...")
 	defer h.TimeTrack(time.Now(), "Imported")
 
 	// checking all defined sources
@@ -149,7 +149,7 @@ func (l *Library) ImportEpubs(allEpubs []string, allHashes []string, isRetail bo
 			knownBook, err := l.FindByMetadata(info)
 			if err != nil {
 				// new Book
-				h.Logger.Debugf("Creating new book.")
+				h.Debug("Creating new book.")
 				bk := b.NewBookWithMetadata(l.generateID(), path, l.Config, isRetail, info)
 				imported, err = bk.Import(path, isRetail, hash)
 				if err != nil {
@@ -158,7 +158,7 @@ func (l *Library) ImportEpubs(allEpubs []string, allHashes []string, isRetail bo
 				l.Books = append(l.Books, *bk)
 			} else {
 				// add to existing book
-				h.Logger.Debugf("Adding epub to " + knownBook.ShortString())
+				h.Debug("Adding epub to " + knownBook.ShortString())
 				imported, err = knownBook.AddEpub(path, isRetail, hash)
 				if err != nil {
 					return err
@@ -175,20 +175,20 @@ func (l *Library) ImportEpubs(allEpubs []string, allHashes []string, isRetail bo
 				newEpubs++
 			}
 		} else {
-			h.Logger.Debugf("Ignoring already imported epub " + filepath.Base(path))
+			h.Debug("Ignoring already imported epub " + filepath.Base(path))
 		}
 	}
 	if isRetail {
-		h.Logger.Debugf("Imported %d retail epubs.\n", newEpubs)
+		h.Debugf("Imported %d retail epubs.\n", newEpubs)
 	} else {
-		h.Logger.Debugf("Imported %d non-retail epubs.\n", newEpubs)
+		h.Debugf("Imported %d non-retail epubs.\n", newEpubs)
 	}
 	return
 }
 
 // Refresh current DB
 func (l *Library) Refresh() (renamed int, err error) {
-	h.Logger.Info("Refreshing database...")
+	h.Info("Refreshing database...")
 
 	// scan for new epubs
 	allEpubs, allHashes, err := h.ListEpubsInDirectory(l.Config.LibraryRoot)
@@ -202,7 +202,7 @@ func (l *Library) Refresh() (renamed int, err error) {
 	for i, epub := range allEpubs {
 		_, err = l.FindByFilename(epub)
 		if err != nil { // no error == found Epub
-			h.Logger.Info("NEW EPUB " + epub + " , will be imported as non-retail.")
+			h.Info("NEW EPUB " + epub + " , will be imported as non-retail.")
 			newEpubs = append(newEpubs, epub)
 			newHashes = append(newHashes, allHashes[i])
 		}
@@ -249,7 +249,7 @@ func (l *Library) ExportToEReader(books []b.Book) (err error) {
 	if !h.DirectoryExists(l.Config.EReaderMountPoint) {
 		return errors.New("E-Reader mount point does not exist: " + l.Config.EReaderMountPoint)
 	}
-	h.Logger.Info("Exporting books.")
+	h.Info("Exporting books.")
 	if len(books) != 0 {
 		for _, book := range books {
 			destination := filepath.Join(l.Config.EReaderMountPoint, filepath.Base(book.MainEpub().FullPath()))
@@ -260,7 +260,7 @@ func (l *Library) ExportToEReader(books []b.Book) (err error) {
 				}
 			}
 			if _, exists := h.FileExists(destination); exists != nil {
-				h.Logger.Info(" - Exporting " + book.ShortString())
+				h.Info(" - Exporting " + book.ShortString())
 				err = h.CopyFile(book.MainEpub().FullPath(), destination)
 				if err != nil {
 					return err

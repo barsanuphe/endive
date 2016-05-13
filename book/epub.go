@@ -60,10 +60,10 @@ func (e *Epub) Check() (hasChanged bool, err error) {
 
 // ReadMetadata from epub file
 func (e *Epub) ReadMetadata() (info Metadata, err error) {
-	h.Logger.Debugf("Reading metadata from %s\n", e.FullPath())
+	h.Debugf("Reading metadata from %s\n", e.FullPath())
 	book, err := epubgo.Open(e.FullPath())
 	if err != nil {
-		h.Logger.Error("Error parsing EPUB")
+		h.Error("Error parsing EPUB")
 		return
 	}
 	defer book.Close()
@@ -71,7 +71,7 @@ func (e *Epub) ReadMetadata() (info Metadata, err error) {
 	// year
 	dateEvents, nonFatalErr := book.MetadataElement("date")
 	if nonFatalErr != nil || len(dateEvents) == 0 {
-		h.Logger.Debug("Error parsing EPUB: no date found")
+		h.Debug("Error parsing EPUB: no date found")
 	} else {
 		found := false
 		// try to find date associated with "publication" event
@@ -114,7 +114,7 @@ func (e *Epub) ReadMetadata() (info Metadata, err error) {
 	// description
 	results, nonFatalErr = book.MetadataElement("description")
 	if nonFatalErr == nil && len(results) != 0 {
-		info.Description = results[0].Content
+		info.Description = cleanHTML(results[0].Content)
 	}
 	// tags
 	results, nonFatalErr = book.MetadataElement("subject")
@@ -128,14 +128,14 @@ func (e *Epub) ReadMetadata() (info Metadata, err error) {
 	// ISBN
 	nonFatalErr = e.findISBN(book, &info)
 	if nonFatalErr != nil {
-		h.Logger.Warningf("ISBN could not be found in %s!!", e.FullPath())
+		h.Warning("ISBN could not be found in %s!!", e.FullPath())
 	}
 
 	// TODO show other included data:"publisher", "contributor", "type", "format",
 	// TODO "source", "relation", "coverage", "rights", "meta",
 
 	if info.Refresh(e.Config) {
-		h.Logger.Info("Found author alias: " + info.Author())
+		h.Info("Found author alias: " + info.Author())
 	}
 	return
 }
@@ -178,6 +178,6 @@ func (e *Epub) findISBN(book *epubgo.Epub, i *Metadata) (err error) {
 		}
 	}
 	// if no valid result, return err
-	h.Logger.Debugf("ISBN not found in %s", e.FullPath())
+	h.Debugf("ISBN not found in %s", e.FullPath())
 	return errors.New("ISBN not found in epub")
 }

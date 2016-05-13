@@ -41,7 +41,7 @@ type DB struct {
 
 // Load current DB
 func (ldb *DB) Load() (err error) {
-	h.Logger.Debug("Loading database...")
+	h.Debug("Loading database...")
 	bytes, err := ioutil.ReadFile(ldb.DatabaseFile)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -60,7 +60,7 @@ func (ldb *DB) Load() (err error) {
 
 // Save current DB
 func (ldb *DB) Save() (hasSaved bool, err error) {
-	h.Logger.Debug("Determining if database should be saved...")
+	h.Debug("Determining if database should be saved...")
 	jsonEpub, err := json.Marshal(ldb.Books)
 	if err != nil {
 		fmt.Println(err)
@@ -74,7 +74,7 @@ func (ldb *DB) Save() (hasSaved bool, err error) {
 	}
 
 	if !bytes.Equal(jsonEpub, jsonEpubOld) {
-		h.Logger.Debug("Changes detected, saving database...")
+		h.Debug("Changes detected, saving database...")
 		// writing db
 		err = ioutil.WriteFile(ldb.DatabaseFile, jsonEpub, 0777)
 		if err != nil {
@@ -94,7 +94,7 @@ func (ldb *DB) Save() (hasSaved bool, err error) {
 		if err != nil {
 			return hasSaved, err
 		}
-		h.Logger.Debug("Saved and indexed " + strconv.FormatUint(numIndexed, 10) + " epubs.")
+		h.Debug("Saved and indexed " + strconv.FormatUint(numIndexed, 10) + " epubs.")
 	}
 	return
 }
@@ -127,7 +127,7 @@ func (ldb *DB) Check() (err error) {
 			return err
 		}
 		if nonRetailChanged {
-			h.Logger.Warning("Non-retail epub for book " + ldb.Books[i].ShortString() + " has changed, check if this is normal.")
+			h.Warning("Non-retail epub for book " + ldb.Books[i].ShortString() + " has changed, check if this is normal.")
 		}
 	}
 	return
@@ -176,7 +176,7 @@ func (ldb *DB) RemoveByID(id int) (err error) {
 		}
 	}
 	if found {
-		h.Logger.Info("REMOVING from db " + ldb.Books[removeIndex].ShortString())
+		h.Info("REMOVING from db " + ldb.Books[removeIndex].ShortString())
 		ldb.Books = append((ldb.Books)[:removeIndex], (ldb.Books)[removeIndex+1:]...)
 	} else {
 		err = errors.New("Did not find book with ID " + strconv.Itoa(id))
