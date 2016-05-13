@@ -109,7 +109,7 @@ func (e *Epub) ReadMetadata() (info Metadata, err error) {
 	// language
 	results, nonFatalErr = book.MetadataElement("language")
 	if nonFatalErr == nil && len(results) != 0 {
-		info.Language = results[0].Content
+		info.Language = cleanLanguage(results[0].Content)
 	}
 	// description
 	results, nonFatalErr = book.MetadataElement("description")

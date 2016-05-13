@@ -135,12 +135,12 @@ func AskForNewValue(field, oldValue string) (newValue string, err error) {
 // AssignNewValues from candidates or from user input
 func AssignNewValues(field, oldValue string, candidates []string) (newValues []string, err error) {
 	if len(candidates) == 0 {
-		desc, err := AskForNewValue(field, oldValue)
+		values, err := AskForNewValue(field, oldValue)
 		if err != nil {
 			return []string{}, err
 		}
 		if YesOrNo("Confirm") {
-			candidates = append(candidates, desc)
+			candidates = append(candidates, values)
 		} else {
 			return []string{}, errors.New("No new value")
 		}

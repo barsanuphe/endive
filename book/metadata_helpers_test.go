@@ -64,8 +64,7 @@ func TestEpubCleanLanguages(t *testing.T) {
 	fmt.Println("+ Testing Info/CleanLanguages()...")
 	assert := assert.New(t)
 	for _, c := range languages {
-		lg, err := cleanLanguage(c.candidate)
-		assert.Nil(err, "Error cleaning language")
+		lg := cleanLanguage(c.candidate)
 		assert.Equal(c.expected, lg, "Error cleaning language")
 	}
 }

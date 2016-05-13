@@ -38,7 +38,7 @@ var languageAliases = map[string][]string{
 	"fr": []string{"fr-FR", "fre"},
 }
 
-func cleanLanguage(language string) (clean string, err error) {
+func cleanLanguage(language string) (clean string) {
 	clean = strings.TrimSpace(language)
 	// reducing to main alias
 	for mainalias, aliasList := range languageAliases {
