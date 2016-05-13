@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	h "github.com/barsanuphe/endive/helpers"
+
+	"github.com/kennygrant/sanitize"
 )
 
 func cleanISBN(full string) (isbn string, err error) {
@@ -71,6 +73,8 @@ func cleanTags(tags Tags) (cleanTags Tags, err error) {
 	cleanTags = Tags{}
 	for _, tag := range tags {
 		clean := true
+		tag.Name = strings.TrimSpace(tag.Name)
+
 		// reducing to main alias
 		for mainalias, aliasList := range tagAliases {
 			_, isIn := h.StringInSlice(tag.Name, aliasList)
@@ -88,7 +92,6 @@ func cleanTags(tags Tags) (cleanTags Tags, err error) {
 		}
 		// adding if not already present
 		if clean {
-			tag.Name = strings.TrimSpace(tag.Name)
 			cleanTags.Add(tag)
 		}
 	}
@@ -98,4 +101,8 @@ func cleanTags(tags Tags) (cleanTags Tags, err error) {
 		cleanTags = cleanTags[:10]
 	}
 	return
+}
+
+func cleanHTML(desc string) (clean string) {
+	return strings.Replace(sanitize.HTML(desc), "\n","",-1)
 }

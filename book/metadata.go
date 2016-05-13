@@ -57,6 +57,8 @@ func (i *Metadata) Clean() {
 	if i.Year == "" {
 		i.Year = "XXXX"
 	}
+	// clean description
+	i.Description = cleanHTML(i.Description)
 	// clean tags
 	i.Tags.Clean()
 	// clean series
