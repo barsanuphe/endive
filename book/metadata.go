@@ -173,7 +173,7 @@ func (i *Metadata) Merge(o Metadata) (err error) {
 	if err != nil {
 		return
 	}
-	i.Language, err = h.ChooseVersion("Language", i.Language, o.Language)
+	i.Language, err = h.ChooseVersion("Language", cleanLanguage(i.Language), cleanLanguage(o.Language))
 	if err != nil {
 		return
 	}

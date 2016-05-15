@@ -66,7 +66,7 @@ var forbiddenTags = []string{
 	"star", "release", "wait", "soon", "wish", "published", "want",
 	"tbr", "series", "finish", "to-", "not-", "library", "audible",
 	"coming", "anticipated", "default", "recommended", "-list", "sequel",
-	"general", "have", "bundle",
+	"general", "have", "bundle", "maybe", "audio",
 }
 
 func cleanTags(tags Tags) (cleanTags Tags, err error) {
