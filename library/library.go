@@ -177,6 +177,11 @@ func (l *Library) ImportEpubs(allEpubs []string, allHashes []string, isRetail bo
 				if err != nil {
 					return err
 				}
+				// saving database also
+				_, err = l.Save()
+				if err != nil {
+					return err
+				}
 				newEpubs++
 			}
 		} else {
@@ -254,7 +259,7 @@ func (l *Library) ExportToEReader(books []b.Book) (err error) {
 	if !h.DirectoryExists(l.Config.EReaderMountPoint) {
 		return errors.New("E-Reader mount point does not exist: " + l.Config.EReaderMountPoint)
 	}
-	h.Info("Exporting books.")
+	h.Title("Exporting books.")
 	if len(books) != 0 {
 		for _, book := range books {
 			destination := filepath.Join(l.Config.EReaderMountPoint, filepath.Base(book.MainEpub().FullPath()))

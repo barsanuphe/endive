@@ -145,7 +145,7 @@ func search(lb *l.Library, c *cli.Context) {
 		fmt.Println("No query found!")
 	} else {
 		query := strings.Join(c.Args(), " ")
-		fmt.Println("Searching for '" + query + "'...")
+		h.Debug("Searching for '" + query + "'...")
 		results, err := lb.Search(query)
 		if err != nil {
 			fmt.Println(err.Error())

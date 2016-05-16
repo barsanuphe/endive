@@ -40,7 +40,7 @@ func cleanISBN(full string) (isbn13 string, err error) {
 
 // tagAliases defines redundant tags and a main alias for them.
 var languageAliases = map[string][]string{
-	"en": []string{"en-US", "en-GB", "eng"},
+	"en": []string{"en-US", "en-GB", "eng", "en-CA"},
 	"fr": []string{"fr-FR", "fre"},
 }
 
