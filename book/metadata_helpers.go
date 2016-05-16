@@ -8,23 +8,29 @@ import (
 	h "github.com/barsanuphe/endive/helpers"
 
 	"github.com/kennygrant/sanitize"
+	"github.com/moraes/isbn"
 )
 
-func cleanISBN(full string) (isbn string, err error) {
+func cleanISBN(full string) (isbn13 string, err error) {
 	// cleanup string, only keep numbers
 	re := regexp.MustCompile("[0-9]+")
 	candidate := strings.Join(re.FindAllString(full, -1), "")
-	// check validity
-	if strings.HasPrefix(candidate, "978") || strings.HasPrefix(candidate, "979") {
-		if len(candidate) != 13 {
-			// if start of isbn detected, try to salvage the situation
-			if len(candidate) > 13 {
-				isbn = candidate[:13]
-			} else {
-				err = errors.New("ISBN-13 not found")
+
+	// if start of isbn detected, try to salvage the situation
+	if len(candidate) > 13 && strings.HasPrefix(candidate, "978") {
+		candidate = candidate[:13]
+	}
+
+	// validate and convert to ISBN13 if necessary
+	if isbn.Validate(candidate) {
+		if len(candidate) == 10 {
+			isbn13, err = isbn.To13(candidate)
+			if err != nil {
+				isbn13 = ""
 			}
-		} else {
-			isbn = candidate
+		}
+		if len(candidate) == 13 {
+			isbn13 = candidate
 		}
 	} else {
 		err = errors.New("ISBN-13 not found")
@@ -53,9 +59,10 @@ func cleanLanguage(language string) (clean string) {
 
 // tagAliases defines redundant tags and a main alias for them.
 var tagAliases = map[string][]string{
-	"science-fiction": []string{"sf", "sci-fi", "scifi-fantasy", "scifi", "science fiction", "sciencefiction", "sci-fi-fantasy"},
+	"science-fiction": []string{"sf", "sci-fi", "scifi-fantasy", "scifi", "science fiction", "sciencefiction", "sci-fi-fantasy", "sf-fantasy", "genre-sf", "science-fiction-speculative"},
 	"fantasy":         []string{"fantasy-sci-fi", "fantasy-scifi", "fantasy-fiction"},
 	"dystopia":        []string{"dystopian"},
+	"nonfiction":      []string{"non-fiction"},
 }
 
 // TODO: names of months, dates
@@ -66,7 +73,8 @@ var forbiddenTags = []string{
 	"star", "release", "wait", "soon", "wish", "published", "want",
 	"tbr", "series", "finish", "to-", "not-", "library", "audible",
 	"coming", "anticipated", "default", "recommended", "-list", "sequel",
-	"general", "have", "bundle", "maybe", "audio",
+	"general", "have", "bundle", "maybe", "audio", "podcast", "calibre", "bks",
+	"moved-on", "record", "arc", "z-", "livre",
 }
 
 func cleanTags(tags Tags) (cleanTags Tags, err error) {

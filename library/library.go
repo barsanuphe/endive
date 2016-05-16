@@ -172,6 +172,11 @@ func (l *Library) ImportEpubs(allEpubs []string, allHashes []string, isRetail bo
 				if !added || err != nil {
 					return err
 				}
+				// saving now == saving import progress, in case of interruption
+				_, err = l.KnownHashes.Save()
+				if err != nil {
+					return err
+				}
 				newEpubs++
 			}
 		} else {

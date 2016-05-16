@@ -160,3 +160,4 @@ For other commands, see:
 | Tables output   | [github.com/barsanuphe/gotabulate](https://github.com/barsanuphe/gotabulate), forked from [github.com/bndr/gotabulate](https://github.com/bndr/gotabulate)     |
 | XDG directories | [launchpad.net/go-xdg](https://launchpad.net/go-xdg)                 |
 | YAML Parser     | [github.com/spf13/viper](https://github.com/spf13/viper)             |
+| ISBN validator  | [github.com/moraes/isbn](https://github.com/moraes/isbn)             |

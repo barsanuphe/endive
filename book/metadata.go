@@ -59,6 +59,8 @@ func (i *Metadata) Clean() {
 	}
 	// clean description
 	i.Description = cleanHTML(i.Description)
+	// clean language
+	i.Language = cleanLanguage(i.Language)
 	// clean tags
 	i.Tags.Clean()
 	// clean series
