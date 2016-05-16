@@ -59,7 +59,7 @@ func cleanLanguage(language string) (clean string) {
 
 // tagAliases defines redundant tags and a main alias for them.
 var tagAliases = map[string][]string{
-	"science-fiction": []string{"sf", "sci-fi", "scifi-fantasy", "scifi", "science fiction", "sciencefiction", "sci-fi-fantasy", "sf-fantasy", "genre-sf", "science-fiction-speculative"},
+	"science-fiction": []string{"sf", "sci-fi", "scifi-fantasy", "scifi", "science fiction", "sciencefiction", "sci-fi-fantasy", "sf-fantasy", "genre-sf", "science-fiction-speculative", "sff"},
 	"fantasy":         []string{"fantasy-sci-fi", "fantasy-scifi", "fantasy-fiction"},
 	"dystopia":        []string{"dystopian"},
 	"nonfiction":      []string{"non-fiction"},
@@ -74,7 +74,7 @@ var forbiddenTags = []string{
 	"tbr", "series", "finish", "to-", "not-", "library", "audible",
 	"coming", "anticipated", "default", "recommended", "-list", "sequel",
 	"general", "have", "bundle", "maybe", "audio", "podcast", "calibre", "bks",
-	"moved-on", "record", "arc", "z-", "livre",
+	"moved-on", "record", "arc", "z-", "livre", "unsorted", "gave-up", "abandoned",
 }
 
 func cleanTags(tags Tags) (cleanTags Tags, err error) {

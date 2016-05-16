@@ -80,6 +80,11 @@ func Red(in string) string {
 	return chalk.Red.Color(in)
 }
 
+// Yellow outputs a string in yellow.
+func Yellow(in string) string {
+	return chalk.Yellow.Color(in)
+}
+
 // Debug message logging
 func Debug(msg string) {
 	if logger != nil {
@@ -154,4 +159,10 @@ func Title(msg string, args ...interface{}) {
 func Subtitle(msg string, args ...interface{}) {
 	msg = fmt.Sprintf(msg, args...)
 	fmt.Println(Green(" + " + msg))
+}
+
+// Subpart message logging
+func Subpart(msg string, args ...interface{}) {
+	msg = fmt.Sprintf(msg, args...)
+	fmt.Println(Yellow(" * " + msg))
 }

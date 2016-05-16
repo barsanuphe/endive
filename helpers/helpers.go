@@ -157,10 +157,10 @@ func AssignNewValues(field, oldValue string, candidates []string) (newValues []s
 
 // ChooseVersion among two choices
 func ChooseVersion(title, local, remote string) (choice string, err error) {
-	fmt.Printf("* %s: \n", title)
 	if local == remote {
 		return local, err
 	}
+	Subpart(title + ":")
 	index, userInput, err := Choose(local, remote)
 	if err != nil {
 		// in case of error, return original version

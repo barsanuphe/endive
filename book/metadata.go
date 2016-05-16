@@ -135,7 +135,7 @@ func (i *Metadata) Merge(o Metadata) (err error) {
 	// TODO tests
 	// TODO all fields
 	if i.Author() != o.Author() {
-		fmt.Println("Authors: ")
+		h.Subpart("Authors: ")
 		index, userInput, err := h.Choose(i.Author(), o.Author())
 		if err != nil {
 			return err
@@ -152,7 +152,7 @@ func (i *Metadata) Merge(o Metadata) (err error) {
 		}
 	}
 	if i.Title() != o.Title() {
-		fmt.Println("Title: ")
+		h.Subpart("Title:")
 		index, userInput, err := h.Choose(i.Title(), o.Title())
 		if err != nil {
 			return err
@@ -180,7 +180,7 @@ func (i *Metadata) Merge(o Metadata) (err error) {
 		return
 	}
 	if i.Tags.String() != o.Tags.String() {
-		fmt.Println("Tags: ")
+		h.Subpart("Tags: ")
 		index, userInput, err := h.Choose(i.Tags.String(), o.Tags.String())
 		if err != nil {
 			return err
@@ -195,7 +195,7 @@ func (i *Metadata) Merge(o Metadata) (err error) {
 		}
 	}
 	if i.Series.String() != o.Series.String() {
-		fmt.Println("Series: ")
+		h.Subpart("Series: ")
 		index, userInput, err := h.Choose(i.Series.String(), o.Series.String())
 		if err != nil {
 			return err

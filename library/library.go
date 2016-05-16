@@ -151,7 +151,8 @@ func (l *Library) ImportEpubs(allEpubs []string, allHashes []string, isRetail bo
 			e := b.Epub{Filename: path}
 			info, err := e.ReadMetadata()
 			if err != nil {
-				return err
+				h.Error("Could not analyze and import " + path)
+				continue
 			}
 
 			// ask if user really wants to import it
