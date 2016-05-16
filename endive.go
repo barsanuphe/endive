@@ -12,7 +12,9 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 
 	cfg "github.com/barsanuphe/endive/config"
 	h "github.com/barsanuphe/endive/helpers"
@@ -270,6 +272,18 @@ func main() {
 		return
 	}
 	defer lb.Close()
+
+	// handle interrupt
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	signal.Notify(c, syscall.SIGTERM)
+	go func() {
+		<-c
+		h.Error("Interrupt!")
+		h.Error("Stopping everything, saving what can be.")
+		lb.Close()
+		os.Exit(1)
+	}()
 
 	// generate CLI interface and run it
 	app := generateCLI(lb)
