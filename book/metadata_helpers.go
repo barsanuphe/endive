@@ -112,5 +112,5 @@ func cleanTags(tags Tags) (cleanTags Tags, err error) {
 }
 
 func cleanHTML(desc string) (clean string) {
-	return strings.Replace(sanitize.HTML(desc), "\n","",-1)
+	return strings.Replace(sanitize.HTML(desc), "\n", "", -1)
 }

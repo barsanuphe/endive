@@ -161,3 +161,4 @@ For other commands, see:
 | XDG directories | [launchpad.net/go-xdg](https://launchpad.net/go-xdg)                 |
 | YAML Parser     | [github.com/spf13/viper](https://github.com/spf13/viper)             |
 | ISBN validator  | [github.com/moraes/isbn](https://github.com/moraes/isbn)             |
+| Spinner         | [github.com/tj/go-spin](https://github.com/tj/go-spin)             |
