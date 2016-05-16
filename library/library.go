@@ -51,6 +51,12 @@ func OpenLibrary() (l *Library, err error) {
 		return
 	}
 
+	// check lock
+	err = cfg.SetLock()
+	if err != nil {
+		return
+	}
+
 	// known hashes
 	hashesPath, err := cfg.GetKnownHashesPath()
 	if err != nil {
@@ -76,6 +82,16 @@ func OpenLibrary() (l *Library, err error) {
 		l.Books[i].RetailEpub.Config = l.Config
 	}
 	return l, err
+}
+
+// Close the library
+func (l *Library) Close() (err error) {
+	_, err = l.Save()
+	if err != nil {
+		return
+	}
+	// remove lock
+	return cfg.RemoveLock()
 }
 
 // ImportRetail imports epubs from the Retail source.

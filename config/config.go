@@ -26,6 +26,8 @@ const (
 	databaseFilename = Endive + ".json"
 	// XdgLogPath is the path for the main log file.
 	XdgLogPath = Endive + "/" + Endive + ".log"
+	// XdgLockPath is the path for the db lock.
+	XdgLockPath = Endive + "/" + Endive + ".lock"
 )
 
 // Config holds all relevant information
@@ -52,6 +54,29 @@ func GetConfigPath() (configFile string, err error) {
 		h.Infof("Configuration file %s created. Populate it.", xdgConfigPath)
 	}
 	return
+}
+
+// SetLock sets the library lock.
+func SetLock() (err error) {
+	_, err = xdg.Data.Find(XdgLockPath)
+	if err != nil {
+		_, err = xdg.Data.Ensure(XdgLockPath)
+		if err != nil {
+			return
+		}
+	} else {
+		err = errors.New("Cannot lock library, is it running somewhere already?")
+	}
+	return
+}
+
+// RemoveLock for current library.
+func RemoveLock() (err error) {
+	lockFile, err := xdg.Data.Find(XdgLockPath)
+	if err != nil {
+		return
+	}
+	return os.Remove(lockFile)
 }
 
 // Load configuration file using viper.

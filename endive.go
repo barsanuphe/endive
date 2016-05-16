@@ -265,11 +265,11 @@ func main() {
 	// get library
 	lb, err := l.OpenLibrary()
 	if err != nil {
-		fmt.Println("Error loading configuration. Check it.")
-		fmt.Println(err.Error())
+		h.Error("Error opening library.")
+		h.Error(err.Error())
 		return
 	}
-	defer lb.Save()
+	defer lb.Close()
 
 	// generate CLI interface and run it
 	app := generateCLI(lb)
