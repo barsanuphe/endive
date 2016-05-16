@@ -65,6 +65,11 @@ func GreenBold(in string) string {
 	return chalk.Bold.TextStyle(chalk.Green.Color(in))
 }
 
+// Green outputs a string in green.
+func Green(in string) string {
+	return chalk.Green.Color(in)
+}
+
 // RedBold outputs a string in red bold.
 func RedBold(in string) string {
 	return chalk.Bold.TextStyle(chalk.Red.Color(in))
@@ -143,4 +148,10 @@ func Choice(msg string, args ...interface{}) {
 func Title(msg string, args ...interface{}) {
 	msg = fmt.Sprintf(msg, args...)
 	fmt.Println(GreenBold(msg))
+}
+
+// Subtitle message logging
+func Subtitle(msg string, args ...interface{}) {
+	msg = fmt.Sprintf(msg, args...)
+	fmt.Println(Green(" + " + msg))
 }

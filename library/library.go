@@ -80,13 +80,13 @@ func OpenLibrary() (l *Library, err error) {
 
 // ImportRetail imports epubs from the Retail source.
 func (l *Library) ImportRetail() (err error) {
-	h.Debug("Importing retail epubs...")
+	h.Title("Importing retail epubs...")
 	defer h.TimeTrack(time.Now(), "Imported")
 
 	// checking all defined sources
 	var allEpubs, allHashes []string
 	for _, source := range l.Config.RetailSource {
-		fmt.Println("Searching for retail epubs in " + source)
+		h.Subtitle("Searching for retail epubs in " + source)
 		epubs, hashes, err := h.ListEpubsInDirectory(source)
 		if err != nil {
 			return err
@@ -99,13 +99,13 @@ func (l *Library) ImportRetail() (err error) {
 
 // ImportNonRetail imports epubs from the Non-Retail source.
 func (l *Library) ImportNonRetail() (err error) {
-	h.Debug("Importing non-retail epubs...")
+	h.Title("Importing non-retail epubs...")
 	defer h.TimeTrack(time.Now(), "Imported")
 
 	// checking all defined sources
 	var allEpubs, allHashes []string
 	for _, source := range l.Config.NonRetailSource {
-		fmt.Println("Searching for non-retail epubs in " + source)
+		h.Subtitle("Searching for non-retail epubs in " + source)
 		epubs, hashes, err := h.ListEpubsInDirectory(source)
 		if err != nil {
 			return err

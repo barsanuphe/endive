@@ -180,17 +180,15 @@ func importEpubs(lb *l.Library, c *cli.Context, isRetail bool) {
 		var err error
 		if isRetail {
 			if len(lb.Config.RetailSource) == 0 {
-				fmt.Println("No retail source found in configuration file!")
+				h.Error("No retail source found in configuration file!")
 				return
 			}
-			fmt.Println("Importing retail epubs...")
 			err = lb.ImportRetail()
 		} else {
 			if len(lb.Config.NonRetailSource) == 0 {
-				fmt.Println("No non-retail source found in configuration file!")
+				h.Error("No non-retail source found in configuration file!")
 				return
 			}
-			fmt.Println("Importing non-retail epubs...")
 			err = lb.ImportNonRetail()
 		}
 		if err != nil {
