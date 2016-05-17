@@ -24,6 +24,7 @@ type Metadata struct {
 	AverageRating string   `json:"average_rating" xml:"average_rating"`
 	Tags          Tags     `json:"tags" xml:"popular_shelves>shelf"`
 	Language      string   `json:"language" xml:"language_code"`
+	Publisher     string   `json:"publisher" xml:"publisher"`
 }
 
 // String returns a representation of Metadata
@@ -122,6 +123,7 @@ func (i *Metadata) Diff(o Metadata, firstHeader, secondHeader string) (diff stri
 	rows = append(rows, []string{i.Author(), o.Author()})
 	rows = append(rows, []string{i.Title(), o.Title()})
 	rows = append(rows, []string{i.Year, o.Year})
+	rows = append(rows, []string{i.Publisher, o.Publisher})
 	rows = append(rows, []string{i.Description, o.Description})
 	rows = append(rows, []string{i.Tags.String(), o.Tags.String()})
 	rows = append(rows, []string{i.Series.String(), o.Series.String()})
@@ -168,6 +170,10 @@ func (i *Metadata) Merge(o Metadata) (err error) {
 		}
 	}
 	i.Year, err = h.ChooseVersion("Publication year", i.Year, o.Year)
+	if err != nil {
+		return
+	}
+	i.Publisher, err = h.ChooseVersion("Publisher", i.Publisher, o.Publisher)
 	if err != nil {
 		return
 	}

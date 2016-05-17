@@ -88,6 +88,9 @@ func (e *Book) ShowInfo() (desc string) {
 	rows = append(rows, []string{"Author", e.Metadata.Author()})
 	rows = append(rows, []string{"Title", e.Metadata.Title()})
 	rows = append(rows, []string{"Publication Year", e.Metadata.Year})
+	if e.Metadata.Publisher != "" {
+		rows = append(rows, []string{"Publisher", e.Metadata.Publisher})
+	}
 	if e.Metadata.ISBN != "" {
 		rows = append(rows, []string{"ISBN", e.Metadata.ISBN})
 	}
