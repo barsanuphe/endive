@@ -82,13 +82,9 @@ func (e *Book) String() (desc string) {
 
 // ShowInfo returns a table with relevant information about a book.
 func (e *Book) ShowInfo() (desc string) {
-	relativePath, err := filepath.Rel(e.Config.LibraryRoot, e.FullPath())
-	if err != nil {
-		panic(err)
-	}
 	var rows [][]string
 	rows = append(rows, []string{"ID", strconv.Itoa(e.ID)})
-	rows = append(rows, []string{"Filename", relativePath})
+	rows = append(rows, []string{"Filename", e.MainEpub().Filename})
 	rows = append(rows, []string{"Author", e.Metadata.Author()})
 	rows = append(rows, []string{"Title", e.Metadata.Title()})
 	rows = append(rows, []string{"Publication Year", e.Metadata.Year})
@@ -183,6 +179,7 @@ func (e *Book) generateNewName(fileTemplate string, isRetail bool) (newName stri
 		"$l", "{{$l}}",
 		"$i", "{{$i}}",
 		"$s", "{{$s}}",
+		"$p", "{{$p}}",
 	)
 	seriesString := ""
 	if len(e.Metadata.Series) != 0 {
@@ -190,13 +187,12 @@ func (e *Book) generateNewName(fileTemplate string, isRetail bool) (newName stri
 	}
 
 	// replace with all valid epub parameters
-	tmpl := fmt.Sprintf(`{{$a := "%s"}}{{$y := "%s"}}{{$t := "%s"}}{{$l := "%s"}}{{$i := "%s"}}{{$s := "%s"}}%s`,
+	tmpl := fmt.Sprintf(`{{$a := "%s"}}{{$y := "%s"}}{{$t := "%s"}}{{$l := "%s"}}{{$i := "%s"}}{{$s := "%s"}}{{$p := "%s"}}%s`,
 		h.CleanForPath(e.Metadata.Author()), e.Metadata.Year,
 		h.CleanForPath(e.Metadata.Title()), e.Metadata.Language,
-		e.Metadata.ISBN, seriesString, r.Replace(fileTemplate))
+		e.Metadata.ISBN, seriesString, e.Progress, r.Replace(fileTemplate))
 
 	var doc bytes.Buffer
-	// NOTE: use html/template for html output
 	te := template.Must(template.New("hop").Parse(tmpl))
 	err = te.Execute(&doc, nil)
 	if err != nil {
