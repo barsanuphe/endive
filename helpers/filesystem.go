@@ -76,7 +76,7 @@ func FileExists(path string) (absolutePath string, err error) {
 }
 
 // DeleteEmptyFolders deletes empty folders that may appear after sorting albums.
-func DeleteEmptyFolders(path string) (err error) {
+func DeleteEmptyFolders(root string) (err error) {
 	defer TimeTrack(time.Now(), "Scanning files")
 
 	Debugf("Scanning for empty directories.\n\n")
@@ -88,7 +88,11 @@ func DeleteEmptyFolders(path string) (err error) {
 	for !atLeastOnce || deletedDirectoriesThisTime != 0 {
 		atLeastOnce = true
 		deletedDirectoriesThisTime = 0
-		err = filepath.Walk(path, func(path string, fileInfo os.FileInfo, walkError error) (err error) {
+		err = filepath.Walk(root, func(path string, fileInfo os.FileInfo, walkError error) (err error) {
+			if path == root {
+				// do not delete root, even if empty
+				return
+			}
 			// when an directory has just been removed, Walk goes through it a second
 			// time with an "file does not exist" error
 			if os.IsNotExist(walkError) {
