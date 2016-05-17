@@ -101,12 +101,16 @@ func markRead(lb *l.Library, c *cli.Context) {
 }
 
 func showInfo(lb *l.Library, c *cli.Context) {
-	book, _, err := checkArgsWithID(lb, c.Args())
-	if err != nil {
-		fmt.Println("Error parsing arguments: " + err.Error())
-		return
+	if c.NArg() == 0 {
+		fmt.Println(lb.ShowInfo())
+	} else {
+		book, _, err := checkArgsWithID(lb, c.Args())
+		if err != nil {
+			fmt.Println("Error parsing arguments: " + err.Error())
+			return
+		}
+		fmt.Println(book.ShowInfo())
 	}
-	fmt.Println(book.ShowInfo())
 }
 
 func listTags(lb *l.Library, c *cli.Context) (err error) {

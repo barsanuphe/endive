@@ -222,20 +222,44 @@ func (l *Library) Refresh() (renamed int, err error) {
 	if err != nil {
 		return
 	}
-
 	// compare allEpubs with l.Epubs
 	newEpubs := []string{}
 	newHashes := []string{}
 	for i, epub := range allEpubs {
 		_, err = l.FindByFilename(epub)
-		if err != nil { // no error == found Epub
-			h.Info("NEW EPUB " + epub + " , will be imported as non-retail.")
-			newEpubs = append(newEpubs, epub)
-			newHashes = append(newHashes, allHashes[i])
+		// no error == found Epub
+		if err != nil {
+			// check if hash is known
+			book, err := l.FindByHash(allHashes[i])
+			if err != nil {
+				// else, it's a new epub, import
+				h.Info("NEW EPUB " + epub + " , will be imported as non-retail.")
+				newEpubs = append(newEpubs, epub)
+				newHashes = append(newHashes, allHashes[i])
+			} else {
+				// if it is, rename found file to filename in DB
+				destination := book.RetailEpub.FullPath()
+				if book.NonRetailEpub.Hash == allHashes[i] {
+					destination = book.NonRetailEpub.FullPath()
+				}
+				// check if retail epub already exists
+				_, err := h.FileExists(destination)
+				if err == nil {
+					// file already exists
+					h.Errorf("Found epub %s with the same hash as %s, ignoring.", epub, destination)
+				} else {
+					h.Warning("Found epub %s which is called %s in the database, renaming.", epub, destination)
+					// rename found file to retail name in db
+					err = os.Rename(epub, destination)
+					if err != nil {
+						return 0, err
+					}
+				}
+			}
 		}
 	}
-	// import as non-retail
-	err = l.ImportEpubs(allEpubs, allHashes, false)
+	// import new books as non-retail
+	err = l.ImportEpubs(newEpubs, newHashes, false)
 	if err != nil {
 		return
 	}
@@ -265,7 +289,6 @@ func (l *Library) Refresh() (renamed int, err error) {
 			return renamed, err
 		}
 	}
-
 	// remove all empty dirs
 	err = h.DeleteEmptyFolders(l.Config.LibraryRoot)
 	return
@@ -279,7 +302,7 @@ func (l *Library) ExportToEReader(books []b.Book) (err error) {
 	h.Title("Exporting books.")
 	if len(books) != 0 {
 		for _, book := range books {
-			destination := filepath.Join(l.Config.EReaderMountPoint, filepath.Base(book.MainEpub().FullPath()))
+			destination := filepath.Join(l.Config.EReaderMountPoint, book.MainEpub().Filename)
 			if !h.DirectoryExists(filepath.Dir(destination)) {
 				err = os.MkdirAll(filepath.Dir(destination), 0777)
 				if err != nil {
@@ -354,4 +377,29 @@ func (l *Library) TabulateList(books []b.Book) (table string) {
 		rows = append(rows, []string{strconv.Itoa(res.ID), res.Metadata.Author(), res.Metadata.Title(), res.Metadata.Year, relativePath})
 	}
 	return h.TabulateRows(rows, "ID", "Author", "Title", "Year", "Filename")
+}
+
+// ShowInfo returns a table with relevant information about a book.
+func (l *Library) ShowInfo() (desc string) {
+	var rows [][]string
+	rows = append(rows, []string{"Number of books", fmt.Sprintf("%d", len(l.Books))})
+	bks := l.ListRetail()
+	rows = append(rows, []string{"Number of books with a retail version", fmt.Sprintf("%d", len(bks))})
+	infoMap := l.ListAuthors()
+	rows = append(rows, []string{"Number of authors", fmt.Sprintf("%d", len(infoMap))})
+	infoMap = l.ListTags()
+	rows = append(rows, []string{"Number of tags", fmt.Sprintf("%d", len(infoMap))})
+	infoMap = l.ListSeries()
+	rows = append(rows, []string{"Number of series", fmt.Sprintf("%d", len(infoMap))})
+	bks = l.ListUntagged()
+	rows = append(rows, []string{"Number of untagged books", fmt.Sprintf("%d", len(bks))})
+	bks = l.ListByProgress("read")
+	rows = append(rows, []string{"Number of read books", fmt.Sprintf("%d", len(bks))})
+	bks = l.ListByProgress("reading")
+	rows = append(rows, []string{"Number of books currently being read", fmt.Sprintf("%d", len(bks))})
+	bks = l.ListByProgress("shortlisted")
+	rows = append(rows, []string{"Number of books shortlisted for imminent reading", fmt.Sprintf("%d", len(bks))})
+	bks = l.ListByProgress("unread")
+	rows = append(rows, []string{"Number of unread books", fmt.Sprintf("%d", len(bks))})
+	return h.TabulateRows(rows, "Library", l.Config.LibraryRoot)
 }

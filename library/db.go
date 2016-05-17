@@ -164,6 +164,17 @@ func (ldb *DB) FindByFilename(filename string) (result *b.Book, err error) {
 	return &b.Book{}, errors.New("Could not find book with epub " + filename)
 }
 
+//FindByHash among known Books
+func (ldb *DB) FindByHash(hash string) (result *b.Book, err error) {
+	// TODO check valid hash?
+	for i, bk := range ldb.Books {
+		if bk.RetailEpub.Hash == hash || bk.NonRetailEpub.Hash == hash {
+			return &ldb.Books[i], nil
+		}
+	}
+	return &b.Book{}, errors.New("Could not find book with hash " + hash)
+}
+
 // RemoveByID a book from the db
 func (ldb *DB) RemoveByID(id int) (err error) {
 	var found bool
