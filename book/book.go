@@ -616,6 +616,12 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 			return err
 		}
 		e.Metadata.Language = cleanLanguage(newValues[0])
+	case "publisher":
+		newValues, err := h.AssignNewValues(field, e.Metadata.Publisher, values)
+		if err != nil {
+			return err
+		}
+		e.Metadata.Publisher = cleanLanguage(newValues[0])
 	case "isbn":
 		newValues, err := h.AssignNewValues(field, e.Metadata.ISBN, values)
 		if err != nil {
