@@ -10,7 +10,9 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"os"
+	"os/exec"
 	"sort"
 	"strconv"
 	"strings"
@@ -29,6 +31,16 @@ func TimeTrack(start time.Time, name string) {
 func StringInSlice(a string, list []string) (index int, isIn bool) {
 	for i, b := range list {
 		if b == a {
+			return i, true
+		}
+	}
+	return -1, false
+}
+
+// StringInSliceCaseInsensitive checks if a string is in a []string, regardless of case.
+func StringInSliceCaseInsensitive(a string, list []string) (index int, isIn bool) {
+	for i, b := range list {
+		if strings.ToLower(b) == strings.ToLower(a) {
 			return i, true
 		}
 	}
@@ -178,4 +190,31 @@ func ChooseVersion(title, local, remote string) (choice string, err error) {
 		return remote, err
 	}
 	return
+}
+
+// Display text through a pager if necessary.
+func Display(output string) {
+	// -e Causes less to automatically exit the second time it reaches end-of-file.
+	// -F or --quit-if-one-screen  Causes less to automatically exit if the entire file can be displayed on the first screen.
+	// -Q Causes totally "quiet" operation: the terminal bell is never rung.
+	// -X or --no-init Disables sending the termcap initialization and deinitialization strings to the terminal. This is sometimes desirable if the deinitialization string does something unnecessary, like clearing the screen.
+	cmd := exec.Command("less", "-e", "-F", "-Q", "-X")
+	r, stdin := io.Pipe()
+	cmd.Stdin = r
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	// create a blocking chan, Run the pager and unblock once it is finished
+	c := make(chan struct{})
+	go func() {
+		defer close(c)
+		cmd.Run()
+	}()
+
+	// send through less
+	fmt.Fprintf(stdin, output)
+	// close stdin (result in pager to exit)
+	stdin.Close()
+	// wait for the pager to be finished
+	<-c
 }
