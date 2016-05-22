@@ -145,22 +145,35 @@ func (l *Library) ImportEpubs(allEpubs []string, allHashes []string, isRetail bo
 	// importing what is necessary
 	for i, path := range allEpubs {
 		hash := allHashes[i]
+		importConfirmed := false
+		e := b.Epub{Filename: path}
+
 		// compare with known hashes
+		info := b.Metadata{}
 		if !l.KnownHashes.IsIn(hash) {
 			// get Metadata from new epub
-			e := b.Epub{Filename: path}
-			info, err := e.ReadMetadata()
+			info, err = e.ReadMetadata()
 			if err != nil {
 				h.Error("Could not analyze and import " + path)
 				continue
 			}
-
 			// ask if user really wants to import it
-			confirmImport := h.YesOrNo(fmt.Sprintf("Found %s (%s).\nImport", filepath.Base(path), info.String()))
-			if !confirmImport {
-				continue
+			importConfirmed = h.YesOrNo(fmt.Sprintf("Found %s (%s).\nImport", filepath.Base(path), info.String()))
+		} else {
+			_, err := l.FindByHash(hash)
+			if err != nil {
+				// get Metadata from new epub
+				info, err = e.ReadMetadata()
+				if err != nil {
+					h.Error("Could not analyze and import " + path)
+					continue
+				}
+				//confirm force import
+				importConfirmed = h.YesOrNo(fmt.Sprintf("File %s has already been imported but is not in the current library. Confirm importing again?", filepath.Base(path)))
 			}
+		}
 
+		if importConfirmed {
 			// loop over Books to find similar Metadata
 			var imported bool
 			knownBook, err := l.FindByMetadata(info)
@@ -351,13 +364,14 @@ func (l *Library) DuplicateRetailEpub(id int) (nonRetailEpub *b.Book, err error)
 }
 
 // Search and print the results
-func (l *Library) Search(query string) (results string, err error) {
+func (l *Library) Search(query, sortBy string) (results string, err error) {
 	hits, err := l.RunQuery(query)
 	if err != nil {
 		return
 	}
 
 	if len(hits) != 0 {
+		b.SortBooks(hits, sortBy)
 		return l.TabulateList(hits), err
 	}
 	return "Nothing.", err
