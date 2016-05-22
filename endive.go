@@ -195,9 +195,9 @@ func generateCLI(lb *l.Library) (app *cli.App) {
 				{
 					Name:    "books",
 					Aliases: []string{"b"},
-					Usage:   "list all books.",
+					Usage:   "list all books: endive list books [sortBy CRITERIA]",
 					Action: func(c *cli.Context) {
-						fmt.Println(lb.TabulateList(lb.Books))
+						displayBooks(lb, c, lb.Books)
 					},
 				},
 				{
@@ -205,8 +205,7 @@ func generateCLI(lb *l.Library) (app *cli.App) {
 					Aliases: []string{"u"},
 					Usage:   "list untagged epubs.",
 					Action: func(c *cli.Context) {
-						list := lb.ListUntagged()
-						fmt.Println(lb.TabulateList(list))
+						displayBooks(lb, c, lb.ListUntagged())
 					},
 				},
 				{
@@ -239,17 +238,15 @@ func generateCLI(lb *l.Library) (app *cli.App) {
 					Aliases: []string{"nrt"},
 					Usage:   "list books that only have non-retail versions.",
 					Action: func(c *cli.Context) {
-						list := lb.ListNonRetailOnly()
-						fmt.Println(lb.TabulateList(list))
+						displayBooks(lb, c, lb.ListNonRetailOnly())
 					},
 				},
 				{
 					Name:    "retail",
 					Aliases: []string{"rt"},
-					Usage:   "list books that only have retail versions.",
+					Usage:   "list books that have retail versions.",
 					Action: func(c *cli.Context) {
-						list := lb.ListRetail()
-						fmt.Println(lb.TabulateList(list))
+						displayBooks(lb, c, lb.ListRetail())
 					},
 				},
 			},

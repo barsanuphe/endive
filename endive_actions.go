@@ -14,6 +14,25 @@ import (
 	"github.com/codegangsta/cli"
 )
 
+func checkSortOrder(c *cli.Context) (orderDefined bool, sortBy string, lastIndex int) {
+	if len(c.Args()) < 2 {
+		return
+	}
+	for i, arg := range c.Args() {
+		_, isIn := h.StringInSliceCaseInsensitive(arg, []string{"orderby", "sortby"})
+		if isIn && i < c.NArg()-1 {
+			// check args is valid
+			if b.CheckValidSortOrder(c.Args()[i+1]) {
+				orderDefined = true
+				sortBy = c.Args()[i+1]
+				lastIndex = i
+				return
+			}
+		}
+	}
+	return
+}
+
 func checkPort(c *cli.Context) (port int, err error) {
 	if len(c.Args()) < 1 {
 		err = errors.New("Not enough arguments")
@@ -148,9 +167,16 @@ func search(lb *l.Library, c *cli.Context) {
 	if c.NArg() == 0 {
 		fmt.Println("No query found!")
 	} else {
-		query := strings.Join(c.Args(), " ")
+		sortBy := "default"
+		order, sortBy, lastIndex := checkSortOrder(c)
+		queryParts := c.Args()
+		if order {
+			// discard everything after "sortby"
+			queryParts = queryParts[:lastIndex]
+		}
+		query := strings.Join(queryParts, " ")
 		h.Debug("Searching for '" + query + "'...")
-		results, err := lb.Search(query)
+		results, err := lb.Search(query, sortBy)
 		if err != nil {
 			fmt.Println(err.Error())
 			panic(err)
@@ -162,8 +188,7 @@ func search(lb *l.Library, c *cli.Context) {
 func importEpubs(lb *l.Library, c *cli.Context, isRetail bool) {
 	if len(c.Args()) >= 1 {
 		// check valid path
-		validPaths := []string{}
-		validHashes := []string{}
+		validPaths, validHashes := []string{}, []string{}
 		for _, path := range c.Args() {
 			validPath, err := h.FileExists(path)
 			if err == nil && filepath.Ext(validPath) == ".epub" {
@@ -221,4 +246,11 @@ func exportAll(lb *l.Library, c *cli.Context) {
 	if err != nil {
 		h.Errorf("Error exporting books to e-reader: %s", err.Error())
 	}
+}
+
+func displayBooks(lb *l.Library, c *cli.Context, books []b.Book) {
+	if sort, orderBy, _ := checkSortOrder(c); sort {
+		b.SortBooks(books, orderBy)
+	}
+	h.Display(lb.TabulateList(books))
 }
