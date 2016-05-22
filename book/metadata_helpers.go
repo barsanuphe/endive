@@ -59,10 +59,22 @@ func cleanLanguage(language string) (clean string) {
 
 // tagAliases defines redundant tags and a main alias for them.
 var tagAliases = map[string][]string{
-	"science-fiction": []string{"sf", "sci-fi", "scifi-fantasy", "scifi", "science fiction", "sciencefiction", "sci-fi-fantasy", "sf-fantasy", "genre-sf", "science-fiction-speculative", "sff"},
-	"fantasy":         []string{"fantasy-sci-fi", "fantasy-scifi", "fantasy-fiction"},
-	"dystopia":        []string{"dystopian"},
-	"nonfiction":      []string{"non-fiction"},
+	"science-fiction": []string{"sf", "sci-fi", "scifi-fantasy", "scifi", "science fiction",
+		"sciencefiction", "sci-fi-fantasy", "sf-fantasy", "genre-sf",
+		"science-fiction-speculative", "sf-f", "sff",
+		"science-fiction-fantasy", "sci-fi-and-fantasy"},
+	"hard sf":     []string{"hard-sf", "hard-sci-fi"},
+	"fantasy":     []string{"fantasy-sci-fi", "fantasy-scifi", "fantasy-fiction"},
+	"dystopia":    []string{"dystopian"},
+	"nonfiction":  []string{"non-fiction"},
+	"young adult": []string{"ya"},
+	"fairy tale":  []string{"fairy-tales", "fairytales"},
+	"historical":  []string{"historical-fiction"},
+	"children":    []string{"childrens", "children-s", "kids", "juvenile"},
+	"humor":       []string{"humour"},
+	"anthology":   []string{"anthologies"},
+	"steampunk":   []string{"steam-punk"},
+	"new-weird":   []string{"weird", "weird-fiction"},
 }
 
 // TODO: names of months, dates
@@ -75,6 +87,7 @@ var forbiddenTags = []string{
 	"coming", "anticipated", "default", "recommended", "-list", "sequel",
 	"general", "have", "bundle", "maybe", "audio", "podcast", "calibre", "bks",
 	"moved-on", "record", "arc", "z-", "livre", "unsorted", "gave-up", "abandoned",
+	"retelling", "middle-grade", "collection", "english", "netgalley",
 }
 
 func cleanTags(tags Tags) (cleanTags Tags) {

@@ -62,6 +62,9 @@ If you have a working Go installation, just run:
     $ go get -u github.com/barsanuphe/endive
     $ go install ...endive
 
+Note that **endive** uses *less* do display information, so it will only work
+where *less* is available.
+
 ## Testing
 
 Testing requires the `GR_API_KEY` environment variable to be set with your very
@@ -79,7 +82,7 @@ own Goodreads API key.
     library_root: /home/user/endive
     database_filename: endive.json
 
-    # $a author, $y year, $t title, $i isbn, $l language, $r retail status, 
+    # $a author, $y year, $t title, $i isbn, $l language, $r retail status,
 	# $c fiction/nonfiction, $g main genre, $p reading progress, $s series
     epub_filename_format: $a/$a ($y) $t
 
@@ -144,7 +147,7 @@ and therefore uses its
 Available fields are: `author`, `title`, `year`, `language`, `tags`, `series`,
 and probably a few more.
 
-Same search, ordered by year: 
+Same search, ordered by year:
 
     $ endive search language:en +author:stross sortby year
 
@@ -159,7 +162,7 @@ Same search, ordered by year:
      2        Charles Stross       The Apocalypse Codex       2012       Charles Stross/Charles Stross (2012) The Apocalypse Codex [retail].epub
     -------  -------------------  -------------------------  ---------  ----------------------------------------------------------------------------
 
-Results can be sorted by: id, author, title, series, genre, category, rating, 
+Results can be sorted by: id, author, title, series, genre, category, rating,
 averagerating, year.
 
 Show info about a book with a specific *ID*:
@@ -182,7 +185,7 @@ List all books that do not have a retail version:
 
     $ endive list nonretail
 
-Sorting all books by author: 
+Sorting all books by author:
 
     $ endive list books sortby author
 
