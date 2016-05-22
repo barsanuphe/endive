@@ -74,7 +74,9 @@ var tagAliases = map[string][]string{
 	"humor":       []string{"humour"},
 	"anthology":   []string{"anthologies"},
 	"steampunk":   []string{"steam-punk"},
-	"new-weird":   []string{"weird", "weird-fiction"},
+	"new weird":   []string{"new-weird", "weird", "weird-fiction"},
+	"time travel": []string{"time-travel"},
+	"space opera": []string{"space-opera"},
 }
 
 // TODO: names of months, dates
