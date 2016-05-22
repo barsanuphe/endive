@@ -70,11 +70,8 @@ func (t *Tags) Has(o Tag) (isIn bool, index int) {
 }
 
 // Clean a list of tags.
-func (t *Tags) Clean() (err error) {
-	cleanTags, err := cleanTags(*t)
-	if err != nil {
-		return err
-	}
+func (t *Tags) Clean() {
+	cleanTags := cleanTags(*t)
 	*t = cleanTags
 	return
 }

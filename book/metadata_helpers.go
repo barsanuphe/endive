@@ -77,36 +77,56 @@ var forbiddenTags = []string{
 	"moved-on", "record", "arc", "z-", "livre", "unsorted", "gave-up", "abandoned",
 }
 
-func cleanTags(tags Tags) (cleanTags Tags, err error) {
+func cleanTags(tags Tags) (cleanTags Tags) {
 	cleanTags = Tags{}
 	for _, tag := range tags {
-		clean := true
-		tag.Name = strings.TrimSpace(tag.Name)
-
-		// reducing to main alias
-		for mainalias, aliasList := range tagAliases {
-			_, isIn := h.StringInSlice(tag.Name, aliasList)
-			if isIn {
-				tag.Name = mainalias
-				break
-			}
-		}
-		// checking if not forbidden
-		for _, ft := range forbiddenTags {
-			if strings.Contains(tag.Name, ft) {
-				clean = false
-				break
-			}
-		}
-		// adding if not already present
-		if clean {
-			cleanTags.Add(tag)
+		cleanName, err := cleanTagName(tag.Name)
+		if err == nil {
+			cleanTags.Add(Tag{Name: cleanName})
 		}
 	}
 	// NOTE: this limit is completely arbitrary
 	// only keep top10 tags, since they are ordered by popularity and will be increasingly wrong.
 	if len(cleanTags) > 10 {
 		cleanTags = cleanTags[:10]
+	}
+	return
+}
+
+func cleanTagName(tagName string) (cleanTagName string, err error) {
+	tagName = strings.TrimSpace(tagName)
+	tagName = strings.ToLower(tagName)
+	// reducing to main alias
+	for mainalias, aliasList := range tagAliases {
+		_, isIn := h.StringInSlice(tagName, aliasList)
+		if isIn {
+			tagName = mainalias
+			break
+		}
+	}
+	// checking if not forbidden
+	for _, ft := range forbiddenTags {
+		if strings.Contains(tagName, ft) {
+			err = errors.New("Forbidden tag " + tagName)
+			break
+		}
+	}
+	// returning if not forbidden
+	if err == nil {
+		cleanTagName = tagName
+	}
+	return
+}
+
+func cleanCategory(category string) (clean string, err error) {
+	cleanName, err := cleanTagName(category)
+	if err != nil {
+		return "", err
+	}
+	if _, isIn := h.StringInSlice(cleanName, validCategories); !isIn {
+		err = errors.New("Invalid category " + category)
+	} else {
+		clean = cleanName
 	}
 	return
 }
