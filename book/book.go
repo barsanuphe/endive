@@ -29,6 +29,7 @@ import (
 )
 
 var validProgress = []string{"unread", "read", "reading", "shortlisted"}
+var validCategories = []string{"fiction", "nonfiction"}
 
 // Book can manipulate a book.
 // A Book can have multiple epub files.
@@ -95,7 +96,17 @@ func (e *Book) ShowInfo() (desc string) {
 		rows = append(rows, []string{"ISBN", e.Metadata.ISBN})
 	}
 	rows = append(rows, []string{"Description", e.Metadata.Description})
+	if e.Metadata.NumPages != "" {
+		rows = append(rows, []string{"Number of pages", e.Metadata.NumPages})
+	}
+
 	rows = append(rows, []string{"Language", e.Metadata.Language})
+	if e.Metadata.Category != "" {
+		rows = append(rows, []string{"Category", e.Metadata.Category})
+	}
+	if e.Metadata.MainGenre != "" {
+		rows = append(rows, []string{"Main Genre", e.Metadata.MainGenre})
+	}
 	if len(e.Metadata.Tags) != 0 {
 		rows = append(rows, []string{"Tags", e.Metadata.Tags.String()})
 	}
@@ -105,14 +116,25 @@ func (e *Book) ShowInfo() (desc string) {
 	available := ""
 	if e.HasRetail() {
 		available += "retail "
+		rows = append(rows, []string{"Retail hash", e.RetailEpub.Hash})
+		if e.RetailEpub.NeedsReplacement == "true" {
+			rows = append(rows, []string{"Retail needs replacement", "TRUE"})
+		}
 	}
 	if e.HasNonRetail() {
 		available += "non-retail"
+		rows = append(rows, []string{"Non-Retail hash", e.NonRetailEpub.Hash})
+		if e.NonRetailEpub.NeedsReplacement == "true" {
+			rows = append(rows, []string{"Non-Retail needs replacement", "TRUE"})
+		}
 	}
 	rows = append(rows, []string{"Available versions", available})
 	rows = append(rows, []string{"Progress", e.Progress})
 	if e.ReadDate != "" {
 		rows = append(rows, []string{"Read Date", e.ReadDate})
+	}
+	if e.Metadata.AverageRating != "" {
+		rows = append(rows, []string{"Average Rating", e.Metadata.AverageRating})
 	}
 	if e.Rating != "" {
 		rows = append(rows, []string{"Rating", e.Rating})
@@ -174,7 +196,7 @@ func (e *Book) generateNewName(fileTemplate string, isRetail bool) (newName stri
 	if fileTemplate == "" {
 		return "", errors.New("Empty filename template")
 	}
-	// TODO add tags?
+
 	r := strings.NewReplacer(
 		"$a", "{{$a}}",
 		"$t", "{{$t}}",
@@ -183,17 +205,24 @@ func (e *Book) generateNewName(fileTemplate string, isRetail bool) (newName stri
 		"$i", "{{$i}}",
 		"$s", "{{$s}}",
 		"$p", "{{$p}}",
+		"$c", "{{$c}}",
+		"$g", "{{$g}}",
+		"$r", "{{$r}}",
 	)
 	seriesString := ""
 	if len(e.Metadata.Series) != 0 {
 		seriesString = h.CleanForPath("[" + e.Metadata.Series.String() + "]")
 	}
-
+	retail := "nonretail"
+	if isRetail {
+		retail = "retail"
+	}
 	// replace with all valid epub parameters
-	tmpl := fmt.Sprintf(`{{$a := "%s"}}{{$y := "%s"}}{{$t := "%s"}}{{$l := "%s"}}{{$i := "%s"}}{{$s := "%s"}}{{$p := "%s"}}%s`,
+	tmpl := fmt.Sprintf(`{{$a := "%s"}}{{$y := "%s"}}{{$t := "%s"}}{{$l := "%s"}}{{$i := "%s"}}{{$s := "%s"}}{{$p := "%s"}}{{$c := "%s"}}{{$g := "%s"}}{{$r := "%s"}}%s`,
 		h.CleanForPath(e.Metadata.Author()), e.Metadata.Year,
 		h.CleanForPath(e.Metadata.Title()), e.Metadata.Language,
-		e.Metadata.ISBN, seriesString, e.Progress, r.Replace(fileTemplate))
+		e.Metadata.ISBN, seriesString, e.Progress, e.Metadata.Category,
+		e.Metadata.MainGenre, retail, r.Replace(fileTemplate))
 
 	var doc bytes.Buffer
 	te := template.Must(template.New("hop").Parse(tmpl))
@@ -202,12 +231,16 @@ func (e *Book) generateNewName(fileTemplate string, isRetail bool) (newName stri
 		return
 	}
 	newName = strings.TrimSpace(doc.String())
-	if isRetail {
+	if !strings.Contains(fileTemplate, "$r") && isRetail {
 		newName += " [retail]"
 	}
 	// adding extension
 	if filepath.Ext(newName) != ".epub" {
 		newName += ".epub"
+	}
+	// making sure the path is relative
+	if strings.HasPrefix(newName, "/") {
+		newName = newName[1:]
 	}
 	// making sure the final filename is valid
 	filename := filepath.Base(newName)
@@ -556,10 +589,6 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 		if e.Metadata.Tags.AddFromNames(newValues...) {
 			h.Infof("Tags added to %s\n", e.ShortString())
 		}
-		err = e.Metadata.Tags.Clean()
-		if err != nil {
-			return err
-		}
 	case "series":
 		// NOTE: if interactive, must follow pattern:
 		// seriesname, seriesindex, otherseriesnames, otherseriesindex
@@ -572,7 +601,7 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 			newValues = strings.Split(newValues[0], ",")
 		}
 		if len(newValues)%2 != 0 {
-			return errors.New("Series must follow the format: seriesname seriesindex")
+			return errors.New("Series must follow the format: seriesname, seriesindex")
 		}
 		// remove all Series
 		e.Metadata.Series = Series{}
@@ -616,12 +645,26 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 			return err
 		}
 		e.Metadata.Language = cleanLanguage(newValues[0])
-	case "publisher":
-		newValues, err := h.AssignNewValues(field, e.Metadata.Publisher, values)
+	case "category":
+		newValues, err := h.AssignNewValues(field, e.Metadata.Category, values)
 		if err != nil {
 			return err
 		}
-		e.Metadata.Publisher = cleanLanguage(newValues[0])
+		cleanName, err := cleanCategory(newValues[0])
+		if err == nil {
+			e.Metadata.Category = cleanName
+		}
+	case "maingenre", "main_genre", "genre":
+		newValues, err := h.AssignNewValues(field, e.Metadata.MainGenre, values)
+		if err != nil {
+			return err
+		}
+		// Clean
+		cleanName, err := cleanTagName(newValues[0])
+		if err != nil {
+			return err
+		}
+		e.Metadata.MainGenre = cleanName
 	case "isbn":
 		newValues, err := h.AssignNewValues(field, e.Metadata.ISBN, values)
 		if err != nil {
@@ -690,6 +733,7 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 		h.Debug("Unknown field: " + field)
 		return errors.New("Unknown field: " + field)
 	}
+	e.Metadata.Clean()
 	return
 }
 

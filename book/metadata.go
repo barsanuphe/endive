@@ -23,6 +23,8 @@ type Metadata struct {
 	Series        Series   `json:"series" xml:"series_works>series_work"`
 	AverageRating string   `json:"average_rating" xml:"average_rating"`
 	Tags          Tags     `json:"tags" xml:"popular_shelves>shelf"`
+	Category      string   `json:"category"`
+	MainGenre     string   `json:"main_genre"`
 	Language      string   `json:"language" xml:"language_code"`
 	Publisher     string   `json:"publisher" xml:"publisher"`
 }
@@ -64,6 +66,35 @@ func (i *Metadata) Clean() {
 	i.Language = cleanLanguage(i.Language)
 	// clean tags
 	i.Tags.Clean()
+	// autofill category
+	if i.Category == "" {
+		if isIn, _ := i.Tags.Has(Tag{Name: "fiction"}); isIn {
+			i.Category = "fiction"
+			i.Tags.RemoveFromNames("fiction")
+		}
+		if isIn, _ := i.Tags.Has(Tag{Name: "nonfiction"}); isIn {
+			i.Category = "nonfiction"
+			i.Tags.RemoveFromNames("nonfiction")
+		}
+	}
+	// if nothing valid found...
+	if i.Category == "" {
+		i.Category = "Unknown"
+	}
+
+	// MainGenre
+	if i.MainGenre == "" && len(i.Tags) != 0 {
+		cleanName, err := cleanTagName(i.Tags[0].Name)
+		if err == nil {
+			i.MainGenre = cleanName
+			i.Tags.RemoveFromNames(i.MainGenre)
+		}
+	}
+	// if nothing valid found...
+	if i.MainGenre == "" {
+		i.MainGenre = "Unknown"
+	}
+
 	// clean series
 	for j := range i.Series {
 		i.Series[j].Name = strings.TrimSpace(i.Series[j].Name)
@@ -125,6 +156,8 @@ func (i *Metadata) Diff(o Metadata, firstHeader, secondHeader string) (diff stri
 	rows = append(rows, []string{i.Year, o.Year})
 	rows = append(rows, []string{i.Publisher, o.Publisher})
 	rows = append(rows, []string{i.Description, o.Description})
+	rows = append(rows, []string{i.Category, o.Category})
+	rows = append(rows, []string{i.MainGenre, o.MainGenre})
 	rows = append(rows, []string{i.Tags.String(), o.Tags.String()})
 	rows = append(rows, []string{i.Series.String(), o.Series.String()})
 	rows = append(rows, []string{i.Language, o.Language})
@@ -185,6 +218,14 @@ func (i *Metadata) Merge(o Metadata) (err error) {
 	if err != nil {
 		return
 	}
+	i.Category, err = h.ChooseVersion("Category (fiction/nonfiction)", i.Category, o.Category)
+	if err != nil {
+		return
+	}
+	i.MainGenre, err = h.ChooseVersion("Main Genre", i.MainGenre, o.MainGenre)
+	if err != nil {
+		return
+	}
 	if i.Tags.String() != o.Tags.String() {
 		h.Subpart("Tags: ")
 		index, userInput, err := h.Choose(i.Tags.String(), o.Tags.String())
@@ -238,5 +279,6 @@ func (i *Metadata) Merge(o Metadata) (err error) {
 	i.ImageURL = o.ImageURL
 	i.NumPages = o.NumPages
 	i.AverageRating = o.AverageRating
+	i.Clean()
 	return
 }
