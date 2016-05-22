@@ -79,7 +79,8 @@ own Goodreads API key.
     library_root: /home/user/endive
     database_filename: endive.json
 
-    # $a author, $y year, $t title, $i isbn, $l language
+    # $a author, $y year, $t title, $i isbn, $l language, $r retail status, 
+	# $c fiction/nonfiction, $g main genre, $p reading progress, $s series
     epub_filename_format: $a/$a ($y) $t
 
     # list of directories that will be scraped for ebooks,
@@ -143,9 +144,52 @@ and therefore uses its
 Available fields are: `author`, `title`, `year`, `language`, `tags`, `series`,
 and probably a few more.
 
+Same search, ordered by year: 
+
+    $ endive search language:en +author:stross sortby year
+
+    # # # E N D I V E # # #
+
+    Searching for 'language:en +author:stross'...
+    -------  -------------------  -------------------------  ---------  ----------------------------------------------------------------------------
+     ID       Author               Title                      Year       Filename
+    -------  -------------------  -------------------------  ---------  ----------------------------------------------------------------------------
+     24       Charles Stross       The Hidden Family          2005       Charles Stross/Charles Stross (2005) The Hidden Family [retail].epub
+
+     2        Charles Stross       The Apocalypse Codex       2012       Charles Stross/Charles Stross (2012) The Apocalypse Codex [retail].epub
+    -------  -------------------  -------------------------  ---------  ----------------------------------------------------------------------------
+
+Results can be sorted by: id, author, title, series, genre, category, rating, 
+averagerating, year.
+
+Show info about a book with a specific *ID*:
+
+    $ endive info *ID*
+
+Edit title for book with specific *ID*:
+
+    $ endive metadata edit *ID* title "New Title"
+
+Refresh library after configuration changes:
+
+    $ endive refresh
+
+List all books:
+
+    $ endive list books
+
+List all books that do not have a retail version:
+
+    $ endive list nonretail
+
+Sorting all books by author: 
+
+    $ endive list books sortby author
+
 For other commands, see:
 
     $ endive help
+
 
 ## Third party libraries
 
@@ -153,12 +197,12 @@ For other commands, see:
 
 |                 | Library       |
 | --------------- |:-------------:|
-| Epub parser     | [github.com/barsanuphe/epubgo](https://github.com/barsanuphe/epubgo), forked from [github.com/meskio/epubgo](https://github.com/meskio/epubgo) |
+| Epub parser     | [github.com/barsanuphe/epubgo](https://github.com/barsanuphe/epubgo), forked from [github.com/meskio/epubgo](https://github.com/meskio/epubgo)             |
 | Search          | [github.com/blevesearch/bleve](https://github.com/blevesearch/bleve) |
 | CLI             | [github.com/codegangsta/cli](https://github.com/codegangsta/cli)     |
 | Color output    | [github.com/ttacon/chalk](https://github.com/ttacon/chalk)           |
-| Tables output   | [github.com/barsanuphe/gotabulate](https://github.com/barsanuphe/gotabulate), forked from [github.com/bndr/gotabulate](https://github.com/bndr/gotabulate)     |
+| Tables output   | [github.com/barsanuphe/gotabulate](https://github.com/barsanuphe/gotabulate), forked from [github.com/bndr/gotabulate](https://github.com/bndr/gotabulate) |
 | XDG directories | [launchpad.net/go-xdg](https://launchpad.net/go-xdg)                 |
 | YAML Parser     | [github.com/spf13/viper](https://github.com/spf13/viper)             |
 | ISBN validator  | [github.com/moraes/isbn](https://github.com/moraes/isbn)             |
-| Spinner         | [github.com/tj/go-spin](https://github.com/tj/go-spin)             |
+| Spinner         | [github.com/tj/go-spin](https://github.com/tj/go-spin)               |

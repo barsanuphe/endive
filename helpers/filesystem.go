@@ -158,9 +158,10 @@ func ListEpubsInDirectory(root string) (epubPaths []string, hashes []string, err
 
 // CleanForPath makes sure a string can be used as part of a path
 func CleanForPath(md string) string {
+	md = strings.TrimSpace(md)
 	// if it starts with a dot, remove it so it does not become
-	// a hidden file
-	if md[0] == '.' {
+	// a hidden file. if it starts with /, weird things happen.
+	if strings.HasPrefix(md, ".") || strings.HasPrefix(md, "/") {
 		md = md[1:]
 	}
 	// clean characters which would be problematic in a filename
