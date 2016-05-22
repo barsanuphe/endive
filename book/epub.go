@@ -130,13 +130,17 @@ func (e *Epub) ReadMetadata() (info Metadata, err error) {
 	if nonFatalErr != nil {
 		h.Warning("ISBN could not be found in %s!!", e.FullPath())
 	}
-
-	// TODO show other included data:"publisher", "contributor", "type", "format",
-	// TODO "source", "relation", "coverage", "rights", "meta",
+	// publisher
+	results, nonFatalErr = book.MetadataElement("publisher")
+	if nonFatalErr == nil && len(results) != 0 {
+		info.Publisher = results[0].Content
+	}
 
 	if info.Refresh(e.Config) {
 		h.Info("Found author alias: " + info.Author())
 	}
+	// cleaning metadata
+	info.Clean()
 	return
 }
 
