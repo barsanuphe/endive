@@ -72,7 +72,6 @@ func (ldb *DB) Save() (hasSaved bool, err error) {
 		fmt.Println(err)
 		return
 	}
-
 	if !bytes.Equal(jsonEpub, jsonEpubOld) {
 		h.Debug("Changes detected, saving database...")
 		// writing db
@@ -81,21 +80,22 @@ func (ldb *DB) Save() (hasSaved bool, err error) {
 			return
 		}
 		hasSaved = true
-
-		// remove old index
-		err = os.RemoveAll(getIndexPath())
-		if err != nil {
-			fmt.Println(err)
-			return hasSaved, err
-		}
-
-		// indexing db
-		numIndexed, err := ldb.Index()
-		if err != nil {
-			return hasSaved, err
-		}
-		h.Debug("Saved and indexed " + strconv.FormatUint(numIndexed, 10) + " epubs.")
 	}
+	return
+}
+
+func (ldb *DB) rebuildIndex() (err error) {
+	// remove old index
+	err = os.RemoveAll(getIndexPath())
+	if err != nil {
+		return err
+	}
+	// indexing db
+	numIndexed, err := ldb.Index()
+	if err != nil {
+		return err
+	}
+	h.Debug("Indexed " + strconv.FormatUint(numIndexed, 10) + " epubs.")
 	return
 }
 

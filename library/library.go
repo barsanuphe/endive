@@ -86,9 +86,15 @@ func OpenLibrary() (l *Library, err error) {
 
 // Close the library
 func (l *Library) Close() (err error) {
-	_, err = l.Save()
+	hasSaved, err := l.Save()
 	if err != nil {
 		return
+	}
+	if hasSaved {
+		err = l.rebuildIndex()
+		if err != nil {
+			return
+		}
 	}
 	// remove lock
 	return cfg.RemoveLock()
@@ -364,15 +370,21 @@ func (l *Library) DuplicateRetailEpub(id int) (nonRetailEpub *b.Book, err error)
 }
 
 // Search and print the results
-func (l *Library) Search(query, sortBy string) (results string, err error) {
-	hits, err := l.RunQuery(query)
+func (l *Library) Search(query, sortBy string, limitFirst, limitLast bool, limitNumber int) (results string, err error) {
+	books, err := l.RunQuery(query)
 	if err != nil {
 		return
 	}
 
-	if len(hits) != 0 {
-		b.SortBooks(hits, sortBy)
-		return l.TabulateList(hits), err
+	if len(books) != 0 {
+		b.SortBooks(books, sortBy)
+		if limitFirst && len(books) > limitNumber {
+			books = books[:limitNumber]
+		}
+		if limitLast && len(books) > limitNumber {
+			books = books[len(books)-limitNumber:]
+		}
+		return l.TabulateList(books), err
 	}
 	return "Nothing.", err
 }
