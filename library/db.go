@@ -34,9 +34,10 @@ func getIndexPath() (path string) {
 
 // DB manages the epub database and search
 type DB struct {
-	DatabaseFile string
-	IndexFile    string // can be in XDG data path
-	Books        []b.Book
+	DatabaseFile         string
+	IndexFile            string // can be in XDG data path
+	Books                []b.Book
+	indexNeedsRebuilding bool
 }
 
 // Load current DB
@@ -80,6 +81,7 @@ func (ldb *DB) Save() (hasSaved bool, err error) {
 			return
 		}
 		hasSaved = true
+		ldb.indexNeedsRebuilding = true
 	}
 	return
 }

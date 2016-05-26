@@ -90,7 +90,7 @@ func (l *Library) Close() (err error) {
 	if err != nil {
 		return
 	}
-	if hasSaved {
+	if hasSaved || l.indexNeedsRebuilding {
 		err = l.rebuildIndex()
 		if err != nil {
 			return
