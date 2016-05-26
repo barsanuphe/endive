@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"syscall"
 
+	b "github.com/barsanuphe/endive/book"
 	cfg "github.com/barsanuphe/endive/config"
 	h "github.com/barsanuphe/endive/helpers"
 	l "github.com/barsanuphe/endive/library"
@@ -197,7 +198,9 @@ func generateCLI(lb *l.Library) (app *cli.App) {
 					Aliases: []string{"b"},
 					Usage:   "list all books: endive list books [sortBy CRITERIA]",
 					Action: func(c *cli.Context) {
-						displayBooks(lb, c, lb.Books)
+						books := make([]b.Book, len(lb.Books), len(lb.Books))
+						copy(books, lb.Books)
+						displayBooks(lb, c, books)
 					},
 				},
 				{
