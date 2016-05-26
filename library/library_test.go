@@ -36,7 +36,7 @@ func TestLibrarySearch(t *testing.T) {
 
 	err := l.Load()
 	assert.Nil(err, "Error loading epubs from database")
-	results, err := l.Search("language:fr", "default")
+	results, err := l.Search("language:fr", "default", false, false, 0)
 	assert.Nil(err, "Error running query")
 	fmt.Println(results)
 	// TODO search all fields to check replacements

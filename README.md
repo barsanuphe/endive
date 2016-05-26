@@ -189,6 +189,10 @@ Sorting all books by author:
 
     $ endive list books sortby author
 
+Sorting all books by year, limit to first 10 results:
+
+    $ endive list books sortby year first 10
+
 For other commands, see:
 
     $ endive help

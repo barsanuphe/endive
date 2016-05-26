@@ -39,7 +39,7 @@ func checkLimits(c *cli.Context) (limitFirst, limitLast bool, number, lastIndex 
 		return
 	}
 	for i, arg := range c.Args() {
-		if  i >= c.NArg()-1 {
+		if i >= c.NArg()-1 {
 			break
 		}
 		if strings.ToLower(arg) == "first" {

@@ -71,7 +71,7 @@ database, endive must use the database version.
 - [ ] the user can store in the database whether a physical copy of the book is
 also available.
 - [x] all metadata fields can be edited by the CLI.
-- 
+-
 
 ### Organization
 
@@ -89,6 +89,8 @@ the configuration files or of epub metadata.
 - [x] epubs without retail versions can be listed.
 - [x] the library can be searched with the following creteria:
     author, title, series, progress, retail, tags, description
+- [x] search can be limited to a specific number of results (first or last
+    books matching filter).
 
 ### User interface
 
