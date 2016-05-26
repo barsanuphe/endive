@@ -18,6 +18,7 @@ func checkSortOrder(c *cli.Context) (orderDefined bool, sortBy string, lastIndex
 	if len(c.Args()) < 2 {
 		return
 	}
+	sortBy = "default"
 	for i, arg := range c.Args() {
 		_, isIn := h.StringInSliceCaseInsensitive(arg, []string{"orderby", "sortby"})
 		if isIn && i < c.NArg()-1 {
@@ -25,6 +26,33 @@ func checkSortOrder(c *cli.Context) (orderDefined bool, sortBy string, lastIndex
 			if b.CheckValidSortOrder(c.Args()[i+1]) {
 				orderDefined = true
 				sortBy = c.Args()[i+1]
+				lastIndex = i
+				return
+			}
+		}
+	}
+	return
+}
+
+func checkLimits(c *cli.Context) (limitFirst, limitLast bool, number, lastIndex int) {
+	if len(c.Args()) < 2 {
+		return
+	}
+	for i, arg := range c.Args() {
+		if  i >= c.NArg()-1 {
+			break
+		}
+		if strings.ToLower(arg) == "first" {
+			limitFirst = true
+		}
+		if strings.ToLower(arg) == "last" {
+			limitLast = true
+		}
+		if limitFirst || limitLast {
+			// check c.Args()[i+1] is int
+			nbr, err := strconv.Atoi(c.Args()[i+1])
+			if err == nil {
+				number = nbr
 				lastIndex = i
 				return
 			}
@@ -167,8 +195,13 @@ func search(lb *l.Library, c *cli.Context) {
 	if c.NArg() == 0 {
 		fmt.Println("No query found!")
 	} else {
-		sortBy := "default"
-		order, sortBy, lastIndex := checkSortOrder(c)
+		order, sortBy, lastIndex1 := checkSortOrder(c)
+		limitFirst, limitLast, number, lastIndex2 := checkLimits(c)
+		// finding index of last argument part of search
+		lastIndex := lastIndex1
+		if lastIndex2 < lastIndex {
+			lastIndex = lastIndex2
+		}
 		queryParts := c.Args()
 		if order {
 			// discard everything after "sortby"
@@ -176,7 +209,7 @@ func search(lb *l.Library, c *cli.Context) {
 		}
 		query := strings.Join(queryParts, " ")
 		h.Debug("Searching for '" + query + "'...")
-		results, err := lb.Search(query, sortBy)
+		results, err := lb.Search(query, sortBy, limitFirst, limitLast, number)
 		if err != nil {
 			fmt.Println(err.Error())
 			panic(err)
@@ -251,6 +284,13 @@ func exportAll(lb *l.Library, c *cli.Context) {
 func displayBooks(lb *l.Library, c *cli.Context, books []b.Book) {
 	if sort, orderBy, _ := checkSortOrder(c); sort {
 		b.SortBooks(books, orderBy)
+	}
+	limitFirst, limitLast, number, _ := checkLimits(c)
+	if limitFirst && len(books) > number {
+		books = books[:number]
+	}
+	if limitLast && len(books) > number {
+		books = books[len(books)-number:]
 	}
 	h.Display(lb.TabulateList(books))
 }
