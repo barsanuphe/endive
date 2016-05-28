@@ -90,10 +90,10 @@ func (ldb *DB) Index() (numIndexed uint64, err error) {
 
 // RunQuery on current DB
 func (ldb *DB) RunQuery(queryString string) (results []b.Book, err error) {
-	// TODO make sure the index is up to date
 	queryString = ldb.prepareQuery(queryString)
 	query := bleve.NewQueryStringQuery(queryString)
-	search := bleve.NewSearchRequest(query)
+	// NOTE: second argument is max number of hits
+	search := bleve.NewSearchRequestOptions(query, 1000, 0, false)
 	// open index
 	index, isNew := openIndex()
 	if isNew {

@@ -25,7 +25,7 @@ func checkSortOrder(c *cli.Context) (orderDefined bool, sortBy string, lastIndex
 			// check args is valid
 			if b.CheckValidSortOrder(c.Args()[i+1]) {
 				orderDefined = true
-				sortBy = c.Args()[i+1]
+				sortBy = strings.ToLower(c.Args()[i+1])
 				lastIndex = i
 				return
 			}
@@ -165,13 +165,12 @@ func listTags(lb *l.Library, c *cli.Context) (err error) {
 	if err != nil {
 		// list all tags
 		tags := lb.ListTags()
-		fmt.Println(h.TabulateMap(tags, "Tag", "# of Books"))
-
+		h.Display(h.TabulateMap(tags, "Tag", "# of Books"))
 	} else {
 		// if ID, list tags of ID
 		var rows [][]string
 		rows = append(rows, []string{book.ShortString(), book.Metadata.Tags.String()})
-		fmt.Println(h.TabulateRows(rows, "Book", "Tags"))
+		h.Display(h.TabulateRows(rows, "Book", "Tags"))
 	}
 	return
 }
@@ -181,12 +180,12 @@ func listSeries(lb *l.Library, c *cli.Context) {
 	if err != nil {
 		// list all series
 		series := lb.ListSeries()
-		fmt.Println(h.TabulateMap(series, "Series", "# of Books"))
+		h.Display(h.TabulateMap(series, "Series", "# of Books"))
 	} else {
 		// if ID, list series of ID
 		var rows [][]string
 		rows = append(rows, []string{book.ShortString(), book.Metadata.Series.String()})
-		fmt.Println(h.TabulateRows(rows, "Book", "Series"))
+		h.Display(h.TabulateRows(rows, "Book", "Series"))
 	}
 	return
 }
@@ -197,13 +196,16 @@ func search(lb *l.Library, c *cli.Context) {
 	} else {
 		order, sortBy, lastIndex1 := checkSortOrder(c)
 		limitFirst, limitLast, number, lastIndex2 := checkLimits(c)
-		// finding index of last argument part of search
-		lastIndex := lastIndex1
-		if lastIndex2 < lastIndex {
-			lastIndex = lastIndex2
-		}
 		queryParts := c.Args()
-		if order {
+		if order || limitFirst || limitLast {
+			// finding index of last argument part of search
+			lastIndex := c.NArg()
+			if order && lastIndex1 < lastIndex {
+				lastIndex = lastIndex1
+			}
+			if (limitFirst || limitLast) && lastIndex2 < lastIndex {
+				lastIndex = lastIndex2
+			}
 			// discard everything after "sortby"
 			queryParts = queryParts[:lastIndex]
 		}
@@ -214,7 +216,7 @@ func search(lb *l.Library, c *cli.Context) {
 			fmt.Println(err.Error())
 			panic(err)
 		}
-		fmt.Println(results)
+		h.Display(results)
 	}
 }
 
