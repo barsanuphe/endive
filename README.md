@@ -57,7 +57,7 @@ See the configuration instructions to find out what to do with that key.
 
 ## Installation
 
-If you have a working Go installation, just run:
+If you have a [working Go installation](https://golang.org/doc/install), just run:
 
     $ go get -u github.com/barsanuphe/endive
     $ go install ...endive
