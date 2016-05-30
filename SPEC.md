@@ -95,7 +95,7 @@ the configuration files or of epub metadata.
 ### User interface
 
 - [x] all features can be accessed with a CLI.
-- [ ] all features can be served over http.
+- [x] output too long for current screen are displayed through a pager (less).
 
 ## E-reader synchronization
 

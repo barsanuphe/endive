@@ -115,7 +115,14 @@ func refreshMetadata(lb *l.Library, c *cli.Context) {
 		fmt.Println("Error parsing arguments: " + err.Error())
 		return
 	}
-	// ask confirmation
+	// is field specified?
+	// TODO take list of fields as arguments?
+	if len(c.Args()) == 2 {
+		field := c.Args()[1]
+		// TODO check if correct
+		fmt.Println(field)
+	}
+	// ask for confirmation
 	if h.YesOrNo("Confirm refreshing metadata for " + book.ShortString()) {
 		err := book.ForceMetadataRefresh()
 		if err != nil {
