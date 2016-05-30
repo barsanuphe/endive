@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	c "github.com/barsanuphe/endive/config"
 	h "github.com/barsanuphe/endive/helpers"
 
 	"github.com/kennygrant/sanitize"
@@ -57,30 +58,6 @@ func cleanLanguage(language string) (clean string) {
 	return
 }
 
-// tagAliases defines redundant tags and a main alias for them.
-var tagAliases = map[string][]string{
-	"science-fiction": []string{"sf", "sci-fi", "scifi-fantasy", "scifi", "science fiction",
-		"sciencefiction", "sci-fi-fantasy", "sf-fantasy", "genre-sf",
-		"science-fiction-speculative", "sf-f", "sff",
-		"science-fiction-fantasy", "sci-fi-and-fantasy"},
-	"hard sf":           []string{"hard-sf", "hard-sci-fi"},
-	"fantasy":           []string{"fantasy-sci-fi", "fantasy-scifi", "fantasy-fiction"},
-	"dystopia":          []string{"dystopian"},
-	"nonfiction":        []string{"non-fiction"},
-	"young adult":       []string{"ya"},
-	"fairy tale":        []string{"fairy-tales", "fairytales"},
-	"historical":        []string{"historical-fiction"},
-	"children":          []string{"childrens", "children-s", "kids", "juvenile"},
-	"humor":             []string{"humour"},
-	"anthology":         []string{"anthologies"},
-	"steampunk":         []string{"steam-punk"},
-	"new weird":         []string{"new-weird", "weird", "weird-fiction"},
-	"time travel":       []string{"time-travel"},
-	"space opera":       []string{"space-opera"},
-	"urban fantasy":     []string{"urban-fantasy"},
-	"alternate history": []string{"alternate-history"},
-}
-
 // TODO: names of months, dates
 // remove shelf names that are obviously not genres
 var forbiddenTags = []string{
@@ -95,10 +72,10 @@ var forbiddenTags = []string{
 	"list", "stand-alone", "meh", "amazon", "paperback",
 }
 
-func cleanTags(tags Tags) (cleanTags Tags) {
+func cleanTags(tags Tags, cfg c.Config) (cleanTags Tags) {
 	cleanTags = Tags{}
 	for _, tag := range tags {
-		cleanName, err := cleanTagName(tag.Name)
+		cleanName, err := cleanTagName(tag.Name, cfg)
 		if err == nil {
 			cleanTags.Add(Tag{Name: cleanName})
 		}
@@ -111,17 +88,9 @@ func cleanTags(tags Tags) (cleanTags Tags) {
 	return
 }
 
-func cleanTagName(tagName string) (cleanTagName string, err error) {
+func cleanTagName(tagName string, cfg c.Config) (cleanTagName string, err error) {
 	tagName = strings.TrimSpace(tagName)
 	tagName = strings.ToLower(tagName)
-	// reducing to main alias
-	for mainalias, aliasList := range tagAliases {
-		_, isIn := h.StringInSlice(tagName, aliasList)
-		if isIn {
-			tagName = mainalias
-			break
-		}
-	}
 	// checking if not forbidden
 	for _, ft := range forbiddenTags {
 		if strings.Contains(tagName, ft) {
@@ -136,8 +105,8 @@ func cleanTagName(tagName string) (cleanTagName string, err error) {
 	return
 }
 
-func cleanCategory(category string) (clean string, err error) {
-	cleanName, err := cleanTagName(category)
+func cleanCategory(category string, cfg c.Config) (clean string, err error) {
+	cleanName, err := cleanTagName(category, cfg)
 	if err != nil {
 		return "", err
 	}

@@ -111,6 +111,14 @@ own Goodreads API key.
             - Robert K. Silverberg
         Jared Diamond:
             - Diamond, Jared
+    tag_aliases:
+        science-fiction:
+            - sci-fi
+            - sf
+            - sciencefiction
+    publisher_aliases:
+        Tor:
+            - Tom Doherty Associates
 
 
 ## Usage

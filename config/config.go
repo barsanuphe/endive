@@ -39,6 +39,8 @@ type Config struct {
 	NonRetailSource    []string
 	EpubFilenameFormat string
 	AuthorAliases      map[string][]string
+	TagAliases         map[string][]string
+	PublisherAliases   map[string][]string
 	EReaderMountPoint  string
 	GoodReadsAPIKey    string
 }
@@ -100,6 +102,8 @@ func (c *Config) Load() (err error) {
 	c.RetailSource = conf.GetStringSlice("retail_source")
 	c.NonRetailSource = conf.GetStringSlice("nonretail_source")
 	c.AuthorAliases = conf.GetStringMapStringSlice("author_aliases")
+	c.TagAliases = conf.GetStringMapStringSlice("tag_aliases")
+	c.PublisherAliases = conf.GetStringMapStringSlice("publisher_aliases")
 	c.EpubFilenameFormat = conf.GetString("epub_filename_format")
 	if c.EpubFilenameFormat == "" {
 		c.EpubFilenameFormat = "$a [$y] $t"
@@ -161,6 +165,12 @@ func (c *Config) String() string {
 	rows = append(rows, []string{"Non-Retail sources", strings.Join(c.NonRetailSource, ", ")})
 	for mainalias, aliases := range c.AuthorAliases {
 		rows = append(rows, []string{"Author alias: " + mainalias, strings.Join(aliases, ", ")})
+	}
+	for mainalias, aliases := range c.TagAliases {
+		rows = append(rows, []string{"Tag alias: " + mainalias, strings.Join(aliases, ", ")})
+	}
+	for mainalias, aliases := range c.PublisherAliases {
+		rows = append(rows, []string{"Publisher alias: " + mainalias, strings.Join(aliases, ", ")})
 	}
 	return h.TabulateRows(rows, "Config", "Value")
 }
