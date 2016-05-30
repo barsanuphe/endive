@@ -212,6 +212,14 @@ func generateCLI(lb *l.Library) (app *cli.App) {
 					},
 				},
 				{
+					Name:    "incomplete",
+					Aliases: []string{"i"},
+					Usage:   "list books with incomplete epubs.",
+					Action: func(c *cli.Context) {
+						displayBooks(lb, c, lb.ListIncomplete())
+					},
+				},
+				{
 					Name:    "tags",
 					Aliases: []string{"t"},
 					Usage:   "list tags",
@@ -233,7 +241,16 @@ func generateCLI(lb *l.Library) (app *cli.App) {
 					Usage:   "list authors.",
 					Action: func(c *cli.Context) {
 						authors := lb.ListAuthors()
-						fmt.Println(h.TabulateMap(authors, "Author", "# of Books"))
+						h.Display(h.TabulateMap(authors, "Author", "# of Books"))
+					},
+				},
+				{
+					Name:    "publishers",
+					Aliases: []string{"p"},
+					Usage:   "list publishers.",
+					Action: func(c *cli.Context) {
+						publishers := lb.ListPublishers()
+						h.Display(h.TabulateMap(publishers, "Publisher", "# of Books"))
 					},
 				},
 				{

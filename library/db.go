@@ -227,6 +227,21 @@ func (ldb *DB) ListAuthors() (authors map[string]int) {
 	return
 }
 
+// ListPublishers among known epubs.
+func (ldb *DB) ListPublishers() (publishers map[string]int) {
+	publishers = make(map[string]int)
+	for _, book := range ldb.Books {
+		if book.Metadata.Publisher != "" {
+			publisher := book.Metadata.Publisher
+			publishers[publisher]++
+		} else {
+			publishers["Unknown"]++
+		}
+
+	}
+	return
+}
+
 // ListTags associated with known epubs.
 func (ldb *DB) ListTags() (tags map[string]int) {
 	tags = make(map[string]int)
@@ -264,6 +279,16 @@ func (ldb *DB) ListByProgress(progress string) (filteredList []b.Book) {
 	for _, book := range ldb.Books {
 		if book.Progress == progress {
 			filteredList = append(filteredList, book)
+		}
+	}
+	return
+}
+
+// ListIncomplete among known epubs.
+func (ldb *DB) ListIncomplete() (incomplete []b.Book) {
+	for _, book := range ldb.Books {
+		if !book.Metadata.IsComplete() {
+			incomplete = append(incomplete, book)
 		}
 	}
 	return
