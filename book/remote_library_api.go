@@ -48,7 +48,6 @@ func (g GoodReads) GetBook(id, key string) Metadata {
 	uri := apiRoot + "book/show/" + id + ".xml?key=" + key
 	r := response{}
 	h.GetXMLData(uri, &r)
-	r.Book.Clean()
 	return r.Book
 }
 

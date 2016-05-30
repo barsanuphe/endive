@@ -296,10 +296,6 @@ func (e *Book) ForceMetadataRefresh() (err error) {
 		err = errors.New("Missing main epub for " + e.ShortString())
 		return
 	}
-	// refresh Metadata
-	if e.Metadata.Refresh(e.Config) {
-		h.Debug("Found author alias: " + e.Metadata.Author())
-	}
 
 	// get online data
 	err = e.SearchOnline()
@@ -329,10 +325,8 @@ func (e *Book) Refresh() (wasRenamed []bool, newName []string, err error) {
 			return
 		}
 	}
-	// refresh Metadata
-	if e.Metadata.Refresh(e.Config) {
-		h.Debug("Found author alias: " + e.Metadata.Author())
-	}
+	// refresh and clean Metadata
+	e.Metadata.Clean(e.Config)
 
 	// refresh both epubs
 	var wasRenamedR, wasRenamedNR bool
@@ -517,8 +511,8 @@ func (e *Book) Check() (retailHasChanged bool, nonRetailHasChanged bool, err err
 	return
 }
 
-// SearchOnline tries to find metadata from online sources.
-func (e *Book) SearchOnline() (err error) {
+// GetOnlineMetadata retrieves the online info for this book.
+func (e *Book) GetOnlineMetadata() (onlineInfo Metadata, err error) {
 	if e.Config.GoodReadsAPIKey == "" {
 		h.Error("Goodreads API key not found, not getting online information.")
 		return
@@ -538,31 +532,55 @@ func (e *Book) SearchOnline() (err error) {
 	// if still nothing was found...
 	if id == "" {
 		// TODO ask for user input
-		return errors.New("Could not find online data for " + e.ShortString())
+		return Metadata{}, errors.New("Could not find online data for " + e.ShortString())
 	}
 	// get book info
-	onlineInfo := g.GetBook(id, e.Config.GoodReadsAPIKey)
+	onlineInfo = g.GetBook(id, e.Config.GoodReadsAPIKey)
+	onlineInfo.Clean(e.Config)
+	return
+}
+
+// SearchOnline tries to find metadata from online sources.
+func (e *Book) SearchOnline() (err error) {
+	onlineInfo, err := e.GetOnlineMetadata()
+	if err != nil {
+		return err
+	}
+
 	// show diff between epub and GR versions, then ask what to do.
 	fmt.Println(e.Metadata.Diff(onlineInfo, "Epub Metadata", "GoodReads"))
-
-	fmt.Printf(h.GreenBold("Accept Goodreads metadata in (B)ulk? (F)ield by field? Or (K)eep original? "))
-	scanner := bufio.NewReader(os.Stdin)
-	choice, _ := scanner.ReadString('\n')
-	switch strings.TrimSpace(choice) {
-	case "k", "K", "keep":
-		h.Info("Keeping epub version.")
-	case "b", "B", "Bulk":
-		h.Info("Accepting online version.")
-		e.Metadata = onlineInfo
-	case "f", "F", "Field":
-		h.Info("Going through every field.")
-		err = e.Metadata.Merge(onlineInfo)
-		if err != nil {
-			return err
+	fmt.Printf(h.GreenBold("Choose: (1) Local version (2) Remote version (3) Edit (4) Abort "))
+	validChoice := false
+	errs := 0
+	for !validChoice {
+		scanner := bufio.NewReader(os.Stdin)
+		choice, _ := scanner.ReadString('\n')
+		choice = strings.TrimSpace(choice)
+		switch choice {
+		case "4":
+			err = errors.New("Abort")
+			validChoice = true
+		case "3":
+			h.Info("Going through every field.")
+			err = e.Metadata.Merge(onlineInfo, e.Config)
+			if err != nil {
+				return err
+			}
+			validChoice = true
+		case "2":
+			h.Info("Accepting online version.")
+			e.Metadata = onlineInfo
+			validChoice = true
+		case "1":
+			h.Info("Keeping epub version.")
+			validChoice = true
+		default:
+			fmt.Println("Invalid choice.")
+			errs++
+			if errs > 10 {
+				return errors.New("Too many invalid choices.")
+			}
 		}
-	default:
-		h.Info("What was that?")
-		// TODO ask again
 	}
 	return
 }
@@ -570,8 +588,7 @@ func (e *Book) SearchOnline() (err error) {
 func (e *Book) editSpecificField(field string, values []string) (err error) {
 	switch field {
 	case "tags", "tag":
-		// NOTE: if interactive, must follow pattern:
-		// tag1, tag2, tag3
+		fmt.Println("NOTE: tags can be edited as a comma-separated list of strings.")
 		newValues, err := h.AssignNewValues(field, e.Metadata.Tags.String(), values)
 		if err != nil {
 			return err
@@ -590,35 +607,30 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 			h.Infof("Tags added to %s\n", e.ShortString())
 		}
 	case "series":
-		// NOTE: if interactive, must follow pattern:
-		// seriesname, seriesindex, otherseriesnames, otherseriesindex
+		fmt.Println("NOTE: series can be edited as a comma-separated list of 'series name:index' strings. Index can be empty.")
 		newValues, err := h.AssignNewValues(field, e.Metadata.Series.String(), values)
 		if err != nil {
 			return err
 		}
 		// if user input was entered, we have to split the line
 		if len(newValues) == 1 {
-			newValues = strings.Split(newValues[0], ",")
-		}
-		if len(newValues)%2 != 0 {
-			return errors.New("Series must follow the format: seriesname, seriesindex")
-		}
-		// remove all Series
-		e.Metadata.Series = Series{}
-		// add new ones
-		var seriesName string
-		var seriesIndex float64
-		for i := range newValues {
-			if i%2 == 0 {
-				seriesName = strings.TrimSpace(newValues[i])
-			} else {
-				seriesIndex, err = strconv.ParseFloat(strings.TrimSpace(newValues[i]), 32)
-				if err != nil {
-					h.Error("Index must be a float.")
-					return err
-				}
-				if e.Metadata.Series.Add(seriesName, float32(seriesIndex)) {
-					h.Infof("Series %s #%f added to %s\n", seriesName, seriesIndex, e.ShortString())
+			// remove all Series
+			e.Metadata.Series = Series{}
+			for _, s := range strings.Split(newValues[0], ",") {
+				// split again name:index
+				parts := strings.Split(s, ":")
+				switch len(parts) {
+				case 1:
+					e.Metadata.Series.Add(strings.TrimSpace(s), 0)
+				case 2:
+					index, err := strconv.ParseFloat(parts[1], 32)
+					if err != nil {
+						h.Warning("Index must be a float, or empty.")
+					} else {
+						e.Metadata.Series.Add(strings.TrimSpace(parts[0]), float32(index))
+					}
+				default:
+					h.Warning("Could not parse series " + s)
 				}
 			}
 		}
@@ -627,7 +639,11 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 		if err != nil {
 			return err
 		}
-		e.Metadata.Authors = newValues
+		e.Metadata.Authors = strings.Split(newValues[0], ",")
+		// trim spaces
+		for j := range e.Metadata.Authors {
+			e.Metadata.Authors[j] = strings.TrimSpace(e.Metadata.Authors[j])
+		}
 	case "year":
 		newValues, err := h.AssignNewValues(field, e.Metadata.Year, values)
 		if err != nil {
@@ -644,27 +660,19 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 		if err != nil {
 			return err
 		}
-		e.Metadata.Language = cleanLanguage(newValues[0])
+		e.Metadata.Language = newValues[0]
 	case "category":
 		newValues, err := h.AssignNewValues(field, e.Metadata.Category, values)
 		if err != nil {
 			return err
 		}
-		cleanName, err := cleanCategory(newValues[0])
-		if err == nil {
-			e.Metadata.Category = cleanName
-		}
+		e.Metadata.Category = newValues[0]
 	case "maingenre", "main_genre", "genre":
 		newValues, err := h.AssignNewValues(field, e.Metadata.MainGenre, values)
 		if err != nil {
 			return err
 		}
-		// Clean
-		cleanName, err := cleanTagName(newValues[0])
-		if err != nil {
-			return err
-		}
-		e.Metadata.MainGenre = cleanName
+		e.Metadata.MainGenre = newValues[0]
 	case "isbn":
 		newValues, err := h.AssignNewValues(field, e.Metadata.ISBN, values)
 		if err != nil {
@@ -688,7 +696,7 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 		if err != nil {
 			return err
 		}
-		e.Metadata.Description = cleanHTML(newValues[0])
+		e.Metadata.Description = newValues[0]
 	case "progress":
 		newValues, err := h.AssignNewValues(field, e.Progress, values)
 		if err != nil {
@@ -728,12 +736,12 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 			return err
 		}
 		e.Review = newValues[0]
-
 	default:
 		h.Debug("Unknown field: " + field)
 		return errors.New("Unknown field: " + field)
 	}
-	e.Metadata.Clean()
+	// cleaning all metadata
+	e.Metadata.Clean(e.Config)
 	return
 }
 
