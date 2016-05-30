@@ -43,6 +43,7 @@ func cleanISBN(full string) (isbn13 string, err error) {
 var languageAliases = map[string][]string{
 	"en": []string{"en-US", "en-GB", "eng", "en-CA"},
 	"fr": []string{"fr-FR", "fre"},
+	"es": []string{"spa"},
 }
 
 func cleanLanguage(language string) (clean string) {
