@@ -86,35 +86,48 @@ func TabulateMap(input map[string]int, firstHeader string, secondHeader string) 
 }
 
 // Choose displays a list of candidates and returns the user's pick
-func Choose(candidates ...string) (index int, userInput string, err error) {
-	for i, choice := range candidates {
-		fmt.Printf("%d. %s\n", i+1, choice)
-	}
-	fmt.Printf(GreenBold("Choose: [1-%d], (E)nter manually, (A)bort? "), len(candidates))
-	scanner := bufio.NewReader(os.Stdin)
-	choice, _ := scanner.ReadString('\n')
-	choice = strings.TrimSpace(choice)
-	switch choice {
-	case "a", "A", "abort":
-		return -1, "", errors.New("Abort")
-	case "e", "E", "enter":
-		fmt.Printf("Enter new value: ")
-		choice, _ = scanner.ReadString('\n')
+func Choose(localCandidate, remoteCandidate string) (chosenOne string, err error) {
+	fmt.Printf("1. %s\n", localCandidate)
+	fmt.Printf("2. %s\n", remoteCandidate)
+	fmt.Printf(GreenBold("Choose: (1) Local version (2) Remote version (3) Edit (4) Abort "))
+
+	validChoice := false
+	errs := 0
+	for !validChoice {
+		scanner := bufio.NewReader(os.Stdin)
+		choice, _ := scanner.ReadString('\n')
 		choice = strings.TrimSpace(choice)
-		confirmed := YesOrNo("Confirm: " + choice)
-		if confirmed {
-			userInput = choice
-			index = -1
-		} else {
-			fmt.Println("Manual entry not confirmed. Sticking with original value.")
-			index = 0
+		switch choice {
+		case "4":
+			err = errors.New("Abort")
+			validChoice = true
+		case "3":
+			fmt.Printf("Enter new value: ")
+			choice, _ = scanner.ReadString('\n')
+			choice = strings.TrimSpace(choice)
+			if choice == "" {
+				fmt.Println("Warning: Empty value detected.")
+			}
+			confirmed := YesOrNo("Confirm: " + choice)
+			if confirmed {
+				chosenOne = choice
+				validChoice = true
+			} else {
+				fmt.Println("Manual entry not confirmed, trying again.")
+			}
+		case "2":
+			chosenOne = remoteCandidate
+			validChoice = true
+		case "1":
+			chosenOne = localCandidate
+			validChoice = true
+		default:
+			fmt.Println("Invalid choice.")
+			errs++
+			if errs > 10 {
+				return "", errors.New("Too many invalid choices.")
+			}
 		}
-	default:
-		index, err = strconv.Atoi(choice)
-		if err != nil {
-			err = errors.New("Incorrect input")
-		}
-		index--
 	}
 	return
 }
@@ -163,32 +176,14 @@ func AssignNewValues(field, oldValue string, candidates []string) (newValues []s
 	}
 	newValues = candidates
 	// show old_value => new_value
-	logger.Infof("Changing %s: \n%s\n\t=>\n%s\n", field, oldValue, strings.Join(newValues, "|"))
+	Infof("Changing %s: \n%s\n\t=>\n%s\n", field, oldValue, strings.Join(newValues, "|"))
 	return
 }
 
 // ChooseVersion among two choices
 func ChooseVersion(title, local, remote string) (choice string, err error) {
-	if local == remote {
-		return local, err
-	}
 	Subpart(title + ":")
-	index, userInput, err := Choose(local, remote)
-	if err != nil {
-		// in case of error, return original version
-		return local, err
-	}
-	switch index {
-	case -1:
-		if userInput != "" {
-			return userInput, err
-		}
-		return local, errors.New("Empty user input")
-	case 0:
-		return local, err
-	case 1:
-		return remote, err
-	}
+	choice, err = Choose(local, remote)
 	return
 }
 
