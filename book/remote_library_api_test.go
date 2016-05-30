@@ -38,24 +38,25 @@ var grBooks = []struct {
 func TestGoodReads(t *testing.T) {
 	// make sure it is set
 	key := os.Getenv("GR_API_KEY")
-	require.NotEqual(t, len(key), 0, "Cannot get Goodreads API key")
+	require.NotEqual(t, 0, len(key), "Cannot get Goodreads API key")
 	g := GoodReads{}
 	assert := assert.New(t)
 	for _, book := range grBooks {
 		// getting book_id
 		bookID := g.GetBookIDByQuery(book.author, book.title, key)
-		assert.Equal(bookID, book.expectedID, "Bad book id")
+		assert.Equal(book.expectedID, bookID, "Bad book id")
 		// getting book information from book_id
 		b := g.GetBook(bookID, key)
-		assert.Equal(b.Author(), book.author, "Bad author")
+		b.Clean(standardTestConfig)
+		assert.Equal(book.author, b.Author(), "Bad author")
 		if b.MainTitle != book.title && b.OriginalTitle != book.title {
 			t.Errorf("Bad title, got %s / %s, expected %s.", b.MainTitle, b.OriginalTitle, book.title)
 		}
-		assert.Equal(b.Year, book.expectedYear, "Bad year")
-		assert.Equal(b.String(), book.expectedFullTitle, "Bad title")
+		assert.Equal(book.expectedYear, b.Year, "Bad year")
+		assert.Equal(book.expectedFullTitle, b.String(), "Bad title")
 
 		// getting book_id by isbn
 		bookID = g.GetBookIDByISBN(book.isbn, key)
-		assert.Equal(bookID, book.expectedID, "Bad book id")
+		assert.Equal(book.expectedID, bookID, "Bad book id")
 	}
 }

@@ -1,6 +1,10 @@
 package book
 
-import "strings"
+import (
+	"strings"
+
+	c "github.com/barsanuphe/endive/config"
+)
 
 // Tag holds the name of a tag.
 type Tag struct {
@@ -70,8 +74,8 @@ func (t *Tags) Has(o Tag) (isIn bool, index int) {
 }
 
 // Clean a list of tags.
-func (t *Tags) Clean() {
-	cleanTags := cleanTags(*t)
+func (t *Tags) Clean(cfg c.Config) {
+	cleanTags := cleanTags(*t, cfg)
 	*t = cleanTags
 	return
 }

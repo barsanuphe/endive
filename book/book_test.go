@@ -62,7 +62,9 @@ func TestMain(m *testing.M) {
 		panic(err)
 	}
 	parentDir = filepath.Dir(wd)
-	standardTestConfig = cfg.Config{LibraryRoot: parentDir}
+	tags := make(map[string][]string)
+	tags["science-fiction"] = []string{"sci-fi"}
+	standardTestConfig = cfg.Config{LibraryRoot: parentDir, TagAliases: tags}
 	// init logger
 	err = h.GetLogger("log_testing")
 	if err != nil {
@@ -228,6 +230,6 @@ func TestBookSearchOnline(t *testing.T) {
 		e.Metadata = info
 
 		err = e.SearchOnline()
-		assert.Nil(err, "Error searching online")
+		assert.NotNil(err, "Expected error searching online, missing user input")
 	}
 }

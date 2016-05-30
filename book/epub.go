@@ -109,12 +109,12 @@ func (e *Epub) ReadMetadata() (info Metadata, err error) {
 	// language
 	results, nonFatalErr = book.MetadataElement("language")
 	if nonFatalErr == nil && len(results) != 0 {
-		info.Language = cleanLanguage(results[0].Content)
+		info.Language = results[0].Content
 	}
 	// description
 	results, nonFatalErr = book.MetadataElement("description")
 	if nonFatalErr == nil && len(results) != 0 {
-		info.Description = cleanHTML(results[0].Content)
+		info.Description = results[0].Content
 	}
 	// tags
 	results, nonFatalErr = book.MetadataElement("subject")
@@ -136,11 +136,8 @@ func (e *Epub) ReadMetadata() (info Metadata, err error) {
 		info.Publisher = results[0].Content
 	}
 
-	if info.Refresh(e.Config) {
-		h.Info("Found author alias: " + info.Author())
-	}
 	// cleaning metadata
-	info.Clean()
+	info.Clean(e.Config)
 	return
 }
 

@@ -39,11 +39,11 @@ func TestTags(t *testing.T) {
 	// check clean
 	isIn, _ = e.Metadata.Tags.Has(tag3)
 	assert.True(isIn, "Error: expected to have tag3.")
-	e.Metadata.Tags.Clean()
+	e.Metadata.Clean(standardTestConfig)
 	isIn, _ = e.Metadata.Tags.Has(tag3)
 	assert.False(isIn, "Error: expected tag3 to have been cleaned.")
 	isIn, _ = e.Metadata.Tags.Has(tag4)
-	assert.False(isIn, "Error: expected tag5 to have been replaced by alias.")
+	assert.False(isIn, "Error: expected tag4 to have been replaced by alias.")
 	isIn, _ = e.Metadata.Tags.Has(tag5)
 	assert.True(isIn, "Error: expected tag5 to have replaced its alias tag4.")
 	// test remove
