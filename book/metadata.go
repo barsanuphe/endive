@@ -5,9 +5,14 @@ import (
 	"strconv"
 	"strings"
 
+	"errors"
+
 	c "github.com/barsanuphe/endive/config"
 	h "github.com/barsanuphe/endive/helpers"
 )
+
+// MetadataFieldNames is a list of valid field names
+var MetadataFieldNames = []string{"author", "title", "year", "publisher", "description", "language", "category", "genre", "tags", "series", "isbn"}
 
 // Metadata contains all of the known book metadata.
 type Metadata struct {
@@ -137,15 +142,24 @@ func (i *Metadata) useAliases(cfg c.Config) (hasChanged bool) {
 		}
 	}
 	// tag aliases
-	for j, tag := range i.Tags {
+	cleanTags := Tags{}
+	for _, tag := range i.Tags {
+		added := false
 		for mainAlias, aliases := range cfg.TagAliases {
 			_, isIn := h.StringInSlice(tag.Name, aliases)
 			if isIn {
-				i.Tags[j].Name = mainAlias
+				cleanTags.AddFromNames(mainAlias)
+				added = true
 				break
 			}
 		}
+		// if no alias found, add directly
+		if !added {
+			cleanTags.AddFromNames(tag.Name)
+		}
 	}
+	i.Tags = cleanTags
+
 	// publisher aliases
 	for mainAlias, aliases := range cfg.PublisherAliases {
 		_, isIn := h.StringInSlice(i.Publisher, aliases)
@@ -208,96 +222,124 @@ func (i *Metadata) Diff(o Metadata, firstHeader, secondHeader string) (diff stri
 
 // Merge with another Metadata.
 func (i *Metadata) Merge(o Metadata, cfg c.Config) (err error) {
-	if i.Author() != o.Author() {
-		h.Subpart("Authors: ")
-		fmt.Println("NOTE: authors can be edited as a comma-separated list of strings.")
-		userInput, err := h.Choose(i.Author(), o.Author())
+	for _, field := range MetadataFieldNames {
+		err = i.MergeField(o, field, cfg)
 		if err != nil {
-			return err
+			return
 		}
-		i.Authors = strings.Split(userInput, ",")
-		// trim spaces
-		for j := range i.Authors {
-			i.Authors[j] = strings.TrimSpace(i.Authors[j])
-		}
-	}
-	if i.Title() != o.Title() {
-		h.Subpart("Title:")
-		chosenTitle, err := h.Choose(i.Title(), o.Title())
-		if err != nil {
-			return err
-		}
-		i.MainTitle = chosenTitle
-		i.OriginalTitle = chosenTitle
-	}
-	i.Year, err = h.ChooseVersion("Publication year", i.Year, o.Year)
-	if err != nil {
-		return
-	}
-	i.Publisher, err = h.ChooseVersion("Publisher", i.Publisher, o.Publisher)
-	if err != nil {
-		return
-	}
-	i.Description, err = h.ChooseVersion("Description", cleanHTML(i.Description), cleanHTML(o.Description))
-	if err != nil {
-		return
-	}
-	i.Language, err = h.ChooseVersion("Language", cleanLanguage(i.Language), cleanLanguage(o.Language))
-	if err != nil {
-		return
-	}
-	i.Category, err = h.ChooseVersion("Category (fiction/nonfiction)", i.Category, o.Category)
-	if err != nil {
-		return
-	}
-	i.MainGenre, err = h.ChooseVersion("Main Genre", i.MainGenre, o.MainGenre)
-	if err != nil {
-		return
-	}
-	if i.Tags.String() != o.Tags.String() {
-		h.Subpart("Tags: ")
-		fmt.Println("NOTE: tags can be edited as a comma-separated list of strings.")
-		tagString, err := h.Choose(i.Tags.String(), o.Tags.String())
-		if err != nil {
-			return err
-		}
-		i.Tags = Tags{}
-		i.Tags.AddFromNames(strings.Split(tagString, ",")...)
-	}
-	if i.Series.String() != o.Series.String() {
-		h.Subpart("Series: ")
-		fmt.Println("NOTE: series can be edited as a comma-separated list of 'series name:index' strings. Index can be empty.")
-		userInput, err := h.Choose(i.Series.String(), o.Series.String())
-		if err != nil {
-			return err
-		}
-		i.Series = Series{}
-		for _, s := range strings.Split(userInput, ",") {
-			// split again name:index
-			parts := strings.Split(s, ":")
-			switch len(parts) {
-			case 1:
-				i.Series.Add(strings.TrimSpace(s), 0)
-			case 2:
-				index, err := strconv.ParseFloat(parts[1], 32)
-				if err != nil {
-					h.Warning("Index must be a float, or empty.")
-				} else {
-					i.Series.Add(strings.TrimSpace(parts[0]), float32(index))
-				}
-			default:
-				h.Warning("Could not parse series " + s)
-			}
-		}
-	}
-	i.ISBN, err = h.ChooseVersion("ISBN", i.ISBN, o.ISBN)
-	if err != nil {
-		return
 	}
 	// automatically fill fields usually not found in epubs.
 	i.ImageURL = o.ImageURL
 	i.NumPages = o.NumPages
 	i.AverageRating = o.AverageRating
+	i.Clean(cfg)
+	return
+}
+
+// MergeField with another Metadata.
+func (i *Metadata) MergeField(o Metadata, field string, cfg c.Config) (err error) {
+	switch field {
+	case "tags", "tag":
+		if i.Tags.String() != o.Tags.String() {
+			h.Subpart("Tags: ")
+			fmt.Println("NOTE: tags can be edited as a comma-separated list of strings.")
+			tagString, err := h.Choose(i.Tags.String(), o.Tags.String())
+			if err != nil {
+				return err
+			}
+			i.Tags = Tags{}
+			i.Tags.AddFromNames(strings.Split(tagString, ",")...)
+		}
+	case "series":
+		if i.Series.rawString() != o.Series.rawString() {
+			h.Subpart("Series: ")
+			fmt.Println("NOTE: series can be edited as a comma-separated list of 'series name:index' strings. Index can be empty.")
+			userInput, err := h.Choose(i.Series.rawString(), o.Series.rawString())
+			if err != nil {
+				return err
+			}
+			i.Series = Series{}
+			for _, s := range strings.Split(userInput, ",") {
+				// split again name:index
+				parts := strings.Split(s, ":")
+				switch len(parts) {
+				case 1:
+					i.Series.Add(strings.TrimSpace(s), 0)
+				case 2:
+					index, err := strconv.ParseFloat(parts[1], 32)
+					if err != nil {
+						h.Warning("Index must be a float, or empty.")
+					} else {
+						i.Series.Add(strings.TrimSpace(parts[0]), float32(index))
+					}
+				default:
+					h.Warning("Could not parse series " + s)
+				}
+			}
+		}
+	case "author", "authors":
+		if i.Author() != o.Author() {
+			h.Subpart("Authors: ")
+			fmt.Println("NOTE: authors can be edited as a comma-separated list of strings.")
+			userInput, err := h.Choose(i.Author(), o.Author())
+			if err != nil {
+				return err
+			}
+			i.Authors = strings.Split(userInput, ",")
+			// trim spaces
+			for j := range i.Authors {
+				i.Authors[j] = strings.TrimSpace(i.Authors[j])
+			}
+		}
+	case "year":
+		i.Year, err = h.ChooseVersion("Publication year", i.Year, o.Year)
+		if err != nil {
+			return
+		}
+	case "publisher":
+		i.Publisher, err = h.ChooseVersion("Publisher", i.Publisher, o.Publisher)
+		if err != nil {
+			return
+		}
+	case "language":
+		i.Language, err = h.ChooseVersion("Language", cleanLanguage(i.Language), cleanLanguage(o.Language))
+		if err != nil {
+			return
+		}
+	case "category":
+		i.Category, err = h.ChooseVersion("Category (fiction/nonfiction)", i.Category, o.Category)
+		if err != nil {
+			return
+		}
+	case "maingenre", "main_genre", "genre":
+		i.MainGenre, err = h.ChooseVersion("Main Genre", i.MainGenre, o.MainGenre)
+		if err != nil {
+			return
+		}
+	case "isbn":
+		i.ISBN, err = h.ChooseVersion("ISBN", i.ISBN, o.ISBN)
+		if err != nil {
+			return
+		}
+	case "title":
+		if i.Title() != o.Title() {
+			h.Subpart("Title:")
+			chosenTitle, err := h.Choose(i.Title(), o.Title())
+			if err != nil {
+				return err
+			}
+			i.MainTitle = chosenTitle
+			i.OriginalTitle = chosenTitle
+		}
+	case "description":
+		i.Description, err = h.ChooseVersion("Description", cleanHTML(i.Description), cleanHTML(o.Description))
+		if err != nil {
+			return
+		}
+	default:
+		h.Debug("Unknown field: " + field)
+		return errors.New("Unknown field: " + field)
+	}
 	i.Clean(cfg)
 	return
 }

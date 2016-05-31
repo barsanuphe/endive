@@ -306,6 +306,62 @@ func (e *Book) ForceMetadataRefresh() (err error) {
 	return
 }
 
+// ForceMetadataFieldRefresh overwrites current Metadata for a specific field only.
+func (e *Book) ForceMetadataFieldRefresh(field string) (err error) {
+	info := Metadata{}
+	_, exists := h.FileExists(e.MainEpub().FullPath())
+	if exists == nil {
+		info, err = e.MainEpub().ReadMetadata()
+		if err != nil {
+			return
+		}
+	} else {
+		err = errors.New("Missing main epub for " + e.ShortString())
+		return
+	}
+	// get online data
+	onlineInfo, err := e.GetOnlineMetadata()
+	if err != nil {
+		return err
+	}
+	// merge field
+	err = info.MergeField(onlineInfo, field, e.Config)
+	if err != nil {
+		return err
+	}
+	switch field {
+	case "tags", "tag":
+		e.Metadata.Tags = info.Tags
+	case "series":
+		e.Metadata.Series = info.Series
+	case "author", "authors":
+		e.Metadata.Authors = info.Authors
+	case "year":
+		e.Metadata.Year = info.Year
+	case "publisher":
+		e.Metadata.Publisher = info.Publisher
+	case "language":
+		e.Metadata.Language = info.Language
+	case "category":
+		e.Metadata.Category = info.Category
+	case "maingenre", "main_genre", "genre":
+		e.Metadata.MainGenre = info.MainGenre
+	case "isbn":
+		e.Metadata.ISBN = info.ISBN
+	case "title":
+		e.Metadata.MainTitle = info.MainTitle
+		e.Metadata.OriginalTitle = info.OriginalTitle
+	case "description":
+		e.Metadata.Description = info.Description
+	default:
+		h.Debug("Unknown field: " + field)
+		return errors.New("Unknown field: " + field)
+	}
+	// cleaning all metadata
+	e.Metadata.Clean(e.Config)
+	return
+}
+
 // Refresh the filenames of the Epubs associated with this Book.
 func (e *Book) Refresh() (wasRenamed []bool, newName []string, err error) {
 	h.Debug("Refreshing Epub " + e.ShortString())
@@ -697,6 +753,12 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 			return err
 		}
 		e.Metadata.Description = newValues[0]
+	case "publisher":
+		newValues, err := h.AssignNewValues(field, e.Metadata.Publisher, values)
+		if err != nil {
+			return err
+		}
+		e.Metadata.Publisher = newValues[0]
 	case "progress":
 		newValues, err := h.AssignNewValues(field, e.Progress, values)
 		if err != nil {
