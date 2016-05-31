@@ -119,14 +119,26 @@ func refreshMetadata(lb *l.Library, c *cli.Context) {
 	// TODO take list of fields as arguments?
 	if len(c.Args()) == 2 {
 		field := c.Args()[1]
-		// TODO check if correct
-		fmt.Println(field)
-	}
-	// ask for confirmation
-	if h.YesOrNo("Confirm refreshing metadata for " + book.ShortString()) {
-		err := book.ForceMetadataRefresh()
-		if err != nil {
-			h.Errorf("Error reinitializing metadata for book ID#%d", book.ID)
+		// check if valid field name
+		_, isIn := h.StringInSlice(strings.ToLower(field), b.MetadataFieldNames)
+		if !isIn {
+			fmt.Println("Invalid metadata field " + field)
+			return
+		}
+		// ask for confirmation
+		if h.YesOrNo("Confirm refreshing metadata field " + field + " for " + book.ShortString()) {
+			err := book.ForceMetadataFieldRefresh(field)
+			if err != nil {
+				h.Errorf("Error reinitializing metadata field "+field+" for book ID#%d", book.ID)
+			}
+		}
+	} else if len(c.Args()) == 1 {
+		// ask for confirmation
+		if h.YesOrNo("Confirm refreshing metadata for " + book.ShortString()) {
+			err := book.ForceMetadataRefresh()
+			if err != nil {
+				h.Errorf("Error reinitializing metadata for book ID#%d", book.ID)
+			}
 		}
 	}
 	_, _, err = book.Refresh()

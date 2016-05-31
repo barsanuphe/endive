@@ -29,6 +29,15 @@ func (s Series) String() (description string) {
 	return strings.Join(series, ", ")
 }
 
+// rawString outputs a series info in raw form: series:index.
+func (s Series) rawString() (description string) {
+	series := []string{}
+	for _, ss := range s {
+		series = append(series, fmt.Sprintf("%s:%s", ss.Name, ss.Position))
+	}
+	return strings.Join(series, ", ")
+}
+
 // Add a series
 func (s *Series) Add(seriesName string, position float32) (seriesModified bool) {
 	hasSeries, seriesIndex, currentIndex := s.Has(seriesName)

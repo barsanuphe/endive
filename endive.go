@@ -153,6 +153,10 @@ func generateCLI(lb *l.Library) (app *cli.App) {
 			Aliases: []string{"r"},
 			Usage:   "refresh library",
 			Action: func(c *cli.Context) {
+				if c.NArg() != 0 {
+					fmt.Println("refresh subcommand does not require arguments.")
+					return
+				}
 				fmt.Println("Refreshing library...")
 				renamed, err := lb.Refresh()
 				if err != nil {

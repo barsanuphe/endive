@@ -75,7 +75,6 @@ func (t *Tags) Has(o Tag) (isIn bool, index int) {
 
 // Clean a list of tags.
 func (t *Tags) Clean(cfg c.Config) {
-	cleanTags := cleanTags(*t, cfg)
-	*t = cleanTags
+	*t = cleanTags(*t, cfg)
 	return
 }
