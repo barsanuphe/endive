@@ -28,6 +28,8 @@ const (
 	XdgLogPath = Endive + "/" + Endive + ".log"
 	// XdgLockPath is the path for the db lock.
 	XdgLockPath = Endive + "/" + Endive + ".lock"
+	// XdgDirtyIndexPath is the path for dirty index marker
+	XdgDirtyIndexPath = Endive + "/" + Endive + ".dirty.index"
 )
 
 // Config holds all relevant information
@@ -75,6 +77,36 @@ func SetLock() (err error) {
 // RemoveLock for current library.
 func RemoveLock() (err error) {
 	lockFile, err := xdg.Data.Find(XdgLockPath)
+	if err != nil {
+		return
+	}
+	return os.Remove(lockFile)
+}
+
+// SetDirtyIndexMarker for the current db.
+func SetDirtyIndexMarker() (err error) {
+	_, err = xdg.Data.Find(XdgDirtyIndexPath)
+	if err != nil {
+		_, err = xdg.Data.Ensure(XdgDirtyIndexPath)
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+
+// IsIndexDirty determines if the index needs to be rebuilt.
+func IsIndexDirty() (isDirty bool) {
+	_, err := xdg.Data.Find(XdgDirtyIndexPath)
+	if err == nil {
+		isDirty = true
+	}
+	return
+}
+
+// RemoveDirtyIndexMarker after successful re-indexing.
+func RemoveDirtyIndexMarker() (err error) {
+	lockFile, err := xdg.Data.Find(XdgDirtyIndexPath)
 	if err != nil {
 		return
 	}
