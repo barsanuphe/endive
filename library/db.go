@@ -36,7 +36,7 @@ func getIndexPath() (path string) {
 type DB struct {
 	DatabaseFile         string
 	IndexFile            string // can be in XDG data path
-	Books                []b.Book
+	Books                b.Books
 	indexNeedsRebuilding bool
 }
 
@@ -198,23 +198,13 @@ func (ldb *DB) RemoveByID(id int) (err error) {
 }
 
 // ListNonRetailOnly among known epubs.
-func (ldb *DB) ListNonRetailOnly() (nonretail []b.Book) {
-	for _, book := range ldb.Books {
-		if !book.HasRetail() {
-			nonretail = append(nonretail, book)
-		}
-	}
-	return
+func (ldb *DB) ListNonRetailOnly() (b.Books) {
+	return ldb.Books.FilterNonRetailOnly()
 }
 
 // ListRetail among known epubs.
-func (ldb *DB) ListRetail() (retail []b.Book) {
-	for _, book := range ldb.Books {
-		if book.HasRetail() {
-			retail = append(retail, book)
-		}
-	}
-	return
+func (ldb *DB) ListRetail() (b.Books) {
+	return ldb.Books.FilterRetail()
 }
 
 // ListAuthors among known epubs.
@@ -265,31 +255,16 @@ func (ldb *DB) ListSeries() (series map[string]int) {
 }
 
 // ListUntagged among known epubs.
-func (ldb *DB) ListUntagged() (untagged []b.Book) {
-	for _, book := range ldb.Books {
-		if len(book.Metadata.Tags) == 0 {
-			untagged = append(untagged, book)
-		}
-	}
-	return
+func (ldb *DB) ListUntagged() (b.Books) {
+	return ldb.Books.FilterUntagged()
 }
 
 // ListByProgress returns a slice of Books with the given reading progress.
-func (ldb *DB) ListByProgress(progress string) (filteredList []b.Book) {
-	for _, book := range ldb.Books {
-		if book.Progress == progress {
-			filteredList = append(filteredList, book)
-		}
-	}
-	return
+func (ldb *DB) ListByProgress(progress string) (b.Books) {
+	return ldb.Books.FilterByProgress(progress)
 }
 
 // ListIncomplete among known epubs.
-func (ldb *DB) ListIncomplete() (incomplete []b.Book) {
-	for _, book := range ldb.Books {
-		if !book.Metadata.IsComplete() {
-			incomplete = append(incomplete, book)
-		}
-	}
-	return
+func (ldb *DB) ListIncomplete() (b.Books) {
+	return ldb.Books.FilterIncomplete()
 }
