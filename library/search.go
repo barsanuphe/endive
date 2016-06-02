@@ -139,6 +139,7 @@ func (ldb *DB) prepareQuery(queryString string) (newQuery string) {
 		"language:", "metadata.language:",
 		"series:", "metadata.series.seriesname:",
 		"tags:", "metadata.tags.name:",
+		"tag:", "metadata.tags.name:",
 		"publisher:", "metadata.publisher:",
 		"category:", "metadata.category:",
 		"genre:", "metadata.main_genre:",
