@@ -89,24 +89,15 @@ func (e *Book) ShowInfo() (desc string) {
 	rows = append(rows, []string{"Author", e.Metadata.Author()})
 	rows = append(rows, []string{"Title", e.Metadata.Title()})
 	rows = append(rows, []string{"Publication Year", e.Metadata.Year})
-	if e.Metadata.Publisher != "" {
-		rows = append(rows, []string{"Publisher", e.Metadata.Publisher})
-	}
-	if e.Metadata.ISBN != "" {
-		rows = append(rows, []string{"ISBN", e.Metadata.ISBN})
-	}
+	rows = append(rows, []string{"Publisher", e.Metadata.Publisher})
+	rows = append(rows, []string{"ISBN", e.Metadata.ISBN})
 	rows = append(rows, []string{"Description", e.Metadata.Description})
 	if e.Metadata.NumPages != "" {
 		rows = append(rows, []string{"Number of pages", e.Metadata.NumPages})
 	}
-
 	rows = append(rows, []string{"Language", e.Metadata.Language})
-	if e.Metadata.Category != "" {
-		rows = append(rows, []string{"Category", e.Metadata.Category})
-	}
-	if e.Metadata.MainGenre != "" {
-		rows = append(rows, []string{"Main Genre", e.Metadata.MainGenre})
-	}
+	rows = append(rows, []string{"Category", e.Metadata.Category})
+	rows = append(rows, []string{"Main Genre", e.Metadata.MainGenre})
 	if len(e.Metadata.Tags) != 0 {
 		rows = append(rows, []string{"Tags", e.Metadata.Tags.String()})
 	}
