@@ -23,7 +23,6 @@ import (
 	b "github.com/barsanuphe/endive/book"
 	cfg "github.com/barsanuphe/endive/config"
 	h "github.com/barsanuphe/endive/helpers"
-	"github.com/tj/go-spin"
 )
 
 // Library manages Epubs
@@ -373,45 +372,7 @@ func (l *Library) DuplicateRetailEpub(id int) (nonRetailEpub *b.Book, err error)
 
 // RebuildIndexBeforeSearch if index is dirty.
 func (l *Library) RebuildIndexBeforeSearch() (err error) {
-	c1 := make(chan bool)
-	c2 := make(chan error)
-
-	// first routine for the spinner
-	ticker := time.NewTicker(time.Millisecond * 100)
-	go func() {
-		for _ = range ticker.C {
-			c1 <- true
-		}
-	}()
-	// second routine deals with the index
-	go func() {
-		// rebuild
-		err := l.rebuildIndex()
-		if err != nil {
-			c2 <- err
-		}
-		// return nil
-		c2 <- nil
-	}()
-
-	// await both of these values simultaneously,
-	// dealing with each one as it arrives.
-	indexingDone := false
-	s := spin.New()
-	for !indexingDone {
-		select {
-		case <-c1:
-			fmt.Printf("\rIndexing... %s ", s.Next())
-		case err := <-c2:
-			if err != nil {
-				fmt.Printf("\rIndexing... KO.\n")
-				return err
-			}
-			fmt.Printf("\rIndexing... Done.\n")
-			indexingDone = true
-		}
-	}
-	return
+	return h.SpinWhileThingsHappen("Indexing", l.rebuildIndex)
 }
 
 // Search and print the results
