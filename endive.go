@@ -56,20 +56,6 @@ func generateCLI(lb *l.Library) (app *cli.App) {
 			},
 		},
 		{
-			Name:    "serve",
-			Aliases: []string{"s"},
-			Usage:   "serve over http",
-			Action: func(c *cli.Context) {
-				port, err := checkPort(c)
-				if err != nil {
-					fmt.Println(err.Error())
-					return
-				}
-				fmt.Printf("Serving on port %d...\n", port)
-				// TODO
-			},
-		},
-		{
 			Name:     "import",
 			Category: "importing",
 			Aliases:  []string{"i"},
