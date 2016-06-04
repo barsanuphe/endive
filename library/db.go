@@ -198,12 +198,12 @@ func (ldb *DB) RemoveByID(id int) (err error) {
 }
 
 // ListNonRetailOnly among known epubs.
-func (ldb *DB) ListNonRetailOnly() (b.Books) {
+func (ldb *DB) ListNonRetailOnly() b.Books {
 	return ldb.Books.FilterNonRetailOnly()
 }
 
 // ListRetail among known epubs.
-func (ldb *DB) ListRetail() (b.Books) {
+func (ldb *DB) ListRetail() b.Books {
 	return ldb.Books.FilterRetail()
 }
 
@@ -255,16 +255,16 @@ func (ldb *DB) ListSeries() (series map[string]int) {
 }
 
 // ListUntagged among known epubs.
-func (ldb *DB) ListUntagged() (b.Books) {
+func (ldb *DB) ListUntagged() b.Books {
 	return ldb.Books.FilterUntagged()
 }
 
 // ListByProgress returns a slice of Books with the given reading progress.
-func (ldb *DB) ListByProgress(progress string) (b.Books) {
+func (ldb *DB) ListByProgress(progress string) b.Books {
 	return ldb.Books.FilterByProgress(progress)
 }
 
 // ListIncomplete among known epubs.
-func (ldb *DB) ListIncomplete() (b.Books) {
+func (ldb *DB) ListIncomplete() b.Books {
 	return ldb.Books.FilterIncomplete()
 }

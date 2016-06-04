@@ -25,7 +25,7 @@ import (
 // TimeTrack helps track the time taken by a function.
 func TimeTrack(start time.Time, name string) {
 	elapsed := time.Since(start)
-	logger.Debugf("-- %s in %s\n", name, elapsed)
+	Debugf("-- %s in %s\n", name, elapsed)
 }
 
 // StringInSlice checks if a string is in a []string.
@@ -147,14 +147,41 @@ func YesOrNo(question string) (yes bool) {
 
 // AskForNewValue from user
 func AskForNewValue(field, oldValue string) (newValue string, err error) {
-	fmt.Printf(BlueBold("Modifying %s: previous value: %s\n"), field, oldValue)
-	fmt.Println(BlueBold("Enter new value: "))
-	scanner := bufio.NewReader(os.Stdin)
-	choice, err := scanner.ReadString('\n')
-	if err != nil {
-		return "", err
+	fmt.Printf(BlueBold("Modifying %s:\n"), field)
+	fmt.Printf("\t%s\n", oldValue)
+	fmt.Printf(GreenBold("Choose: (1) Keep Value (2) Edit "))
+	validChoice := false
+	errs := 0
+	for !validChoice {
+		scanner := bufio.NewReader(os.Stdin)
+		choice, _ := scanner.ReadString('\n')
+		choice = strings.TrimSpace(choice)
+		switch choice {
+		case "2":
+			fmt.Printf("Enter new value: ")
+			choice, _ = scanner.ReadString('\n')
+			choice = strings.TrimSpace(choice)
+			if choice == "" {
+				fmt.Println("Warning: Empty value detected.")
+			}
+			confirmed := YesOrNo("Confirm: " + choice)
+			if confirmed {
+				newValue = choice
+				validChoice = true
+			} else {
+				fmt.Println("Manual entry not confirmed, trying again.")
+			}
+		case "1":
+			newValue = oldValue
+			validChoice = true
+		default:
+			fmt.Println("Invalid choice.")
+			errs++
+			if errs > 10 {
+				return "", errors.New("Too many invalid choices.")
+			}
+		}
 	}
-	newValue = strings.TrimSpace(choice)
 	return
 }
 
@@ -165,11 +192,7 @@ func AssignNewValues(field, oldValue string, candidates []string) (newValues []s
 		if err != nil {
 			return []string{}, err
 		}
-		if YesOrNo("Confirm") {
-			candidates = append(candidates, values)
-		} else {
-			return []string{}, errors.New("No new value")
-		}
+		candidates = append(candidates, values)
 	}
 	// cleanup
 	for i := range candidates {

@@ -805,7 +805,7 @@ func (e *Book) EditField(args ...string) (err error) {
 		for _, field := range []string{"author", "title", "year", "tags", "series", "language", "isbn", "description", "progress", "readdate", "rating", "review"} {
 			err = e.editSpecificField(field, []string{})
 			if err != nil {
-				return
+				fmt.Println("Could not assign new value to field " + field + ", continuing.")
 			}
 		}
 	} else {

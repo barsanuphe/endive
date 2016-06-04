@@ -1,5 +1,6 @@
 package book
 
+// Books is a slice of Book.
 type Books []Book
 
 // filter Books with a given function
@@ -20,19 +21,20 @@ func (bks *Books) FilterIncomplete() Books {
 
 // FilterByProgress among Books.
 func (bks *Books) FilterByProgress(progress string) Books {
-	return bks.filter(func (b *Book) bool { return b.Progress == progress })
+	return bks.filter(func(b *Book) bool { return b.Progress == progress })
 }
 
 // FilterUntagged among Books.
 func (bks *Books) FilterUntagged() Books {
-	return bks.filter(func (b *Book) bool { return len(b.Metadata.Tags) == 0 })
+	return bks.filter(func(b *Book) bool { return len(b.Metadata.Tags) == 0 })
 }
 
 // FilterRetail among Books.
 func (bks *Books) FilterRetail() Books {
-	return bks.filter(func (b *Book) bool { return b.HasRetail() })
+	return bks.filter(func(b *Book) bool { return b.HasRetail() })
 }
 
+// FilterNonRetailOnly among Books.
 func (bks *Books) FilterNonRetailOnly() Books {
-	return bks.filter(func (b *Book) bool { return !b.HasRetail() })
+	return bks.filter(func(b *Book) bool { return !b.HasRetail() })
 }
