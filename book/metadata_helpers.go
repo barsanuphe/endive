@@ -120,5 +120,5 @@ func cleanCategory(category string, cfg c.Config) (clean string, err error) {
 }
 
 func cleanHTML(desc string) (clean string) {
-	return strings.Replace(sanitize.HTML(desc), "\n", "", -1)
+	return sanitize.HTML(desc)
 }
