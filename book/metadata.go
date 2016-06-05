@@ -240,56 +240,50 @@ func (i *Metadata) Merge(o Metadata, cfg c.Config) (err error) {
 func (i *Metadata) MergeField(o Metadata, field string, cfg c.Config) (err error) {
 	switch field {
 	case "tags", "tag":
-		if i.Tags.String() != o.Tags.String() {
-			h.Subpart("Tags: ")
-			fmt.Println("NOTE: tags can be edited as a comma-separated list of strings.")
-			tagString, err := h.Choose(i.Tags.String(), o.Tags.String())
-			if err != nil {
-				return err
-			}
-			i.Tags = Tags{}
-			i.Tags.AddFromNames(strings.Split(tagString, ",")...)
+		h.Subpart("Tags: ")
+		fmt.Println("NOTE: tags can be edited as a comma-separated list of strings.")
+		tagString, err := h.Choose(i.Tags.String(), o.Tags.String())
+		if err != nil {
+			return err
 		}
+		i.Tags = Tags{}
+		i.Tags.AddFromNames(strings.Split(tagString, ",")...)
 	case "series":
-		if i.Series.rawString() != o.Series.rawString() {
-			h.Subpart("Series: ")
-			fmt.Println("NOTE: series can be edited as a comma-separated list of 'series name:index' strings. Index can be empty.")
-			userInput, err := h.Choose(i.Series.rawString(), o.Series.rawString())
-			if err != nil {
-				return err
-			}
-			i.Series = Series{}
-			for _, s := range strings.Split(userInput, ",") {
-				// split again name:index
-				parts := strings.Split(s, ":")
-				switch len(parts) {
-				case 1:
-					i.Series.Add(strings.TrimSpace(s), 0)
-				case 2:
-					index, err := strconv.ParseFloat(parts[1], 32)
-					if err != nil {
-						h.Warning("Index must be a float, or empty.")
-					} else {
-						i.Series.Add(strings.TrimSpace(parts[0]), float32(index))
-					}
-				default:
-					h.Warning("Could not parse series " + s)
+		h.Subpart("Series: ")
+		fmt.Println("NOTE: series can be edited as a comma-separated list of 'series name:index' strings. Index can be empty.")
+		userInput, err := h.Choose(i.Series.rawString(), o.Series.rawString())
+		if err != nil {
+			return err
+		}
+		i.Series = Series{}
+		for _, s := range strings.Split(userInput, ",") {
+			// split again name:index
+			parts := strings.Split(s, ":")
+			switch len(parts) {
+			case 1:
+				i.Series.Add(strings.TrimSpace(s), 0)
+			case 2:
+				index, err := strconv.ParseFloat(parts[1], 32)
+				if err != nil {
+					h.Warning("Index must be a float, or empty.")
+				} else {
+					i.Series.Add(strings.TrimSpace(parts[0]), float32(index))
 				}
+			default:
+				h.Warning("Could not parse series " + s)
 			}
 		}
 	case "author", "authors":
-		if i.Author() != o.Author() {
-			h.Subpart("Authors: ")
-			fmt.Println("NOTE: authors can be edited as a comma-separated list of strings.")
-			userInput, err := h.Choose(i.Author(), o.Author())
-			if err != nil {
-				return err
-			}
-			i.Authors = strings.Split(userInput, ",")
-			// trim spaces
-			for j := range i.Authors {
-				i.Authors[j] = strings.TrimSpace(i.Authors[j])
-			}
+		h.Subpart("Authors: ")
+		fmt.Println("NOTE: authors can be edited as a comma-separated list of strings.")
+		userInput, err := h.Choose(i.Author(), o.Author())
+		if err != nil {
+			return err
+		}
+		i.Authors = strings.Split(userInput, ",")
+		// trim spaces
+		for j := range i.Authors {
+			i.Authors[j] = strings.TrimSpace(i.Authors[j])
 		}
 	case "year":
 		i.Year, err = h.ChooseVersion("Publication year", i.Year, o.Year)
@@ -322,15 +316,13 @@ func (i *Metadata) MergeField(o Metadata, field string, cfg c.Config) (err error
 			return
 		}
 	case "title":
-		if i.Title() != o.Title() {
-			h.Subpart("Title:")
-			chosenTitle, err := h.Choose(i.Title(), o.Title())
-			if err != nil {
-				return err
-			}
-			i.MainTitle = chosenTitle
-			i.OriginalTitle = chosenTitle
+		h.Subpart("Title:")
+		chosenTitle, err := h.Choose(i.Title(), o.Title())
+		if err != nil {
+			return err
 		}
+		i.MainTitle = chosenTitle
+		i.OriginalTitle = chosenTitle
 	case "description":
 		i.Description, err = h.ChooseVersion("Description", cleanHTML(i.Description), cleanHTML(o.Description))
 		if err != nil {
