@@ -70,7 +70,8 @@ var forbiddenTags = []string{
 	"general", "have", "bundle", "maybe", "audio", "podcast", "calibre", "bks",
 	"moved-on", "record", "arc", "z-", "livre", "unsorted", "gave-up", "abandoned",
 	"retelling", "middle-grade", "collection", "english", "netgalley", "available",
-	"list", "stand-alone", "meh", "amazon", "paperback",
+	"list", "stand-alone", "meh", "amazon", "paperback", "giveaways", "review-copy",
+	"check", "queue", "dnf",
 }
 
 func cleanTags(tags Tags, cfg c.Config) (cleanTags Tags) {

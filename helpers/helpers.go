@@ -135,7 +135,7 @@ func Choose(localCandidate, remoteCandidate string) (chosenOne string, err error
 
 // YesOrNo asks a question and returns the answer
 func YesOrNo(question string) (yes bool) {
-	fmt.Printf(BlueBold("%s (y)/(n)? "), question)
+	fmt.Printf(BlueBold("%s y/n? "), question)
 	scanner := bufio.NewReader(os.Stdin)
 	choice, _ := scanner.ReadString('\n')
 	switch strings.TrimSpace(choice) {
