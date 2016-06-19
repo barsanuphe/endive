@@ -270,22 +270,24 @@ func (i *Metadata) MergeField(o Metadata, field string, cfg c.Config) (err error
 		if err != nil {
 			return err
 		}
-		i.Series = Series{}
-		for _, s := range strings.Split(userInput, ",") {
-			// split again name:index
-			parts := strings.Split(s, ":")
-			switch len(parts) {
-			case 1:
-				i.Series.Add(strings.TrimSpace(s), 0)
-			case 2:
-				index, err := strconv.ParseFloat(parts[1], 32)
-				if err != nil {
-					h.Warning("Index must be a float, or empty.")
-				} else {
-					i.Series.Add(strings.TrimSpace(parts[0]), float32(index))
+		if strings.TrimSpace(userInput) != "" {
+			i.Series = Series{}
+			for _, s := range strings.Split(userInput, ",") {
+				// split again name:index
+				parts := strings.Split(s, ":")
+				switch len(parts) {
+				case 1:
+					i.Series.Add(strings.TrimSpace(s), 0)
+				case 2:
+					index, err := strconv.ParseFloat(parts[1], 32)
+					if err != nil {
+						h.Warning("Index must be a float, or empty.")
+					} else {
+						i.Series.Add(strings.TrimSpace(parts[0]), float32(index))
+					}
+				default:
+					h.Warning("Could not parse series " + s)
 				}
-			default:
-				h.Warning("Could not parse series " + s)
 			}
 		}
 	case "author", "authors":
@@ -300,7 +302,7 @@ func (i *Metadata) MergeField(o Metadata, field string, cfg c.Config) (err error
 		for j := range i.Authors {
 			i.Authors[j] = strings.TrimSpace(i.Authors[j])
 		}
-	case "ear":
+	case "year":
 		i.OriginalYear, err = h.ChooseVersion("Original Publication year", i.OriginalYear, o.OriginalYear)
 		if err != nil {
 			return

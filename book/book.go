@@ -692,7 +692,7 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 			return err
 		}
 		// if user input was entered, we have to split the line
-		if len(newValues) == 1 {
+		if len(newValues) == 1 && strings.TrimSpace(newValues[0]) != "" {
 			// remove all Series
 			e.Metadata.Series = Series{}
 			for _, s := range strings.Split(newValues[0], ",") {
