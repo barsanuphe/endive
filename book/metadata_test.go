@@ -26,7 +26,7 @@ func TestInfo(t *testing.T) {
 		// testing Get, GetFirstValue
 		assert.Equal(e.Metadata.Title(), testEpub.expectedTitle, "Error getting title")
 		assert.Equal(e.Metadata.Author(), testEpub.expectedAuthor, "Error getting author")
-		assert.Equal(e.Metadata.Year, testEpub.expectedPublicationYear, "Error getting year")
+		assert.Equal(e.Metadata.OriginalYear, testEpub.expectedPublicationYear, "Error getting year")
 		assert.Equal(e.Metadata.Language, testEpub.expectedLanguage, "Error getting language")
 
 		// testing HasAny

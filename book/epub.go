@@ -78,7 +78,7 @@ func (e *Epub) ReadMetadata() (info Metadata, err error) {
 		for _, el := range dateEvents {
 			for _, evt := range el.Attr {
 				if evt == "publication" {
-					info.Year = el.Content[0:4]
+					info.EditionYear = el.Content[0:4]
 					found = true
 					break
 				}
@@ -90,9 +90,11 @@ func (e *Epub) ReadMetadata() (info Metadata, err error) {
 		// else reverting to first date found
 		if !found {
 			// using first date found
-			info.Year = dateEvents[0].Content[0:4]
+			info.EditionYear = dateEvents[0].Content[0:4]
 		}
 	}
+	// by default, assuming it's a first edition
+	info.OriginalYear = info.EditionYear
 	// title
 	results, nonFatalErr := book.MetadataElement("title")
 	if nonFatalErr == nil && len(results) != 0 {

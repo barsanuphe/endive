@@ -52,7 +52,7 @@ func TestGoodReads(t *testing.T) {
 		if b.MainTitle != book.title && b.OriginalTitle != book.title {
 			t.Errorf("Bad title, got %s / %s, expected %s.", b.MainTitle, b.OriginalTitle, book.title)
 		}
-		assert.Equal(book.expectedYear, b.Year, "Bad year")
+		assert.Equal(book.expectedYear, b.OriginalYear, "Bad year")
 		assert.Equal(book.expectedFullTitle, b.String(), "Bad title")
 
 		// getting book_id by isbn

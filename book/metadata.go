@@ -12,7 +12,7 @@ import (
 )
 
 // MetadataFieldNames is a list of valid field names
-var MetadataFieldNames = []string{"author", "title", "year", "publisher", "description", "language", "category", "genre", "tags", "series", "isbn"}
+var MetadataFieldNames = []string{"author", "title", "year", "edition_year", "publisher", "description", "language", "category", "genre", "tags", "series", "isbn"}
 
 // Metadata contains all of the known book metadata.
 type Metadata struct {
@@ -23,7 +23,8 @@ type Metadata struct {
 	NumPages      string   `json:"num_pages" xml:"num_pages"`
 	Authors       []string `json:"authors" xml:"authors>author>name"`
 	ISBN          string   `json:"isbn" xml:"isbn13"`
-	Year          string   `json:"year" xml:"work>original_publication_year"`
+	OriginalYear  string   `json:"year" xml:"work>original_publication_year"`
+	EditionYear   string   `json:"edition_year" xml:"publication_year"`
 	Description   string   `json:"description" xml:"description"`
 	Series        Series   `json:"series" xml:"series_works>series_work"`
 	AverageRating string   `json:"average_rating" xml:"average_rating"`
@@ -37,9 +38,9 @@ type Metadata struct {
 // String returns a representation of Metadata
 func (i *Metadata) String() string {
 	if len(i.Series) != 0 {
-		return fmt.Sprintf("%s (%s) %s [%s]", i.Author(), i.Year, i.Title(), i.MainSeries().String())
+		return fmt.Sprintf("%s (%s) %s [%s]", i.Author(), i.OriginalYear, i.Title(), i.MainSeries().String())
 	}
-	return fmt.Sprintf("%s (%s) %s", i.Author(), i.Year, i.Title())
+	return fmt.Sprintf("%s (%s) %s", i.Author(), i.OriginalYear, i.Title())
 }
 
 // HasAny checks if metadata was parsed.
@@ -55,7 +56,7 @@ func (i *Metadata) HasAny() (hasMetadata bool) {
 func (i *Metadata) IsComplete() (hasCompleteMetadata bool) {
 	hasAuthor := i.Author() != ""
 	hasTitle := i.Title() != ""
-	hasYear := i.Year != "" && i.Year != "XXXX"
+	hasYear := i.OriginalYear != "" && i.OriginalYear != "XXXX"
 	hasLanguage := i.Language != ""
 	hasDescription := i.Description != ""
 	hasCategory := i.Category != "" && i.Category != "Unknown"
@@ -77,8 +78,19 @@ func (i *Metadata) Title() string {
 // Clean cleans up the Metadata
 func (i *Metadata) Clean(cfg c.Config) {
 	// default year
-	if i.Year == "" {
-		i.Year = "XXXX"
+	if i.OriginalYear == "" {
+		if i.EditionYear != "" {
+			i.OriginalYear = i.EditionYear
+		} else {
+			i.OriginalYear = "XXXX"
+		}
+	}
+	if i.EditionYear == "" {
+		if i.OriginalYear != "" {
+			i.EditionYear = i.OriginalYear
+		} else {
+			i.EditionYear = "XXXX"
+		}
 	}
 	// clean description
 	i.Description = cleanHTML(i.Description)
@@ -125,6 +137,8 @@ func (i *Metadata) Clean(cfg c.Config) {
 	for j := range i.Series {
 		i.Series[j].Name = strings.TrimSpace(i.Series[j].Name)
 	}
+	// clean publisher
+	i.Publisher = strings.TrimSpace(i.Publisher)
 	// use config aliases
 	i.useAliases(cfg)
 }
@@ -175,7 +189,7 @@ func (i *Metadata) useAliases(cfg c.Config) (hasChanged bool) {
 func (i *Metadata) Author() (author string) {
 	author = "Unknown"
 	if len(i.Authors) != 0 {
-		author = i.Authors[0]
+		author = strings.Join(i.Authors, ", ")
 	}
 	return
 }
@@ -208,7 +222,8 @@ func (i *Metadata) Diff(o Metadata, firstHeader, secondHeader string) (diff stri
 	rows = append(rows, []string{i.String(), o.String()})
 	rows = append(rows, []string{i.Author(), o.Author()})
 	rows = append(rows, []string{i.Title(), o.Title()})
-	rows = append(rows, []string{i.Year, o.Year})
+	rows = append(rows, []string{i.OriginalYear, o.OriginalYear})
+	rows = append(rows, []string{i.EditionYear, o.EditionYear})
 	rows = append(rows, []string{i.Publisher, o.Publisher})
 	rows = append(rows, []string{i.Description, o.Description})
 	rows = append(rows, []string{i.Category, o.Category})
@@ -285,8 +300,13 @@ func (i *Metadata) MergeField(o Metadata, field string, cfg c.Config) (err error
 		for j := range i.Authors {
 			i.Authors[j] = strings.TrimSpace(i.Authors[j])
 		}
-	case "year":
-		i.Year, err = h.ChooseVersion("Publication year", i.Year, o.Year)
+	case "ear":
+		i.OriginalYear, err = h.ChooseVersion("Original Publication year", i.OriginalYear, o.OriginalYear)
+		if err != nil {
+			return
+		}
+	case "edition_year":
+		i.EditionYear, err = h.ChooseVersion("Publication year", i.EditionYear, o.EditionYear)
 		if err != nil {
 			return
 		}

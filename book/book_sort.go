@@ -60,8 +60,11 @@ func SortBooks(books []Book, orderBy string) {
 	id := func(p1, p2 *Book) bool {
 		return p1.ID < p2.ID
 	}
+	originalYear := func(p1, p2 *Book) bool {
+		return p1.Metadata.OriginalYear < p2.Metadata.OriginalYear
+	}
 	year := func(p1, p2 *Book) bool {
-		return p1.Metadata.Year < p2.Metadata.Year
+		return p1.Metadata.EditionYear < p2.Metadata.EditionYear
 	}
 	author := func(p1, p2 *Book) bool {
 		return p1.Metadata.Author() < p2.Metadata.Author()
@@ -77,6 +80,8 @@ func SortBooks(books []Book, orderBy string) {
 		By(author).Sort(books)
 	case "title":
 		By(title).Sort(books)
+	case "original_year":
+		By(originalYear).Sort(books)
 	case "year":
 		By(year).Sort(books)
 		// TODO all cases

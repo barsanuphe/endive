@@ -65,7 +65,7 @@ func NewBookWithMetadata(id int, filename string, c cfg.Config, isRetail bool, i
 
 // ShortString returns a short string representation of Epub
 func (e *Book) ShortString() (desc string) {
-	return e.Metadata.Author() + " (" + e.Metadata.Year + ") " + e.Metadata.Title()
+	return e.Metadata.Author() + " (" + e.Metadata.OriginalYear + ") " + e.Metadata.Title()
 }
 
 // String returns a string representation of Epub
@@ -78,60 +78,90 @@ func (e *Book) String() (desc string) {
 		}
 		tags += " ]"
 	}
-	return e.FullPath() + ":\t" + e.Metadata.Author() + " (" + e.Metadata.Year + ") " + e.Metadata.Title() + " [" + e.Metadata.Language + "] " + tags
+	return e.FullPath() + ":\t" + e.Metadata.Author() + " (" + e.Metadata.OriginalYear + ") " + e.Metadata.Title() + " [" + e.Metadata.Language + "] " + tags
 }
 
 // ShowInfo returns a table with relevant information about a book.
-func (e *Book) ShowInfo() (desc string) {
+func (e *Book) ShowInfo(fields ...string) (desc string) {
+	if len(fields) == 0 {
+		// select all fields
+		fields = []string{"id", "filename", "author", "title", "year", "edition_year", "publisher", "isbn", "description", "numpages", "language", "category", "genre", "tag", "series", "versions", "progress", "readdate", "averagerating", "rating", "review"}
+	}
 	var rows [][]string
-	rows = append(rows, []string{"ID", strconv.Itoa(e.ID)})
-	rows = append(rows, []string{"Filename", e.MainEpub().Filename})
-	rows = append(rows, []string{"Author", e.Metadata.Author()})
-	rows = append(rows, []string{"Title", e.Metadata.Title()})
-	rows = append(rows, []string{"Publication Year", e.Metadata.Year})
-	rows = append(rows, []string{"Publisher", e.Metadata.Publisher})
-	rows = append(rows, []string{"ISBN", e.Metadata.ISBN})
-	rows = append(rows, []string{"Description", e.Metadata.Description})
-	if e.Metadata.NumPages != "" {
-		rows = append(rows, []string{"Number of pages", e.Metadata.NumPages})
-	}
-	rows = append(rows, []string{"Language", e.Metadata.Language})
-	rows = append(rows, []string{"Category", e.Metadata.Category})
-	rows = append(rows, []string{"Main Genre", e.Metadata.MainGenre})
-	if len(e.Metadata.Tags) != 0 {
-		rows = append(rows, []string{"Tags", e.Metadata.Tags.String()})
-	}
-	if len(e.Metadata.Series) != 0 {
-		rows = append(rows, []string{"Series", e.Metadata.Series.String()})
-	}
-	available := ""
-	if e.HasRetail() {
-		available += "retail "
-		rows = append(rows, []string{"Retail hash", e.RetailEpub.Hash})
-		if e.RetailEpub.NeedsReplacement == "true" {
-			rows = append(rows, []string{"Retail needs replacement", "TRUE"})
+	for _, field := range fields {
+		switch field {
+		case "id":
+			rows = append(rows, []string{"ID", strconv.Itoa(e.ID)})
+		case "filename":
+			rows = append(rows, []string{"Filename", e.MainEpub().Filename})
+		case "author", "authors":
+			rows = append(rows, []string{"Author", e.Metadata.Author()})
+		case "title":
+			rows = append(rows, []string{"Title", e.Metadata.Title()})
+		case "year":
+			rows = append(rows, []string{"Original Publication Year", e.Metadata.OriginalYear})
+		case "edition_year":
+			rows = append(rows, []string{"Publication Year", e.Metadata.EditionYear})
+		case "publisher":
+			rows = append(rows, []string{"Publisher", e.Metadata.Publisher})
+		case "isbn":
+			rows = append(rows, []string{"ISBN", e.Metadata.ISBN})
+		case "description":
+			rows = append(rows, []string{"Description", e.Metadata.Description})
+		case "numpages":
+			if e.Metadata.NumPages != "" {
+				rows = append(rows, []string{"Number of pages", e.Metadata.NumPages})
+			}
+		case "language":
+			rows = append(rows, []string{"Language", e.Metadata.Language})
+		case "category":
+			rows = append(rows, []string{"Category", e.Metadata.Category})
+		case "genre", "maingenre":
+			rows = append(rows, []string{"Main Genre", e.Metadata.MainGenre})
+		case "tag", "tags":
+			if len(e.Metadata.Tags) != 0 {
+				rows = append(rows, []string{"Tags", e.Metadata.Tags.String()})
+			}
+		case "series":
+			if len(e.Metadata.Series) != 0 {
+				rows = append(rows, []string{"Series", e.Metadata.Series.String()})
+			}
+		case "versions":
+			available := ""
+			if e.HasRetail() {
+				available += "retail "
+				rows = append(rows, []string{"Retail hash", e.RetailEpub.Hash})
+				if e.RetailEpub.NeedsReplacement == "true" {
+					rows = append(rows, []string{"Retail needs replacement", "TRUE"})
+				}
+			}
+			if e.HasNonRetail() {
+				available += "non-retail"
+				rows = append(rows, []string{"Non-Retail hash", e.NonRetailEpub.Hash})
+				if e.NonRetailEpub.NeedsReplacement == "true" {
+					rows = append(rows, []string{"Non-Retail needs replacement", "TRUE"})
+				}
+			}
+			rows = append(rows, []string{"Available versions", available})
+		case "progress":
+			rows = append(rows, []string{"Progress", e.Progress})
+		case "readdate", "read_date":
+			if e.ReadDate != "" {
+				rows = append(rows, []string{"Read Date", e.ReadDate})
+			}
+		case "averagerating":
+			if e.Metadata.AverageRating != "" {
+				rows = append(rows, []string{"Average Rating", e.Metadata.AverageRating})
+			}
+		case "rating":
+			if e.Rating != "" {
+				rows = append(rows, []string{"Rating", e.Rating})
+			}
+		case "review":
+			if e.Review != "" {
+				rows = append(rows, []string{"Review", e.Review})
+			}
 		}
-	}
-	if e.HasNonRetail() {
-		available += "non-retail"
-		rows = append(rows, []string{"Non-Retail hash", e.NonRetailEpub.Hash})
-		if e.NonRetailEpub.NeedsReplacement == "true" {
-			rows = append(rows, []string{"Non-Retail needs replacement", "TRUE"})
-		}
-	}
-	rows = append(rows, []string{"Available versions", available})
-	rows = append(rows, []string{"Progress", e.Progress})
-	if e.ReadDate != "" {
-		rows = append(rows, []string{"Read Date", e.ReadDate})
-	}
-	if e.Metadata.AverageRating != "" {
-		rows = append(rows, []string{"Average Rating", e.Metadata.AverageRating})
-	}
-	if e.Rating != "" {
-		rows = append(rows, []string{"Rating", e.Rating})
-	}
-	if e.Review != "" {
-		rows = append(rows, []string{"Review", e.Review})
 	}
 	return h.TabulateRows(rows, "Info", "Book")
 }
@@ -210,7 +240,7 @@ func (e *Book) generateNewName(fileTemplate string, isRetail bool) (newName stri
 	}
 	// replace with all valid epub parameters
 	tmpl := fmt.Sprintf(`{{$a := "%s"}}{{$y := "%s"}}{{$t := "%s"}}{{$l := "%s"}}{{$i := "%s"}}{{$s := "%s"}}{{$p := "%s"}}{{$c := "%s"}}{{$g := "%s"}}{{$r := "%s"}}%s`,
-		h.CleanForPath(e.Metadata.Author()), e.Metadata.Year,
+		h.CleanForPath(e.Metadata.Author()), e.Metadata.OriginalYear,
 		h.CleanForPath(e.Metadata.Title()), e.Metadata.Language,
 		e.Metadata.ISBN, seriesString, e.Progress, e.Metadata.Category,
 		e.Metadata.MainGenre, retail, r.Replace(fileTemplate))
@@ -328,7 +358,9 @@ func (e *Book) ForceMetadataFieldRefresh(field string) (err error) {
 	case "author", "authors":
 		e.Metadata.Authors = info.Authors
 	case "year":
-		e.Metadata.Year = info.Year
+		e.Metadata.OriginalYear = info.OriginalYear
+	case "edition_year":
+		e.Metadata.EditionYear = info.EditionYear
 	case "publisher":
 		e.Metadata.Publisher = info.Publisher
 	case "language":
@@ -682,7 +714,7 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 			}
 		}
 	case "author", "authors":
-		newValues, err := h.AssignNewValues(field, strings.Join(e.Metadata.Authors, ", "), values)
+		newValues, err := h.AssignNewValues(field, e.Metadata.Author(), values)
 		if err != nil {
 			return err
 		}
@@ -692,7 +724,7 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 			e.Metadata.Authors[j] = strings.TrimSpace(e.Metadata.Authors[j])
 		}
 	case "year":
-		newValues, err := h.AssignNewValues(field, e.Metadata.Year, values)
+		newValues, err := h.AssignNewValues(field, e.Metadata.OriginalYear, values)
 		if err != nil {
 			return err
 		}
@@ -701,7 +733,18 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 		if err != nil {
 			return err
 		}
-		e.Metadata.Year = newValues[0]
+		e.Metadata.OriginalYear = newValues[0]
+	case "edition_year":
+		newValues, err := h.AssignNewValues(field, e.Metadata.EditionYear, values)
+		if err != nil {
+			return err
+		}
+		// check it's a valid date!
+		_, err = strconv.Atoi(newValues[0])
+		if err != nil {
+			return err
+		}
+		e.Metadata.EditionYear = newValues[0]
 	case "language":
 		newValues, err := h.AssignNewValues(field, e.Metadata.Language, values)
 		if err != nil {
@@ -802,7 +845,7 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 func (e *Book) EditField(args ...string) (err error) {
 	if len(args) == 0 {
 		// completely interactive edit
-		for _, field := range []string{"author", "title", "year", "tags", "series", "language", "isbn", "description", "progress", "readdate", "rating", "review"} {
+		for _, field := range []string{"author", "title", "year", "edition_year", "tags", "series", "language", "isbn", "description", "progress", "readdate", "rating", "review"} {
 			err = e.editSpecificField(field, []string{})
 			if err != nil {
 				fmt.Println("Could not assign new value to field " + field + ", continuing.")
