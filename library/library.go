@@ -94,7 +94,12 @@ func (l *Library) Close() (err error) {
 	if l.indexNeedsRebuilding {
 		err = cfg.SetDirtyIndexMarker()
 		if err != nil {
-			return
+			h.Error(err.Error())
+		}
+		// db has been modified at some point, backup.
+		err = l.Backup()
+		if err != nil {
+			h.Error(err.Error())
 		}
 	}
 	// remove lock
@@ -316,6 +321,10 @@ func (l *Library) Refresh() (renamed int, err error) {
 
 // ExportToEReader selected epubs.
 func (l *Library) ExportToEReader(books []b.Book) (err error) {
+	err = l.RebuildIndexBeforeSearchIfNecessary()
+	if err != nil {
+		return
+	}
 	if !h.DirectoryExists(l.Config.EReaderMountPoint) {
 		return errors.New("E-Reader mount point does not exist: " + l.Config.EReaderMountPoint)
 	}
@@ -370,28 +379,30 @@ func (l *Library) DuplicateRetailEpub(id int) (nonRetailEpub *b.Book, err error)
 	return
 }
 
-// RebuildIndexBeforeSearch if index is dirty.
-func (l *Library) RebuildIndexBeforeSearch() (err error) {
-	return h.SpinWhileThingsHappen("Indexing", l.rebuildIndex)
+// RebuildIndexBeforeSearchIfNecessary if index is dirty.
+func (l *Library) RebuildIndexBeforeSearchIfNecessary() (err error) {
+	if cfg.IsIndexDirty() {
+		if err := h.SpinWhileThingsHappen("Indexing", l.rebuildIndex); err != nil {
+			return err
+		}
+		// remove marker after successful re-indexing
+		if err := cfg.RemoveDirtyIndexMarker(); err != nil {
+			return err
+		}
+	}
+	return
 }
 
 // Search and print the results
 func (l *Library) Search(query, sortBy string, limitFirst, limitLast bool, limitNumber int) (results string, err error) {
-	if cfg.IsIndexDirty() {
-		if err := l.RebuildIndexBeforeSearch(); err != nil {
-			return "", err
-		}
-		// remove marker after successful re-indexing
-		if err := cfg.RemoveDirtyIndexMarker(); err != nil {
-			return "", err
-		}
+	err = l.RebuildIndexBeforeSearchIfNecessary()
+	if err != nil {
+		return
 	}
-
 	books, err := l.RunQuery(query)
 	if err != nil {
 		return
 	}
-
 	if len(books) != 0 {
 		b.SortBooks(books, sortBy)
 		if limitFirst && len(books) > limitNumber {
@@ -416,7 +427,7 @@ func (l *Library) TabulateList(books []b.Book) (table string) {
 		if err != nil {
 			panic(errors.New("File " + res.FullPath() + " not in library?"))
 		}
-		rows = append(rows, []string{strconv.Itoa(res.ID), res.Metadata.Author(), res.Metadata.Title(), res.Metadata.Year, relativePath})
+		rows = append(rows, []string{strconv.Itoa(res.ID), res.Metadata.Author(), res.Metadata.Title(), res.Metadata.OriginalYear, relativePath})
 	}
 	return h.TabulateRows(rows, "ID", "Author", "Title", "Year", "Filename")
 }
