@@ -249,3 +249,37 @@ func CalculateSHA256(filename string) (hash string, err error) {
 	hash = hex.EncodeToString(hashBytes.Sum(result))
 	return
 }
+
+// GetUniqueTimestampedFilename for a given filename.
+func GetUniqueTimestampedFilename(dir, filename string) (uniqueFilename string, err error) {
+	// create dir if necessary
+	if !DirectoryExists(dir) {
+		err = os.MkdirAll(dir, 0700)
+		if err != nil {
+			return
+		}
+	}
+	// Mon Jan 2 15:04:05 -0700 MST 2006
+	currentTime := time.Now().Local()
+	uniqueNameFound := false
+	ext := filepath.Ext(filename)
+	filenameBase := strings.TrimSuffix(filepath.Base(filename), ext)
+	attempts := 0
+	for !uniqueNameFound || attempts > 50 {
+		suffix := ""
+		if attempts > 0 {
+			suffix = fmt.Sprintf("_%d", attempts)
+		}
+		candidate := fmt.Sprintf("%s - %s%s.tar.gz", currentTime.Format("2006-01-02 15:04:05"), filenameBase, suffix)
+		// While candidate already exists, change suffix.
+		_, err := FileExists(filepath.Join(dir, candidate))
+		if err != nil {
+			// file not found
+			uniqueFilename = filepath.Join(dir, candidate)
+			uniqueNameFound = true
+		} else {
+			attempts++
+		}
+	}
+	return
+}

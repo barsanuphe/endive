@@ -30,6 +30,8 @@ const (
 	XdgLockPath = Endive + "/" + Endive + ".lock"
 	// XdgDirtyIndexPath is the path for dirty index marker
 	XdgDirtyIndexPath = Endive + "/" + Endive + ".dirty.index"
+	// XdgArchiveDir is the path where database archives are kept
+	XdgArchiveDir = Endive + "/archives/"
 )
 
 // Config holds all relevant information
@@ -45,6 +47,11 @@ type Config struct {
 	PublisherAliases   map[string][]string
 	EReaderMountPoint  string
 	GoodReadsAPIKey    string
+}
+
+// GetArchiveUniqueName in the endive archive directory.
+func GetArchiveUniqueName(filename string) (archive string, err error) {
+	return h.GetUniqueTimestampedFilename(filepath.Join(xdg.Data.Dirs()[0], XdgArchiveDir), filename)
 }
 
 // GetConfigPath gets the default path for configuration.

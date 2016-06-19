@@ -14,6 +14,7 @@ import (
 	cfg "github.com/barsanuphe/endive/config"
 	h "github.com/barsanuphe/endive/helpers"
 
+	"github.com/jhoonb/archivex"
 	"launchpad.net/go-xdg"
 )
 
@@ -83,6 +84,28 @@ func (ldb *DB) Save() (hasSaved bool, err error) {
 		hasSaved = true
 		ldb.indexNeedsRebuilding = true
 	}
+	return
+}
+
+// Backup current database.
+func (ldb *DB) Backup() (err error) {
+	h.Debug("Backup up database...")
+	// generate archive filename with date.
+	archiveName, err := cfg.GetArchiveUniqueName(ldb.DatabaseFile)
+	if err != nil {
+		return
+	}
+	// creating tarball
+	tar := new(archivex.TarFile)
+	err = tar.Create(archiveName)
+	if err != nil {
+		return
+	}
+	err = tar.AddFile(ldb.DatabaseFile)
+	if err != nil {
+		return
+	}
+	tar.Close()
 	return
 }
 
