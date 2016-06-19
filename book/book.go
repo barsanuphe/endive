@@ -573,7 +573,7 @@ func (e *Book) removeEpub(isRetail bool) (err error) {
 // Check epubs integrity.
 func (e *Book) Check() (retailHasChanged bool, nonRetailHasChanged bool, err error) {
 	if e.HasNonRetail() {
-		nonRetailHasChanged, err = e.RetailEpub.Check()
+		nonRetailHasChanged, err = e.NonRetailEpub.Check()
 		if err != nil {
 			return
 		}

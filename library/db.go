@@ -143,6 +143,7 @@ func (ldb *DB) generateID() (id int) {
 // Check all Books
 func (ldb *DB) Check() (err error) {
 	for i := range ldb.Books {
+		h.Debug("Checking " + ldb.Books[i].ShortString())
 		retailChanged, nonRetailChanged, err := ldb.Books[i].Check()
 		if err != nil {
 			return err
