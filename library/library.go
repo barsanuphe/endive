@@ -321,10 +321,6 @@ func (l *Library) Refresh() (renamed int, err error) {
 
 // ExportToEReader selected epubs.
 func (l *Library) ExportToEReader(books []b.Book) (err error) {
-	err = l.RebuildIndexBeforeSearchIfNecessary()
-	if err != nil {
-		return
-	}
 	if !h.DirectoryExists(l.Config.EReaderMountPoint) {
 		return errors.New("E-Reader mount point does not exist: " + l.Config.EReaderMountPoint)
 	}

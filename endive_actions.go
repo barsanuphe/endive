@@ -282,6 +282,11 @@ func importEpubs(lb *l.Library, c *cli.Context, isRetail bool) {
 
 func exportFilter(lb *l.Library, c *cli.Context) {
 	fmt.Println("Exporting selection to E-Reader...")
+	err := lb.RebuildIndexBeforeSearchIfNecessary()
+	if err != nil {
+		h.Error("Error indexing books before export to e-reader")
+		return
+	}
 	query := strings.Join(c.Args(), " ")
 	books, err := lb.RunQuery(query)
 	if err != nil {
