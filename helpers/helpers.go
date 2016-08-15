@@ -124,6 +124,7 @@ func Choose(localCandidate, remoteCandidate string) (chosenOne string, err error
 			validChoice = true
 		default:
 			fmt.Println("Invalid choice.")
+			fmt.Printf(GreenBold("Choose: (1) Local version (2) Remote version (3) Edit (4) Abort "))
 			errs++
 			if errs > 10 {
 				return "", errors.New("Too many invalid choices.")
@@ -176,6 +177,7 @@ func AskForNewValue(field, oldValue string) (newValue string, err error) {
 			validChoice = true
 		default:
 			fmt.Println("Invalid choice.")
+			fmt.Printf(GreenBold("Choose: (1) Keep Value (2) Edit "))
 			errs++
 			if errs > 10 {
 				return "", errors.New("Too many invalid choices.")
