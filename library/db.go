@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	b "github.com/barsanuphe/endive/book"
 	cfg "github.com/barsanuphe/endive/config"
@@ -142,6 +143,7 @@ func (ldb *DB) generateID() (id int) {
 
 // Check all Books
 func (ldb *DB) Check() (err error) {
+	defer h.TimeTrack(time.Now(), "Checking")
 	for i := range ldb.Books {
 		h.Debug("Checking " + ldb.Books[i].ShortString())
 		retailChanged, nonRetailChanged, err := ldb.Books[i].Check()

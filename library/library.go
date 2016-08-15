@@ -332,6 +332,7 @@ func (l *Library) ExportToEReader(books []b.Book) (err error) {
 	if len(books) != 0 {
 		for _, book := range books {
 			destination := filepath.Join(l.Config.EReaderMountPoint, book.MainEpub().Filename)
+			destination = h.CleanPathForVFAT(destination)
 			if !h.DirectoryExists(filepath.Dir(destination)) {
 				err = os.MkdirAll(filepath.Dir(destination), 0777)
 				if err != nil {

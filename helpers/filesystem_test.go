@@ -78,23 +78,31 @@ func TestHelpersIsDirEmpty(t *testing.T) {
 }
 
 var paths = []struct {
-	path              string
-	expectedCleanPath string
+	path                  string
+	expectedCleanPath     string
+	expectedVFATCleanPath string
 }{
 	{
 		`a/b\\j`,
+		"a-b--j",
 		"a-b--j",
 	},
 	{
 		".a/a",
 		"a-a",
+		"a-a",
+	},
+	{
+		".a : 2002?",
+		"a : 2002?",
+		"a - 2002",
 	},
 }
 
 func TestHelpersCleanForPath(t *testing.T) {
 	fmt.Println("+ Testing Helpers/CleanForPath()...")
 	for _, el := range paths {
-		assert.Equal(t, CleanForPath(el.path), el.expectedCleanPath, "Error cleaning path")
+		assert.Equal(t, CleanPath(el.path), el.expectedCleanPath, "Error cleaning path")
 	}
 }
 

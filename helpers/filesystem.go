@@ -156,8 +156,8 @@ func ListEpubsInDirectory(root string) (epubPaths []string, hashes []string, err
 	return
 }
 
-// CleanForPath makes sure a string can be used as part of a path
-func CleanForPath(md string) string {
+// CleanPath makes sure a string can be used as part of a path
+func CleanPath(md string) string {
 	md = strings.TrimSpace(md)
 	// if it starts with a dot, remove it so it does not become
 	// a hidden file. if it starts with /, weird things happen.
@@ -170,6 +170,17 @@ func CleanForPath(md string) string {
 		"\\", "-",
 	)
 	return r.Replace(md)
+}
+
+// CleanPathForVFAT makes sure a string can be used as part of a path
+func CleanPathForVFAT(md string) string {
+	clean := CleanPath(md)
+	// clean characters which would be problematic in a filename
+	r := strings.NewReplacer(
+		":", "-",
+		"?", "",
+	)
+	return r.Replace(clean)
 }
 
 // CopyFile copies a file from src to dst. If src and dst files exist, and are

@@ -232,7 +232,7 @@ func (e *Book) generateNewName(fileTemplate string, isRetail bool) (newName stri
 	)
 	seriesString := ""
 	if len(e.Metadata.Series) != 0 {
-		seriesString = h.CleanForPath("[" + e.Metadata.Series.String() + "]")
+		seriesString = h.CleanPath("[" + e.Metadata.Series.String() + "]")
 	}
 	retail := "nonretail"
 	if isRetail {
@@ -240,8 +240,8 @@ func (e *Book) generateNewName(fileTemplate string, isRetail bool) (newName stri
 	}
 	// replace with all valid epub parameters
 	tmpl := fmt.Sprintf(`{{$a := "%s"}}{{$y := "%s"}}{{$t := "%s"}}{{$l := "%s"}}{{$i := "%s"}}{{$s := "%s"}}{{$p := "%s"}}{{$c := "%s"}}{{$g := "%s"}}{{$r := "%s"}}%s`,
-		h.CleanForPath(e.Metadata.Author()), e.Metadata.OriginalYear,
-		h.CleanForPath(e.Metadata.Title()), e.Metadata.Language,
+		h.CleanPath(e.Metadata.Author()), e.Metadata.OriginalYear,
+		h.CleanPath(e.Metadata.Title()), e.Metadata.Language,
 		e.Metadata.ISBN, seriesString, e.Progress, e.Metadata.Category,
 		e.Metadata.MainGenre, retail, r.Replace(fileTemplate))
 
@@ -265,8 +265,8 @@ func (e *Book) generateNewName(fileTemplate string, isRetail bool) (newName stri
 	}
 	// making sure the final filename is valid
 	filename := filepath.Base(newName)
-	if filename != h.CleanForPath(filename) {
-		newName = filepath.Join(filepath.Dir(newName), strings.TrimSpace(h.CleanForPath(filename)))
+	if filename != h.CleanPath(filename) {
+		newName = filepath.Join(filepath.Dir(newName), strings.TrimSpace(h.CleanPath(filename)))
 	}
 	return
 }
