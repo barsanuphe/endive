@@ -270,8 +270,8 @@ func (i *Metadata) MergeField(o Metadata, field string, cfg c.Config) (err error
 		if e != nil {
 			return e
 		}
+		i.Series = Series{}
 		if strings.TrimSpace(userInput) != "" {
-			i.Series = Series{}
 			for _, s := range strings.Split(userInput, ",") {
 				// split again name:index
 				parts := strings.Split(s, ":")
