@@ -144,6 +144,7 @@ func (e *Epub) ReadMetadata() (info Metadata, err error) {
 }
 
 func (e *Epub) findISBN(book *epubgo.Epub, i *Metadata) (err error) {
+
 	// get the identifier
 	identifiers, nonFatalErr := book.MetadataElement("identifier")
 	if nonFatalErr == nil && len(identifiers) != 0 {
@@ -165,21 +166,21 @@ func (e *Epub) findISBN(book *epubgo.Epub, i *Metadata) (err error) {
 				}
 			}
 		}
-
-		// try getting source
-		sources, nonFatalErr := book.MetadataElement("source")
-		if nonFatalErr == nil && len(sources) != 0 {
-			// try to find isbn
-			for _, el := range sources {
-				// clean results
-				isbn, err := cleanISBN(el.Content)
-				if err == nil {
-					i.ISBN = isbn
-					return err
-				}
+	}
+	// try getting source if not already found
+	sources, nonFatalErr := book.MetadataElement("source")
+	if nonFatalErr == nil && len(sources) != 0 {
+		// try to find isbn
+		for _, el := range sources {
+			// clean results
+			isbn, err := cleanISBN(el.Content)
+			if err == nil {
+				i.ISBN = isbn
+				return err
 			}
 		}
 	}
+
 	// if no valid result, return err
 	h.Debugf("ISBN not found in %s", e.FullPath())
 	return errors.New("ISBN not found in epub")

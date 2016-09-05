@@ -257,18 +257,18 @@ func (i *Metadata) MergeField(o Metadata, field string, cfg c.Config) (err error
 	case "tags", "tag":
 		h.Subpart("Tags: ")
 		fmt.Println("NOTE: tags can be edited as a comma-separated list of strings.")
-		tagString, err := h.Choose(i.Tags.String(), o.Tags.String())
-		if err != nil {
-			return err
+		tagString, e := h.Choose(i.Tags.String(), o.Tags.String())
+		if e != nil {
+			return e
 		}
 		i.Tags = Tags{}
 		i.Tags.AddFromNames(strings.Split(tagString, ",")...)
 	case "series":
 		h.Subpart("Series: ")
 		fmt.Println("NOTE: series can be edited as a comma-separated list of 'series name:index' strings. Index can be empty.")
-		userInput, err := h.Choose(i.Series.rawString(), o.Series.rawString())
-		if err != nil {
-			return err
+		userInput, e := h.Choose(i.Series.rawString(), o.Series.rawString())
+		if e != nil {
+			return e
 		}
 		if strings.TrimSpace(userInput) != "" {
 			i.Series = Series{}
@@ -279,8 +279,8 @@ func (i *Metadata) MergeField(o Metadata, field string, cfg c.Config) (err error
 				case 1:
 					i.Series.Add(strings.TrimSpace(s), 0)
 				case 2:
-					index, err := strconv.ParseFloat(parts[1], 32)
-					if err != nil {
+					index, e := strconv.ParseFloat(parts[1], 32)
+					if e != nil {
 						h.Warning("Index must be a float, or empty.")
 					} else {
 						i.Series.Add(strings.TrimSpace(parts[0]), float32(index))
@@ -293,9 +293,9 @@ func (i *Metadata) MergeField(o Metadata, field string, cfg c.Config) (err error
 	case "author", "authors":
 		h.Subpart("Authors: ")
 		fmt.Println("NOTE: authors can be edited as a comma-separated list of strings.")
-		userInput, err := h.Choose(i.Author(), o.Author())
-		if err != nil {
-			return err
+		userInput, e := h.Choose(i.Author(), o.Author())
+		if e != nil {
+			return e
 		}
 		i.Authors = strings.Split(userInput, ",")
 		// trim spaces
@@ -339,9 +339,9 @@ func (i *Metadata) MergeField(o Metadata, field string, cfg c.Config) (err error
 		}
 	case "title":
 		h.Subpart("Title:")
-		chosenTitle, err := h.Choose(i.Title(), o.Title())
-		if err != nil {
-			return err
+		chosenTitle, e := h.Choose(i.Title(), o.Title())
+		if e != nil {
+			return e
 		}
 		i.MainTitle = chosenTitle
 		i.OriginalTitle = chosenTitle
