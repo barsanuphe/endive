@@ -81,7 +81,7 @@ func (s *Series) AddFromString(candidate string) (seriesModified bool, err error
 				// case "series:float"
 				index, e := strconv.ParseFloat(parts[1], 32)
 				if e != nil {
-					return false, wrongFormatError
+					err = wrongFormatError
 				} else {
 					s.Add(strings.TrimSpace(parts[0]), float32(index))
 					seriesModified = true

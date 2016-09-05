@@ -264,7 +264,7 @@ func (i *Metadata) MergeField(o Metadata, field string, cfg c.Config) (err error
 		i.Tags.AddFromNames(strings.Split(tagString, ",")...)
 	case "series":
 		h.Subpart("Series: ")
-		fmt.Println("NOTE: series can be edited as a comma-separated list of 'series name:index' strings. Index can be empty.")
+		fmt.Println("NOTE: series can be edited as a comma-separated list of 'series name:index' strings. Index can be empty, or a range.")
 		userInput, e := h.Choose(i.Series.rawString(), o.Series.rawString())
 		if e != nil {
 			return e

@@ -18,11 +18,11 @@ var grBooks = []struct {
 }{
 	{
 		"Scott Lynch",
-		"The Thorn of Emberlain",
-		"8074907",
-		"2016",
-		"Scott Lynch (2016) The Thorn of Emberlain [Gentleman Bastard (#4)]",
-		"9780575079588",
+		"The Republic of Thieves",
+		"2890090",
+		"2013",
+		"Scott Lynch (2013) The Republic of Thieves [Gentleman Bastard (#3)]",
+		"9780553804690",
 	},
 	{
 		"George Orwell",

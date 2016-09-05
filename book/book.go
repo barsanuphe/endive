@@ -686,7 +686,7 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 			h.Infof("Tags added to %s\n", e.ShortString())
 		}
 	case "series":
-		fmt.Println("NOTE: series can be edited as a comma-separated list of 'series name:index' strings. Index can be empty.")
+		fmt.Println("NOTE: series can be edited as a comma-separated list of 'series name:index' strings. Index can be empty, or a range.")
 		newValues, err := h.AssignNewValues(field, e.Metadata.Series.String(), values)
 		if err != nil {
 			return err

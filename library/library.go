@@ -342,7 +342,7 @@ func (l *Library) ExportToEReader(books []b.Book) (err error) {
 					return err
 				}
 			} else {
-				h.Info(" - Previously exported: "  + book.ShortString())
+				h.Info(" - Previously exported: " + book.ShortString())
 			}
 		}
 	} else {
