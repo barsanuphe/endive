@@ -143,7 +143,7 @@ func (e *Epub) ReadMetadata() (info Metadata, err error) {
 	return
 }
 
-func (e *Epub) findISBN(book *epubgo.Epub, i *Metadata) (err error) {
+func (e *Epub) findISBN(book *epubgo.Epub, i *Metadata) error {
 
 	// get the identifier
 	identifiers, nonFatalErr := book.MetadataElement("identifier")

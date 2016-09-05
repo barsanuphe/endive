@@ -1,10 +1,6 @@
 package book
 
-import (
-	"strings"
-
-	c "github.com/barsanuphe/endive/config"
-)
+import "strings"
 
 // Tag holds the name of a tag.
 type Tag struct {
@@ -15,7 +11,7 @@ type Tag struct {
 type Tags []Tag
 
 // String give a string representation of Tags.
-func (t *Tags) String() (text string) {
+func (t *Tags) String() string {
 	tagNames := []string{}
 	for _, tag := range *t {
 		tagNames = append(tagNames, tag.Name)
@@ -35,7 +31,7 @@ func (t *Tags) Add(tags ...Tag) (added bool) {
 }
 
 // AddFromNames Tags to the list, from []string
-func (t *Tags) AddFromNames(tags ...string) (added bool) {
+func (t *Tags) AddFromNames(tags ...string) bool {
 	newTags := Tags{}
 	for _, tag := range tags {
 		newTags = append(newTags, Tag{Name: strings.TrimSpace(tag)})
@@ -55,7 +51,7 @@ func (t *Tags) Remove(tags ...Tag) (removed bool) {
 }
 
 // RemoveFromNames Tags to the list, from []string
-func (t *Tags) RemoveFromNames(tags ...string) (removed bool) {
+func (t *Tags) RemoveFromNames(tags ...string) bool {
 	newTags := Tags{}
 	for _, tag := range tags {
 		newTags = append(newTags, Tag{Name: tag})
@@ -74,7 +70,7 @@ func (t *Tags) Has(o Tag) (isIn bool, index int) {
 }
 
 // Clean a list of tags.
-func (t *Tags) Clean(cfg c.Config) {
-	*t = cleanTags(*t, cfg)
+func (t *Tags) Clean() {
+	*t = cleanTags(*t)
 	return
 }

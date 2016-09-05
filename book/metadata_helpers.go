@@ -5,7 +5,6 @@ import (
 	"regexp"
 	"strings"
 
-	c "github.com/barsanuphe/endive/config"
 	h "github.com/barsanuphe/endive/helpers"
 
 	"github.com/kennygrant/sanitize"
@@ -74,10 +73,10 @@ var forbiddenTags = []string{
 	"check", "queue", "dnf",
 }
 
-func cleanTags(tags Tags, cfg c.Config) (cleanTags Tags) {
+func cleanTags(tags Tags) (cleanTags Tags) {
 	cleanTags = Tags{}
 	for _, tag := range tags {
-		cleanName, err := cleanTagName(tag.Name, cfg)
+		cleanName, err := cleanTagName(tag.Name)
 		if err == nil {
 			cleanTags.Add(Tag{Name: cleanName})
 		}
@@ -90,7 +89,7 @@ func cleanTags(tags Tags, cfg c.Config) (cleanTags Tags) {
 	return
 }
 
-func cleanTagName(tagName string, cfg c.Config) (cleanTagName string, err error) {
+func cleanTagName(tagName string) (cleanTagName string, err error) {
 	tagName = strings.TrimSpace(tagName)
 	tagName = strings.ToLower(tagName)
 	// checking if not forbidden
@@ -107,8 +106,8 @@ func cleanTagName(tagName string, cfg c.Config) (cleanTagName string, err error)
 	return
 }
 
-func cleanCategory(category string, cfg c.Config) (clean string, err error) {
-	cleanName, err := cleanTagName(category, cfg)
+func cleanCategory(category string) (clean string, err error) {
+	cleanName, err := cleanTagName(category)
 	if err != nil {
 		return "", err
 	}
@@ -120,6 +119,6 @@ func cleanCategory(category string, cfg c.Config) (clean string, err error) {
 	return
 }
 
-func cleanHTML(desc string) (clean string) {
+func cleanHTML(desc string) string {
 	return sanitize.HTML(desc)
 }

@@ -53,7 +53,7 @@ func (i *Metadata) HasAny() (hasMetadata bool) {
 }
 
 // IsComplete checks if metadata looks complete
-func (i *Metadata) IsComplete() (hasCompleteMetadata bool) {
+func (i *Metadata) IsComplete() bool {
 	hasAuthor := i.Author() != ""
 	hasTitle := i.Title() != ""
 	hasYear := i.OriginalYear != "" && i.OriginalYear != "XXXX"
@@ -96,8 +96,10 @@ func (i *Metadata) Clean(cfg c.Config) {
 	i.Description = cleanHTML(i.Description)
 	// clean language
 	i.Language = cleanLanguage(i.Language)
+	// use config aliases
+	i.useAliases(cfg)
 	// clean tags
-	i.Tags.Clean(cfg)
+	i.Tags.Clean()
 	// autofill category
 	if i.Category == "" {
 		if isIn, _ := i.Tags.Has(Tag{Name: "fiction"}); isIn {
@@ -113,13 +115,13 @@ func (i *Metadata) Clean(cfg c.Config) {
 	if i.Category == "" {
 		i.Category = "Unknown"
 	}
-	if cat, err := cleanCategory(i.Category, cfg); err == nil {
+	if cat, err := cleanCategory(i.Category); err == nil {
 		i.Category = cat
 	}
 
 	// MainGenre
 	if i.MainGenre == "" && len(i.Tags) != 0 {
-		cleanName, err := cleanTagName(i.Tags[0].Name, cfg)
+		cleanName, err := cleanTagName(i.Tags[0].Name)
 		if err == nil {
 			i.MainGenre = cleanName
 			i.Tags.RemoveFromNames(i.MainGenre)
@@ -129,7 +131,7 @@ func (i *Metadata) Clean(cfg c.Config) {
 	if i.MainGenre == "" {
 		i.MainGenre = "Unknown"
 	}
-	if main, err := cleanTagName(i.MainGenre, cfg); err == nil {
+	if main, err := cleanTagName(i.MainGenre); err == nil {
 		i.MainGenre = main
 	}
 
@@ -139,8 +141,6 @@ func (i *Metadata) Clean(cfg c.Config) {
 	}
 	// clean publisher
 	i.Publisher = strings.TrimSpace(i.Publisher)
-	// use config aliases
-	i.useAliases(cfg)
 }
 
 // useAliases updates Metadata fields, using the configuration file.
