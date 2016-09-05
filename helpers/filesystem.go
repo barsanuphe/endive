@@ -174,13 +174,12 @@ func CleanPath(md string) string {
 
 // CleanPathForVFAT makes sure a string can be used as part of a path
 func CleanPathForVFAT(md string) string {
-	clean := CleanPath(md)
 	// clean characters which would be problematic in a filename
 	r := strings.NewReplacer(
 		":", "-",
 		"?", "",
 	)
-	return r.Replace(clean)
+	return r.Replace(md)
 }
 
 // CopyFile copies a file from src to dst. If src and dst files exist, and are

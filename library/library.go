@@ -324,11 +324,11 @@ func (l *Library) ExportToEReader(books []b.Book) (err error) {
 	if !h.DirectoryExists(l.Config.EReaderMountPoint) {
 		return errors.New("E-Reader mount point does not exist: " + l.Config.EReaderMountPoint)
 	}
-	h.Title("Exporting books.")
 	if len(books) != 0 {
+		h.Title("Exporting books.")
 		for _, book := range books {
-			destination := filepath.Join(l.Config.EReaderMountPoint, book.MainEpub().Filename)
-			destination = h.CleanPathForVFAT(destination)
+			filename := h.CleanPathForVFAT(book.MainEpub().Filename)
+			destination := filepath.Join(l.Config.EReaderMountPoint, filename)
 			if !h.DirectoryExists(filepath.Dir(destination)) {
 				err = os.MkdirAll(filepath.Dir(destination), 0777)
 				if err != nil {
@@ -341,8 +341,12 @@ func (l *Library) ExportToEReader(books []b.Book) (err error) {
 				if err != nil {
 					return err
 				}
+			} else {
+				h.Info(" - Previously exported: "  + book.ShortString())
 			}
 		}
+	} else {
+		h.Title("Nothing to export.")
 	}
 	return
 }
