@@ -696,20 +696,9 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 			// remove all Series
 			e.Metadata.Series = Series{}
 			for _, s := range strings.Split(newValues[0], ",") {
-				// split again name:index
-				parts := strings.Split(s, ":")
-				switch len(parts) {
-				case 1:
-					e.Metadata.Series.Add(strings.TrimSpace(s), 0)
-				case 2:
-					index, err := strconv.ParseFloat(parts[1], 32)
-					if err != nil {
-						h.Warning("Index must be a float, or empty.")
-					} else {
-						e.Metadata.Series.Add(strings.TrimSpace(parts[0]), float32(index))
-					}
-				default:
-					h.Warning("Could not parse series " + s)
+				_, err := e.Metadata.Series.AddFromString(s)
+				if err != nil {
+					h.Warning("Could not parse series " + s + ", " + err.Error())
 				}
 			}
 		}

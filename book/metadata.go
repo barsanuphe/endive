@@ -2,7 +2,6 @@ package book
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"errors"
@@ -274,24 +273,9 @@ func (i *Metadata) MergeField(o Metadata, field string, cfg c.Config) (err error
 		userInput = strings.TrimSpace(userInput)
 		if userInput != "" {
 			for _, s := range strings.Split(userInput, ",") {
-				// split again name:index
-				parts := strings.Split(s, ":")
-				switch len(parts) {
-				case 1:
-					i.Series.Add(strings.TrimSpace(s), 0)
-				case 2:
-					if parts[1] == "" {
-						i.Series.Add(strings.TrimSpace(parts[0]), 0)
-					} else {
-						index, e := strconv.ParseFloat(parts[1], 32)
-						if e != nil {
-							h.Warning("Index must be a float, or empty.")
-						} else {
-							i.Series.Add(strings.TrimSpace(parts[0]), float32(index))
-						}
-					}
-				default:
-					h.Warning("Could not parse series " + s)
+				_, err := i.Series.AddFromString(s)
+				if err != nil {
+					h.Warning("Could not add series " + s + " , " + err.Error())
 				}
 			}
 		}

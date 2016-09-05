@@ -1,6 +1,7 @@
 package book
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -21,7 +22,7 @@ func (s SingleSeries) String() string {
 type Series []SingleSeries
 
 // String outputs a series info.
-func (s Series) String() (description string) {
+func (s Series) String() string {
 	series := []string{}
 	for _, ss := range s {
 		series = append(series, ss.String())
@@ -30,12 +31,67 @@ func (s Series) String() (description string) {
 }
 
 // rawString outputs a series info in raw form: series:index.
-func (s Series) rawString() (description string) {
+func (s Series) rawString() string {
 	series := []string{}
 	for _, ss := range s {
 		series = append(series, fmt.Sprintf("%s:%s", ss.Name, ss.Position))
 	}
 	return strings.Join(series, ", ")
+}
+
+// AddFromString a series, checking for correct form.
+func (s *Series) AddFromString(candidate string) (seriesModified bool, err error) {
+	// TODO parse "series:part" strings: range
+	wrongFormatError := errors.New("Series index must be empty, a float, or a range, got: " + candidate)
+
+	// split again name:index
+	parts := strings.Split(candidate, ":")
+
+	switch len(parts) {
+	case 1:
+		// case "series"
+		s.Add(strings.TrimSpace(candidate), 0)
+		seriesModified = true
+	case 2:
+		if parts[1] == "" {
+			// case "series:"
+			s.Add(strings.TrimSpace(parts[0]), 0)
+			seriesModified = true
+		} else {
+			// case "series:index1-index2
+			if strings.Contains(parts[1], "-") {
+				indexes := strings.Split(strings.TrimSpace(parts[1]), "-")
+				if len(indexes) != 2 {
+					return false, wrongFormatError
+				}
+				// parse as float both indexes
+				index1, e := strconv.ParseFloat(indexes[0], 32)
+				if e != nil {
+					return false, wrongFormatError
+				}
+				index2, e := strconv.ParseFloat(indexes[1], 32)
+				if e != nil {
+					return false, wrongFormatError
+				}
+				for i := index1; i <= index2; i++ {
+					s.Add(strings.TrimSpace(parts[0]), float32(i))
+				}
+				seriesModified = true
+			} else {
+				// case "series:float"
+				index, e := strconv.ParseFloat(parts[1], 32)
+				if e != nil {
+					return false, wrongFormatError
+				} else {
+					s.Add(strings.TrimSpace(parts[0]), float32(index))
+					seriesModified = true
+				}
+			}
+		}
+	default:
+		err = wrongFormatError
+	}
+	return
 }
 
 // Add a series
@@ -50,7 +106,8 @@ func (s *Series) Add(seriesName string, position float32) (seriesModified bool) 
 	} else {
 		// if hasSeries, if index is different, update index
 		if currentIndex != indexStr {
-			(*s)[seriesIndex].Position = indexStr
+			// TODO order indexes
+			(*s)[seriesIndex].Position += "," + indexStr
 			seriesModified = true
 		}
 	}
@@ -81,6 +138,6 @@ func (s *Series) Has(seriesName string) (hasSeries bool, index int, position str
 }
 
 // HasAny checks if epub is part of any series
-func (s *Series) HasAny() (hasSeries bool) {
+func (s *Series) HasAny() bool {
 	return len(*s) != 0
 }

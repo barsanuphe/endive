@@ -54,13 +54,38 @@ func TestSeries(t *testing.T) {
 		// testing having modified series
 		hasSeries, index, seriesIndex = e.Metadata.Series.Has(seriesName)
 		assert.True(hasSeries, "Error:  expected epub %s to have series %s", e.FullPath(), seriesName)
-		assert.Equal(index, 0, "Error:  expected epub %s to have series %s at index 0", e.FullPath(), seriesName)
-		assert.Equal(seriesIndex, strconv.FormatFloat(float64(i)+0.5, 'f', -1, 32), "Error:  expected epub %s to have series %s, book %f and not %s", e.FullPath(), seriesName2, float32(i), seriesIndex)
+		assert.Equal(0, index, "Error:  expected epub %s to have series %s at index 0", e.FullPath(), seriesName)
+		expected := fmt.Sprintf("%s,%s", strconv.FormatFloat(float64(i), 'f', -1, 32), strconv.FormatFloat(float64(i)+0.5, 'f', -1, 32))
+		assert.Equal(expected, seriesIndex, "Error:  expected epub %s to have series %s, book %f and not %s", e.FullPath(), seriesName, float32(i), seriesIndex)
 
 		// testing removing series
 		seriesRemoved := e.Metadata.Series.Remove(seriesName)
 		assert.True(seriesRemoved, "Error removing Series %s for epub %s", seriesName, e.FullPath())
 		hasSeries, _, _ = e.Metadata.Series.Has(seriesName)
 		assert.False(hasSeries, "Error:  did not expect epub %s to have series %s", e.FullPath(), seriesName)
+
+		// testing adding from string
+		e.Metadata.Series = Series{}
+		seriesModified, err := e.Metadata.Series.AddFromString("test:1.5")
+		assert.True(seriesModified, "Error: series should be modified")
+		assert.Nil(err)
+
+		seriesModified, err = e.Metadata.Series.AddFromString("test:2.5")
+		assert.True(seriesModified, "Error: series should be modified")
+		assert.Nil(err)
+
+		seriesModified, err = e.Metadata.Series.AddFromString("test2:")
+		assert.True(seriesModified, "Error: series should be modified")
+		assert.Nil(err)
+
+		seriesModified, err = e.Metadata.Series.AddFromString("test3")
+		assert.True(seriesModified, "Error: series should be modified")
+		assert.Nil(err)
+
+		seriesModified, err = e.Metadata.Series.AddFromString("test4:7-9")
+		assert.True(seriesModified, "Error: series should be modified")
+		assert.Nil(err)
+
+		assert.Equal("test (#1.5,2.5), test2 (#0), test3 (#0), test4 (#7,8,9)", e.Metadata.Series.String())
 	}
 }
