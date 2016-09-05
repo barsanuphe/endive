@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	h "github.com/barsanuphe/endive/helpers"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -58,7 +60,7 @@ var isbns = []struct {
 func TestEpubCleanISBN(t *testing.T) {
 	fmt.Println("+ Testing Info/CleanISBN()...")
 	for _, c := range isbns {
-		isbn, err := CleanISBN(c.candidate)
+		isbn, err := h.CleanISBN(c.candidate)
 		if err == nil && c.expectedError != nil {
 			t.Errorf("Unexpected error cleaning isbn %s", c.candidate)
 		} else if err != nil && c.expectedError == nil {

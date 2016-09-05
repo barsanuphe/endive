@@ -87,7 +87,10 @@ func TestBookJSON(t *testing.T) {
 	for i, testEpub := range epubs {
 		e := NewBook(i, testEpub.filename, standardTestConfig, isRetail)
 		info, err := e.MainEpub().ReadMetadata()
-		assert.Nil(err, fmt.Sprintf("Error getting Metadata for %s, got %s, expected nil", e.FullPath(), err))
+		assert.NotNil(err, "Error should be found (no ISBN in test epubs) for "+e.FullPath())
+		if err != nil {
+			assert.Equal("ISBN not found in epub", err.Error(), "Error should only mention missing ISBN")
+		}
 		e.EpubMetadata = info
 		e.Metadata = info
 
@@ -117,7 +120,10 @@ func TestBookNewName(t *testing.T) {
 	for i, testEpub := range epubs {
 		e := NewBook(i, testEpub.filename, standardTestConfig, !isRetail)
 		info, err := e.MainEpub().ReadMetadata()
-		assert.Nil(err, "Error getting Metadata for  "+e.FullPath())
+		assert.NotNil(err, "Error should be found (no ISBN in test epubs) for "+e.FullPath())
+		if err != nil {
+			assert.Equal("ISBN not found in epub", err.Error(), "Error should only mention missing ISBN")
+		}
 		e.EpubMetadata = info
 		e.Metadata = info
 
@@ -131,7 +137,10 @@ func TestBookNewName(t *testing.T) {
 
 		e = NewBook(10+i, testEpub.filename, standardTestConfig, isRetail)
 		info, err = e.MainEpub().ReadMetadata()
-		assert.Nil(err, "Error getting Metadata for  "+e.FullPath())
+		assert.NotNil(err, "Error should be found (no ISBN in test epubs) for "+e.FullPath())
+		if err != nil {
+			assert.Equal("ISBN not found in epub", err.Error(), "Error should only mention missing ISBN")
+		}
 		e.EpubMetadata = info
 		e.Metadata = info
 
@@ -157,7 +166,10 @@ func TestBookRefresh(t *testing.T) {
 		// creating Epub object
 		e := NewBook(i, tempCopy, cfg, isRetail)
 		info, err := e.MainEpub().ReadMetadata()
-		assert.Nil(err, "Error getting Metadata")
+		assert.NotNil(err, "Error should be found (no ISBN in test epubs) for "+e.FullPath())
+		if err != nil {
+			assert.Equal("ISBN not found in epub", err.Error(), "Error should only mention missing ISBN")
+		}
 		e.EpubMetadata = info
 		e.Metadata = info
 
@@ -225,7 +237,10 @@ func TestBookSearchOnline(t *testing.T) {
 		fmt.Println(testEpub.filename)
 		e := NewBook(i, testEpub.filename, standardTestConfig, isRetail)
 		info, err := e.MainEpub().ReadMetadata()
-		assert.Nil(err, "Error getting Metadata for  "+e.FullPath())
+		assert.NotNil(err, "Error should be found (no ISBN in test epubs) for "+e.FullPath())
+		if err != nil {
+			assert.Equal("ISBN not found in epub", err.Error(), "Error should only mention missing ISBN")
+		}
 		e.EpubMetadata = info
 		e.Metadata = info
 

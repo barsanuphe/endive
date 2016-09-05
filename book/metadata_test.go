@@ -19,7 +19,10 @@ func TestInfo(t *testing.T) {
 
 		// reading info
 		info, err := e.MainEpub().ReadMetadata()
-		assert.Nil(err, "Error getting Metadata for  + ", e.FullPath())
+		assert.NotNil(err, "Error should be found (no ISBN in test epubs) for "+e.FullPath())
+		if err != nil {
+			assert.Equal("ISBN not found in epub", err.Error(), "Error should only mention missing ISBN")
+		}
 		e.EpubMetadata = info
 		e.Metadata = info
 
