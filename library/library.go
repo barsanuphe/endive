@@ -14,11 +14,10 @@ package library
 import (
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strconv"
 	"time"
-
-	"os"
 
 	b "github.com/barsanuphe/endive/book"
 	cfg "github.com/barsanuphe/endive/config"
@@ -166,8 +165,17 @@ func (l *Library) ImportEpubs(allEpubs []string, allHashes []string, isRetail bo
 			// get Metadata from new epub
 			info, err = e.ReadMetadata()
 			if err != nil {
-				h.Error("Could not analyze and import " + path)
-				continue
+				if err.Error() == "ISBN not found in epub" {
+					isbn, err := h.AskForISBN()
+					if err != nil {
+						h.Warning("Warning: ISBN still unknown.")
+					} else {
+						info.ISBN = isbn
+					}
+				} else {
+					h.Error("Could not analyze and import " + path)
+					continue
+				}
 			}
 			// ask if user really wants to import it
 			importConfirmed = h.YesOrNo(fmt.Sprintf("Found %s (%s).\nImport", filepath.Base(path), info.String()))
@@ -177,8 +185,17 @@ func (l *Library) ImportEpubs(allEpubs []string, allHashes []string, isRetail bo
 				// get Metadata from new epub
 				info, err = e.ReadMetadata()
 				if err != nil {
-					h.Error("Could not analyze and import " + path)
-					continue
+					if err.Error() == "ISBN not found in epub" {
+						isbn, err := h.AskForISBN()
+						if err != nil {
+							h.Warning("Warning: ISBN still unknown.")
+						} else {
+							info.ISBN = isbn
+						}
+					} else {
+						h.Error("Could not analyze and import " + path)
+						continue
+					}
 				}
 				//confirm force import
 				importConfirmed = h.YesOrNo(fmt.Sprintf("File %s has already been imported but is not in the current library. Confirm importing again?", filepath.Base(path)))

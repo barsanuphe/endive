@@ -20,7 +20,7 @@ type Epub struct {
 // FullPath returns the absolute file path.
 // if it is in the library, prepends LibraryRoot.
 // if it is outside, return Filename directly.
-func (e *Epub) FullPath() (path string) {
+func (e *Epub) FullPath() string {
 	// TODO: tests
 	if filepath.IsAbs(e.Filename) {
 		return e.Filename
@@ -127,15 +127,17 @@ func (e *Epub) ReadMetadata() (info Metadata, err error) {
 			info.Tags.Add(tag)
 		}
 	}
-	// ISBN
-	nonFatalErr = e.findISBN(book, &info)
-	if nonFatalErr != nil {
-		h.Warning("ISBN could not be found in %s!!", e.FullPath())
-	}
 	// publisher
 	results, nonFatalErr = book.MetadataElement("publisher")
 	if nonFatalErr == nil && len(results) != 0 {
 		info.Publisher = results[0].Content
+	}
+
+	// ISBN
+	nonFatalErr = e.findISBN(book, &info)
+	if nonFatalErr != nil {
+		h.Warning("ISBN could not be found in %s!!", e.FullPath())
+		err = nonFatalErr
 	}
 
 	// cleaning metadata
@@ -151,7 +153,7 @@ func (e *Epub) findISBN(book *epubgo.Epub, i *Metadata) error {
 		// try to find isbn
 		for _, el := range identifiers {
 			// try to find isbn in content
-			isbn, err := cleanISBN(el.Content)
+			isbn, err := h.CleanISBN(el.Content)
 			if err == nil {
 				i.ISBN = isbn
 				return err
@@ -159,7 +161,7 @@ func (e *Epub) findISBN(book *epubgo.Epub, i *Metadata) error {
 			// try to find isbn in the attributes
 			// it shouldn't be there, but retail epubs have awful metadata
 			for _, evt := range el.Attr {
-				isbn, err = cleanISBN(evt)
+				isbn, err = h.CleanISBN(evt)
 				if err == nil {
 					i.ISBN = isbn
 					return err
@@ -173,7 +175,7 @@ func (e *Epub) findISBN(book *epubgo.Epub, i *Metadata) error {
 		// try to find isbn
 		for _, el := range sources {
 			// clean results
-			isbn, err := cleanISBN(el.Content)
+			isbn, err := h.CleanISBN(el.Content)
 			if err == nil {
 				i.ISBN = isbn
 				return err

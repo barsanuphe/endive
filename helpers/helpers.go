@@ -13,12 +13,14 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/barsanuphe/gotabulate"
+	"github.com/moraes/isbn"
 	"github.com/tj/go-spin"
 )
 
@@ -210,6 +212,67 @@ func AssignNewValues(field, oldValue string, candidates []string) (newValues []s
 func ChooseVersion(title, local, remote string) (choice string, err error) {
 	Subpart(title + ":")
 	choice, err = Choose(local, remote)
+	return
+}
+
+// CleanISBN from a string
+func CleanISBN(full string) (isbn13 string, err error) {
+	// cleanup string, only keep numbers
+	re := regexp.MustCompile("[0-9]+")
+	candidate := strings.Join(re.FindAllString(full, -1), "")
+
+	// if start of isbn detected, try to salvage the situation
+	if len(candidate) > 13 && strings.HasPrefix(candidate, "978") {
+		candidate = candidate[:13]
+	}
+
+	// validate and convert to ISBN13 if necessary
+	if isbn.Validate(candidate) {
+		if len(candidate) == 10 {
+			isbn13, err = isbn.To13(candidate)
+			if err != nil {
+				isbn13 = ""
+			}
+		}
+		if len(candidate) == 13 {
+			isbn13 = candidate
+		}
+	} else {
+		err = errors.New("ISBN-13 not found")
+	}
+	return
+}
+
+// AskForISBN when not found in epub
+func AskForISBN() (isbn string, err error) {
+	scanner := bufio.NewReader(os.Stdin)
+	validChoice := false
+	errs := 0
+	for !validChoice {
+		fmt.Print("Enter ISBN: ")
+		choice, _ := scanner.ReadString('\n')
+		choice = strings.TrimSpace(choice)
+		// check valid ISBN
+		isbnCandidate, err := CleanISBN(choice)
+		if err != nil {
+			errs++
+			Warning("Warning: Invalid value.")
+		} else {
+			confirmed := YesOrNo("Confirm: " + choice)
+			if confirmed {
+				isbn = isbnCandidate
+				validChoice = true
+			} else {
+				errs++
+				fmt.Println("Manual entry not confirmed, trying again.")
+			}
+		}
+		if errs > 10 {
+			Warning("Too many errors, continuing without ISBN.")
+			err = errors.New("ISBN not set")
+			break
+		}
+	}
 	return
 }
 

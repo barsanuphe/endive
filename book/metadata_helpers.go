@@ -2,41 +2,12 @@ package book
 
 import (
 	"errors"
-	"regexp"
 	"strings"
 
 	h "github.com/barsanuphe/endive/helpers"
 
 	"github.com/kennygrant/sanitize"
-	"github.com/moraes/isbn"
 )
-
-func cleanISBN(full string) (isbn13 string, err error) {
-	// cleanup string, only keep numbers
-	re := regexp.MustCompile("[0-9]+")
-	candidate := strings.Join(re.FindAllString(full, -1), "")
-
-	// if start of isbn detected, try to salvage the situation
-	if len(candidate) > 13 && strings.HasPrefix(candidate, "978") {
-		candidate = candidate[:13]
-	}
-
-	// validate and convert to ISBN13 if necessary
-	if isbn.Validate(candidate) {
-		if len(candidate) == 10 {
-			isbn13, err = isbn.To13(candidate)
-			if err != nil {
-				isbn13 = ""
-			}
-		}
-		if len(candidate) == 13 {
-			isbn13 = candidate
-		}
-	} else {
-		err = errors.New("ISBN-13 not found")
-	}
-	return
-}
 
 // tagAliases defines redundant tags and a main alias for them.
 var languageAliases = map[string][]string{

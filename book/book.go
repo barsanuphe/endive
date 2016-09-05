@@ -758,7 +758,7 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 			return err
 		}
 		// check it's a valid ISBN
-		isbn, err := cleanISBN(newValues[0])
+		isbn, err := h.CleanISBN(newValues[0])
 		if err != nil {
 			return err
 		}
