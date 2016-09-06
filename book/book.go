@@ -700,12 +700,12 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 		}
 	case "series":
 		fmt.Println("NOTE: series can be edited as a comma-separated list of 'series name:index' strings. Index can be empty, or a range.")
-		newValues, err := h.AssignNewValues(field, e.Metadata.Series.String(), values)
+		newValues, err := h.AssignNewValues(field, e.Metadata.Series.rawString(), values)
 		if err != nil {
 			return err
 		}
 		// if user input was entered, we have to split the line
-		if len(newValues) == 1 && strings.TrimSpace(newValues[0]) != "" {
+		if len(newValues) == 1 && newValues[0] != e.Metadata.Series.rawString() && strings.TrimSpace(newValues[0]) != "" {
 			// remove all Series
 			e.Metadata.Series = Series{}
 			for _, s := range strings.Split(newValues[0], ",") {

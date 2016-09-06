@@ -105,7 +105,7 @@ func Choose(localCandidate, remoteCandidate string) (chosenOne string, err error
 			err = errors.New("Abort")
 			validChoice = true
 		case "3":
-			fmt.Printf("Enter new value: ")
+			fmt.Print("Enter new value: ")
 			choice, _ = scanner.ReadString('\n')
 			choice = strings.TrimSpace(choice)
 			if choice == "" {
@@ -209,10 +209,9 @@ func AssignNewValues(field, oldValue string, candidates []string) (newValues []s
 }
 
 // ChooseVersion among two choices
-func ChooseVersion(title, local, remote string) (choice string, err error) {
+func ChooseVersion(title, local, remote string) (string, error) {
 	Subpart(title + ":")
-	choice, err = Choose(local, remote)
-	return
+	return Choose(local, remote)
 }
 
 // CleanISBN from a string
