@@ -152,7 +152,7 @@ func ListEpubsInDirectory(root string) (epubPaths []string, hashes []string, err
 		}
 		return
 	})
-	fmt.Printf("\r")
+	fmt.Print("\r")
 	return
 }
 

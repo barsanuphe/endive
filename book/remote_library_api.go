@@ -12,9 +12,9 @@ import (
 
 // RemoteLibraryAPI is the interface for accessing remote library information.
 type RemoteLibraryAPI interface {
-	GetBook(id, key string) Metadata
-	GetBookIDByQuery(author, title, key string) (id string)
-	GetBookIDByISBN(isbn, key string) (id string)
+	GetBook(id, key string) (Metadata, error)
+	GetBookIDByQuery(author, title, key string) (id string, err error)
+	GetBookIDByISBN(isbn, key string) (id string, err error)
 }
 
 // GoodReads implements RemoteLibraryAPI and retrieves information from goodreads.com.
@@ -43,12 +43,15 @@ type work struct {
 }
 
 // GetBook returns a GoodreadsBook from its Goodreads ID
-func (g GoodReads) GetBook(id, key string) Metadata {
+func (g GoodReads) GetBook(id, key string) (Metadata, error) {
 	defer h.TimeTrack(time.Now(), "Getting Book info")
 	uri := apiRoot + "book/show/" + id + ".xml?key=" + key
 	r := response{}
-	h.GetXMLData(uri, &r)
-	return r.Book
+	err := h.GetXMLData(uri, &r)
+	if err != nil {
+		h.Error(err.Error())
+	}
+	return r.Book, err
 }
 
 func makeSearchQuery(parts ...string) (query string) {
@@ -58,41 +61,47 @@ func makeSearchQuery(parts ...string) (query string) {
 }
 
 // GetBookIDByQuery gets a Goodreads ID from a query
-func (g GoodReads) GetBookIDByQuery(author, title, key string) (id string) {
+func (g GoodReads) GetBookIDByQuery(author, title, key string) (id string, err error) {
 	defer h.TimeTrack(time.Now(), "Getting Book ID by query")
 
 	uri := apiRoot + "search/index.xml?key=" + key + "&q=" + makeSearchQuery(author, title)
 	r := response{}
-	h.GetXMLData(uri, &r)
+	err = h.GetXMLData(uri, &r)
+	if err != nil {
+		return
+	}
 	// parsing results
 	numberOfHits, err := strconv.Atoi(r.Search.ResultsNumber)
 	if err != nil {
-		fmt.Println("error")
+		return
 	}
 	if numberOfHits != 0 {
 		// TODO: if more than 1 hit, give the user a choice, as in beets import.
 		for _, work := range r.Search.Works {
 			if work.Author == author && work.Title == title {
-				return work.ID
+				return work.ID, nil
 			}
 		}
 		fmt.Println("Could not find exact match, returning first hit.")
-		return r.Search.Works[0].ID
+		return r.Search.Works[0].ID, nil
 	}
 	return
 }
 
 // GetBookIDByISBN gets a Goodreads ID from an ISBN
-func (g GoodReads) GetBookIDByISBN(isbn, key string) (id string) {
+func (g GoodReads) GetBookIDByISBN(isbn, key string) (id string, err error) {
 	defer h.TimeTrack(time.Now(), "Getting Book ID by ISBN")
 
 	uri := apiRoot + "search/index.xml?key=" + key + "&q=" + isbn
 	r := response{}
-	h.GetXMLData(uri, &r)
+	err = h.GetXMLData(uri, &r)
+	if err != nil {
+		return
+	}
 	// parsing results
 	numberOfHits, err := strconv.Atoi(r.Search.ResultsNumber)
 	if err != nil {
-		fmt.Println("error")
+		return
 	}
 	if numberOfHits != 0 {
 		id = r.Search.Works[0].ID

@@ -43,10 +43,13 @@ func TestGoodReads(t *testing.T) {
 	assert := assert.New(t)
 	for _, book := range grBooks {
 		// getting book_id
-		bookID := g.GetBookIDByQuery(book.author, book.title, key)
+		bookID, err := g.GetBookIDByQuery(book.author, book.title, key)
+		assert.Nil(err, "Unexpected error")
 		assert.Equal(book.expectedID, bookID, "Bad book id")
+
 		// getting book information from book_id
-		b := g.GetBook(bookID, key)
+		b, err := g.GetBook(bookID, key)
+		assert.Nil(err, "Unexpected error")
 		b.Clean(standardTestConfig)
 		assert.Equal(book.author, b.Author(), "Bad author")
 		if b.MainTitle != book.title && b.OriginalTitle != book.title {
@@ -56,7 +59,8 @@ func TestGoodReads(t *testing.T) {
 		assert.Equal(book.expectedFullTitle, b.String(), "Bad title")
 
 		// getting book_id by isbn
-		bookID = g.GetBookIDByISBN(book.isbn, key)
+		bookID, err = g.GetBookIDByISBN(book.isbn, key)
+		assert.Nil(err, "Unexpected error")
 		assert.Equal(book.expectedID, bookID, "Bad book id")
 	}
 }

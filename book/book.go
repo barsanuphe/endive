@@ -539,7 +539,12 @@ func (e *Book) Import(path string, isRetail bool, hash string) (imported bool, e
 	// get online data
 	err = e.SearchOnline()
 	if err != nil {
-		h.Warning(err.Error())
+		h.Debug(err.Error())
+		h.Warning("Could not retrieve information from GoodReads. Manual review.")
+		err = e.EditField()
+		if err != nil {
+			h.Error(err.Error())
+		}
 	}
 
 	// rename
@@ -601,12 +606,18 @@ func (e *Book) GetOnlineMetadata() (onlineInfo Metadata, err error) {
 	g = GoodReads{}
 	id := ""
 	if e.Metadata.ISBN != "" {
-		id = g.GetBookIDByISBN(e.Metadata.ISBN, e.Config.GoodReadsAPIKey)
+		id, err = g.GetBookIDByISBN(e.Metadata.ISBN, e.Config.GoodReadsAPIKey)
+		if err != nil {
+			return
+		}
 	}
 	// if no ISBN or nothing was found
 	if id == "" {
 		// TODO: if unsure, show hits
-		id = g.GetBookIDByQuery(e.Metadata.Author(), e.Metadata.Title(), e.Config.GoodReadsAPIKey)
+		id, err = g.GetBookIDByQuery(e.Metadata.Author(), e.Metadata.Title(), e.Config.GoodReadsAPIKey)
+		if err != nil {
+			return
+		}
 	}
 	// if still nothing was found...
 	if id == "" {
@@ -614,8 +625,10 @@ func (e *Book) GetOnlineMetadata() (onlineInfo Metadata, err error) {
 		return Metadata{}, errors.New("Could not find online data for " + e.ShortString())
 	}
 	// get book info
-	onlineInfo = g.GetBook(id, e.Config.GoodReadsAPIKey)
-	onlineInfo.Clean(e.Config)
+	onlineInfo, err = g.GetBook(id, e.Config.GoodReadsAPIKey)
+	if err == nil {
+		onlineInfo.Clean(e.Config)
+	}
 	return
 }
 
