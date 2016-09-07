@@ -24,7 +24,7 @@ func TestSearch(t *testing.T) {
 	assert.EqualValues(len(res), 1, "Error searching fr, unexpected results")
 	assert.Equal(res[0].FullPath(), "test/pg17989.epub", "Error searching fr, unexpected results")
 	// index
-	numIndexed, err := l.Index()
+	numIndexed, err := l.IndexAll()
 	assert.Nil(err, "Error indexing epubs from database")
 	assert.EqualValues(numIndexed, 2, "Error indexing epubs from database, expected 2")
 	// metadata.language:fr

@@ -268,7 +268,7 @@ func (l *Library) Refresh() (renamed int, err error) {
 	newEpubs := []string{}
 	newHashes := []string{}
 	for i, epub := range allEpubs {
-		_, err = l.FindByFilename(epub)
+		_, err = l.Books.FindByFilename(epub)
 		// no error == found Epub
 		if err != nil {
 			// check if hash is known
@@ -372,7 +372,7 @@ func (l *Library) ExportToEReader(books []b.Book) (err error) {
 func (l *Library) DuplicateRetailEpub(id int) (nonRetailEpub *b.Book, err error) {
 	// TODO tests
 	// find book from ID
-	book, err := l.FindByID(id)
+	book, err := l.Books.FindByID(id)
 	if err != nil {
 		return &b.Book{}, err
 	}

@@ -29,8 +29,8 @@ func openIndex() (index bleve.Index, isNew bool) {
 	return index, isNew
 }
 
-// Index current DB
-func (ldb *DB) Index() (numIndexed uint64, err error) {
+// IndexAll current DB
+func (ldb *DB) IndexAll() (numIndexed uint64, err error) {
 	// open index
 	index, _ := openIndex()
 	defer index.Close()
@@ -47,7 +47,10 @@ func (ldb *DB) Index() (numIndexed uint64, err error) {
 
 	// index by path
 	for _, book := range ldb.Books {
-		index.Index(book.FullPath(), book)
+		err = index.Index(book.FullPath(), book)
+		if err != nil {
+			return
+		}
 	}
 
 	// check number of indexed documents
@@ -57,6 +60,62 @@ func (ldb *DB) Index() (numIndexed uint64, err error) {
 	}
 
 	h.Debug("Indexed: " + strconv.FormatUint(numIndexed, 10) + " epubs.")
+	return
+}
+
+// indexAdd add Books to index
+func (ldb *DB) indexAdd(books map[string]b.Book) (err error) {
+	// open index
+	index, _ := openIndex()
+	defer index.Close()
+
+	for k, v := range books {
+		err = index.Index(k, v)
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+
+// indexDelete delete Books from index
+func (ldb *DB) indexDelete(books map[string]b.Book) (err error) {
+	// open index
+	index, _ := openIndex()
+	defer index.Close()
+
+	for k := range books {
+		err = index.Delete(k)
+		if err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+// IndexDiff indexes incremental modifications
+func (ldb *DB) IndexDiff(newB map[string]b.Book, modifiedB map[string]b.Book, deletedB map[string]b.Book) (err error) {
+	// delete books
+	err = ldb.indexDelete(deletedB)
+	if err != nil {
+		return
+	}
+	// remove index for modified books too
+	err = ldb.indexDelete(modifiedB)
+	if err != nil {
+		return
+	}
+	// add new books
+	err = ldb.indexAdd(newB)
+	if err != nil {
+		return
+	}
+	// add modified books
+	err = ldb.indexAdd(modifiedB)
+	if err != nil {
+		return
+	}
 	return
 }
 
@@ -72,7 +131,7 @@ func (ldb *DB) RunQuery(queryString string) (results []b.Book, err error) {
 		index.Close()
 		// indexing db
 		h.Debug("New index, populating...")
-		numIndexed, err := ldb.Index()
+		numIndexed, err := ldb.IndexAll()
 		if err != nil {
 			return nil, err
 		}
@@ -91,7 +150,7 @@ func (ldb *DB) RunQuery(queryString string) (results []b.Book, err error) {
 	if searchResults.Total != 0 {
 		for _, hit := range searchResults.Hits {
 			var epub *b.Book
-			epub, err = ldb.FindByFilename(hit.ID)
+			epub, err = ldb.Books.FindByFilename(hit.ID)
 			if err != nil {
 				return
 			}

@@ -42,23 +42,28 @@ type DB struct {
 	indexNeedsRebuilding bool
 }
 
-// Load current DB
-func (ldb *DB) Load() (err error) {
-	h.Debug("Loading database...")
-	bytes, err := ioutil.ReadFile(ldb.DatabaseFile)
+// load JSON contents into Books
+func (ldb *DB) loadBooks() (bks b.Books, jsonContent []byte, err error) {
+	jsonContent, err = ioutil.ReadFile(ldb.DatabaseFile)
 	if err != nil {
 		if os.IsNotExist(err) {
 			// first run
-			return nil
+			return
 		}
 		return
 	}
-	err = json.Unmarshal(bytes, &ldb.Books)
+	err = json.Unmarshal(jsonContent, &bks)
 	if err != nil {
 		fmt.Println(err)
-		return
 	}
 	return
+}
+
+// Load current DB
+func (ldb *DB) Load() (err error) {
+	h.Debug("Loading database...")
+	ldb.Books, _, err = ldb.loadBooks()
+	return err
 }
 
 // Save current DB
@@ -69,12 +74,13 @@ func (ldb *DB) Save() (hasSaved bool, err error) {
 		fmt.Println(err)
 		return
 	}
+
 	// compare with input
-	jsonEpubOld, err := ioutil.ReadFile(ldb.DatabaseFile)
+	oldBooks, jsonEpubOld, err := ldb.loadBooks()
 	if err != nil && !os.IsNotExist(err) {
-		fmt.Println(err)
-		return
+		h.Error("Error loading database")
 	}
+
 	if !bytes.Equal(jsonEpub, jsonEpubOld) {
 		h.Debug("Changes detected, saving database...")
 		// writing db
@@ -83,7 +89,17 @@ func (ldb *DB) Save() (hasSaved bool, err error) {
 			return
 		}
 		hasSaved = true
-		ldb.indexNeedsRebuilding = true
+
+		// index what is needed.
+		// diff to check the changes
+		n, m, d := ldb.Books.Diff(oldBooks)
+		// update the index
+		err = ldb.IndexDiff(n, m, d)
+		if err != nil {
+			h.Error("Error updating index, it may be necessary to build it anew")
+			ldb.indexNeedsRebuilding = true
+			return
+		}
 	}
 	return
 }
@@ -117,7 +133,7 @@ func (ldb *DB) rebuildIndex() (err error) {
 		return err
 	}
 	// indexing db
-	numIndexed, err := ldb.Index()
+	numIndexed, err := ldb.IndexAll()
 	if err != nil {
 		return err
 	}
@@ -131,7 +147,7 @@ func (ldb *DB) generateID() (id int) {
 	if len(ldb.Books) == 0 {
 		return
 	}
-	// find max ID of ldb.Books
+	// find max ID of ldb.Books and add 1
 	for _, book := range ldb.Books {
 		if book.ID > id {
 			id = book.ID
@@ -161,16 +177,6 @@ func (ldb *DB) Check() (err error) {
 	return
 }
 
-// FindByID among known Books
-func (ldb *DB) FindByID(id int) (result *b.Book, err error) {
-	for i, bk := range ldb.Books {
-		if bk.ID == id {
-			return &ldb.Books[i], nil
-		}
-	}
-	return &b.Book{}, errors.New("Could not find book with ID " + strconv.Itoa(id))
-}
-
 // FindByMetadata among known Books
 func (ldb *DB) FindByMetadata(i b.Metadata) (result *b.Book, err error) {
 	// TODO tests
@@ -180,16 +186,6 @@ func (ldb *DB) FindByMetadata(i b.Metadata) (result *b.Book, err error) {
 		}
 	}
 	return &b.Book{}, errors.New("Could not find book with info " + i.String())
-}
-
-//FindByFilename among known Books
-func (ldb *DB) FindByFilename(filename string) (result *b.Book, err error) {
-	for i, bk := range ldb.Books {
-		if bk.RetailEpub.FullPath() == filename || bk.NonRetailEpub.FullPath() == filename {
-			return &ldb.Books[i], nil
-		}
-	}
-	return &b.Book{}, errors.New("Could not find book with epub " + filename)
 }
 
 //FindByHash among known Books
