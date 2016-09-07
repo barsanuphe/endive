@@ -203,8 +203,15 @@ func AssignNewValues(field, oldValue string, candidates []string) (newValues []s
 		candidates[i] = strings.TrimSpace(candidates[i])
 	}
 	newValues = candidates
+
 	// show old_value => new_value
-	Infof("Changing %s: \n%s\n\t=>\n%s\n", field, oldValue, strings.Join(newValues, "|"))
+	newValuesString := strings.Join(newValues, "|")
+	if oldValue != newValuesString {
+
+		Infof("Changing %s: \n%s\n\t=>\n%s\n", field, oldValue, newValuesString)
+	} else {
+		Info("Nothing to change.")
+	}
 	return
 }
 

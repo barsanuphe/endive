@@ -7,8 +7,8 @@ import (
 	h "github.com/barsanuphe/endive/helpers"
 )
 
-// TODO add all possibile orders
-var validSortOrder = []string{"id", "author", "title", "series", "genre", "category", "rating", "averagerating", "year"}
+// TODO add all possible orders
+var validSortOrder = []string{idField, authorField, titleField, seriesField, genreField, categoryField, ratingField, averageRatingField, yearField}
 
 // CheckValidSortOrder checks if a sorting field is valid.
 func CheckValidSortOrder(sortBy string) (valid bool) {
@@ -74,15 +74,15 @@ func SortBooks(books []Book, orderBy string) {
 	}
 
 	switch orderBy {
-	case "id":
+	case idField:
 		By(id).Sort(books)
-	case "author":
+	case authorField:
 		By(author).Sort(books)
-	case "title":
+	case titleField:
 		By(title).Sort(books)
-	case "original_year":
+	case yearField:
 		By(originalYear).Sort(books)
-	case "year":
+	case editionYearField:
 		By(year).Sort(books)
 		// TODO all cases
 	}

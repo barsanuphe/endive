@@ -10,8 +10,32 @@ import (
 	h "github.com/barsanuphe/endive/helpers"
 )
 
+const (
+	titleField         = "title"
+	descriptionField   = "description"
+	isbnField          = "isbn"
+	yearField          = "year"
+	editionYearField   = "edition_year"
+	authorField        = "author"
+	publisherField     = "publisher"
+	tagsField          = "tags"
+	seriesField        = "series"
+	languageField      = "language"
+	categoryField      = "category"
+	genreField         = "genre"
+	numPagesField      = "numpages"
+	averageRatingField = "averagerating"
+	fictionCategory    = "fiction"
+	nonfictionCategory = "nonfiction"
+
+	unknownYear = "XXXX"
+	unknown     = "Unknown"
+
+	epubExtension = ".epub"
+)
+
 // MetadataFieldNames is a list of valid field names
-var MetadataFieldNames = []string{"author", "title", "year", "edition_year", "publisher", "description", "language", "category", "genre", "tags", "series", "isbn"}
+var MetadataFieldNames = []string{authorField, titleField, yearField, editionYearField, publisherField, descriptionField, languageField, categoryField, genreField, tagsField, seriesField, isbnField}
 
 // Metadata contains all of the known book metadata.
 type Metadata struct {
@@ -55,11 +79,11 @@ func (i *Metadata) HasAny() (hasMetadata bool) {
 func (i *Metadata) IsComplete() bool {
 	hasAuthor := i.Author() != ""
 	hasTitle := i.Title() != ""
-	hasYear := i.OriginalYear != "" && i.OriginalYear != "XXXX"
+	hasYear := i.OriginalYear != "" && i.OriginalYear != unknownYear
 	hasLanguage := i.Language != ""
 	hasDescription := i.Description != ""
-	hasCategory := i.Category != "" && i.Category != "Unknown"
-	hasGenre := i.MainGenre != "" && i.MainGenre != "Unknown"
+	hasCategory := i.Category != "" && i.Category != unknown
+	hasGenre := i.MainGenre != "" && i.MainGenre != unknown
 	hasISBN := i.ISBN != ""
 	hasPublisher := i.Publisher != ""
 	hasTags := i.Tags.String() != ""
@@ -81,14 +105,14 @@ func (i *Metadata) Clean(cfg c.Config) {
 		if i.EditionYear != "" {
 			i.OriginalYear = i.EditionYear
 		} else {
-			i.OriginalYear = "XXXX"
+			i.OriginalYear = unknownYear
 		}
 	}
 	if i.EditionYear == "" {
 		if i.OriginalYear != "" {
 			i.EditionYear = i.OriginalYear
 		} else {
-			i.EditionYear = "XXXX"
+			i.EditionYear = unknownYear
 		}
 	}
 	// clean description
@@ -101,18 +125,18 @@ func (i *Metadata) Clean(cfg c.Config) {
 	i.Tags.Clean()
 	// autofill category
 	if i.Category == "" {
-		if isIn, _ := i.Tags.Has(Tag{Name: "fiction"}); isIn {
-			i.Category = "fiction"
-			i.Tags.RemoveFromNames("fiction")
+		if isIn, _ := i.Tags.Has(Tag{Name: fictionCategory}); isIn {
+			i.Category = fictionCategory
+			i.Tags.RemoveFromNames(fictionCategory)
 		}
-		if isIn, _ := i.Tags.Has(Tag{Name: "nonfiction"}); isIn {
-			i.Category = "nonfiction"
-			i.Tags.RemoveFromNames("nonfiction")
+		if isIn, _ := i.Tags.Has(Tag{Name: nonfictionCategory}); isIn {
+			i.Category = nonfictionCategory
+			i.Tags.RemoveFromNames(nonfictionCategory)
 		}
 	}
 	// if nothing valid found...
 	if i.Category == "" {
-		i.Category = "Unknown"
+		i.Category = unknown
 	}
 	if cat, err := cleanCategory(i.Category); err == nil {
 		i.Category = cat
@@ -128,7 +152,7 @@ func (i *Metadata) Clean(cfg c.Config) {
 	}
 	// if nothing valid found...
 	if i.MainGenre == "" {
-		i.MainGenre = "Unknown"
+		i.MainGenre = unknown
 	}
 	if main, err := cleanTagName(i.MainGenre); err == nil {
 		i.MainGenre = main
@@ -143,7 +167,7 @@ func (i *Metadata) Clean(cfg c.Config) {
 }
 
 // useAliases updates Metadata fields, using the configuration file.
-func (i *Metadata) useAliases(cfg c.Config) (hasChanged bool) {
+func (i *Metadata) useAliases(cfg c.Config) {
 	// author aliases
 	for j, author := range i.Authors {
 		for mainAlias, aliases := range cfg.AuthorAliases {
@@ -181,12 +205,11 @@ func (i *Metadata) useAliases(cfg c.Config) (hasChanged bool) {
 			break
 		}
 	}
-	return
 }
 
 // Author returns Metadata's main author.
 func (i *Metadata) Author() (author string) {
-	author = "Unknown"
+	author = unknown
 	if len(i.Authors) != 0 {
 		author = strings.Join(i.Authors, ", ")
 	}
@@ -253,7 +276,7 @@ func (i *Metadata) Merge(o Metadata, cfg c.Config) (err error) {
 // MergeField with another Metadata.
 func (i *Metadata) MergeField(o Metadata, field string, cfg c.Config) (err error) {
 	switch field {
-	case "tags", "tag":
+	case tagsField:
 		h.Subpart("Tags: ")
 		fmt.Println("NOTE: tags can be edited as a comma-separated list of strings.")
 		tagString, e := h.Choose(i.Tags.String(), o.Tags.String())
@@ -262,7 +285,7 @@ func (i *Metadata) MergeField(o Metadata, field string, cfg c.Config) (err error
 		}
 		i.Tags = Tags{}
 		i.Tags.AddFromNames(strings.Split(tagString, ",")...)
-	case "series":
+	case seriesField:
 		h.Subpart("Series: ")
 		fmt.Println("NOTE: series can be edited as a comma-separated list of 'series name:index' strings. Index can be empty, or a range.")
 		userInput, e := h.Choose(i.Series.rawString(), o.Series.rawString())
@@ -273,13 +296,13 @@ func (i *Metadata) MergeField(o Metadata, field string, cfg c.Config) (err error
 		userInput = strings.TrimSpace(userInput)
 		if userInput != "" {
 			for _, s := range strings.Split(userInput, ",") {
-				_, err := i.Series.AddFromString(s)
-				if err != nil {
-					h.Warning("Could not add series " + s + " , " + err.Error())
+				_, errAdding := i.Series.AddFromString(s)
+				if errAdding != nil {
+					h.Warning("Could not add series " + s + " , " + errAdding.Error())
 				}
 			}
 		}
-	case "author", "authors":
+	case authorField:
 		h.Subpart("Authors: ")
 		fmt.Println("NOTE: authors can be edited as a comma-separated list of strings.")
 		userInput, e := h.Choose(i.Author(), o.Author())
@@ -291,42 +314,42 @@ func (i *Metadata) MergeField(o Metadata, field string, cfg c.Config) (err error
 		for j := range i.Authors {
 			i.Authors[j] = strings.TrimSpace(i.Authors[j])
 		}
-	case "year":
+	case yearField:
 		i.OriginalYear, err = h.ChooseVersion("Original Publication year", i.OriginalYear, o.OriginalYear)
 		if err != nil {
 			return
 		}
-	case "edition_year":
+	case editionYearField:
 		i.EditionYear, err = h.ChooseVersion("Publication year", i.EditionYear, o.EditionYear)
 		if err != nil {
 			return
 		}
-	case "publisher":
+	case publisherField:
 		i.Publisher, err = h.ChooseVersion("Publisher", i.Publisher, o.Publisher)
 		if err != nil {
 			return
 		}
-	case "language":
+	case languageField:
 		i.Language, err = h.ChooseVersion("Language", cleanLanguage(i.Language), cleanLanguage(o.Language))
 		if err != nil {
 			return
 		}
-	case "category":
+	case categoryField:
 		i.Category, err = h.ChooseVersion("Category (fiction/nonfiction)", i.Category, o.Category)
 		if err != nil {
 			return
 		}
-	case "maingenre", "main_genre", "genre":
+	case genreField:
 		i.MainGenre, err = h.ChooseVersion("Main Genre", i.MainGenre, o.MainGenre)
 		if err != nil {
 			return
 		}
-	case "isbn":
+	case isbnField:
 		i.ISBN, err = h.ChooseVersion("ISBN", i.ISBN, o.ISBN)
 		if err != nil {
 			return
 		}
-	case "title":
+	case titleField:
 		h.Subpart("Title:")
 		chosenTitle, e := h.Choose(i.Title(), o.Title())
 		if e != nil {
@@ -334,7 +357,7 @@ func (i *Metadata) MergeField(o Metadata, field string, cfg c.Config) (err error
 		}
 		i.MainTitle = chosenTitle
 		i.OriginalTitle = chosenTitle
-	case "description":
+	case descriptionField:
 		i.Description, err = h.ChooseVersion("Description", cleanHTML(i.Description), cleanHTML(o.Description))
 		if err != nil {
 			return

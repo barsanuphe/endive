@@ -21,7 +21,7 @@ var grBooks = []struct {
 		"The Republic of Thieves",
 		"2890090",
 		"2013",
-		"Scott Lynch (2013) The Republic of Thieves [Gentleman Bastard (#3)]",
+		"Scott Lynch (2013) The Republic of Thieves [Gentleman Bastard #3]",
 		"9780553804690",
 	},
 	{

@@ -15,7 +15,7 @@ type SingleSeries struct {
 
 // String outputs a single series info.
 func (s SingleSeries) String() string {
-	return fmt.Sprintf("%s (#%s)", s.Name, s.Position)
+	return fmt.Sprintf("%s #%s", s.Name, s.Position)
 }
 
 // Series can track a series and an epub's position.
@@ -41,7 +41,6 @@ func (s Series) rawString() string {
 
 // AddFromString a series, checking for correct form.
 func (s *Series) AddFromString(candidate string) (seriesModified bool, err error) {
-	// TODO parse "series:part" strings: range
 	wrongFormatError := errors.New("Series index must be empty, a float, or a range, got: " + candidate)
 
 	// split again name:index

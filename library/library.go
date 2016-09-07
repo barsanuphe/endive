@@ -451,7 +451,7 @@ func (l *Library) TabulateList(books []b.Book) (table string) {
 }
 
 // ShowInfo returns a table with relevant information about a book.
-func (l *Library) ShowInfo() (desc string) {
+func (l *Library) ShowInfo() string {
 	var rows [][]string
 	rows = append(rows, []string{"Number of books", fmt.Sprintf("%d", len(l.Books))})
 	bks := l.ListRetail()

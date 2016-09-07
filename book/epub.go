@@ -96,7 +96,7 @@ func (e *Epub) ReadMetadata() (info Metadata, err error) {
 	// by default, assuming it's a first edition
 	info.OriginalYear = info.EditionYear
 	// title
-	results, nonFatalErr := book.MetadataElement("title")
+	results, nonFatalErr := book.MetadataElement(titleField)
 	if nonFatalErr == nil && len(results) != 0 {
 		info.MainTitle = results[0].Content
 	}
@@ -114,7 +114,7 @@ func (e *Epub) ReadMetadata() (info Metadata, err error) {
 		info.Language = results[0].Content
 	}
 	// description
-	results, nonFatalErr = book.MetadataElement("description")
+	results, nonFatalErr = book.MetadataElement(descriptionField)
 	if nonFatalErr == nil && len(results) != 0 {
 		info.Description = results[0].Content
 	}

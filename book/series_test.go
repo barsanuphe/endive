@@ -30,7 +30,7 @@ func TestSeries(t *testing.T) {
 
 		hasAny = e.Metadata.Series.HasAny()
 		assert.True(hasAny, "Error: expected to have at least one series.")
-		expectedString := fmt.Sprintf("%s (#%d), %s (#%d)", seriesName, i, seriesName2, i)
+		expectedString := fmt.Sprintf("%s #%d, %s #%d", seriesName, i, seriesName2, i)
 		assert.Equal(e.Metadata.Series.String(), expectedString, "Error printing series info")
 
 		// testing having series
@@ -86,6 +86,6 @@ func TestSeries(t *testing.T) {
 		assert.True(seriesModified, "Error: series should be modified")
 		assert.Nil(err)
 
-		assert.Equal("test (#1.5,2.5), test2 (#0), test3 (#0), test4 (#7,8,9)", e.Metadata.Series.String())
+		assert.Equal("test #1.5,2.5, test2 #0, test3 #0, test4 #7,8,9", e.Metadata.Series.String())
 	}
 }

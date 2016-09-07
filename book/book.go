@@ -49,6 +49,16 @@ type Book struct {
 	Review   string `json:"review"`
 }
 
+const (
+	idField       = "id"
+	progressField = "progress"
+	readDateField = "readdate"
+	ratingField   = "rating"
+	reviewField   = "review"
+
+	trueValue = "true"
+)
+
 // NewBook constructs a valid new Epub
 func NewBook(id int, filename string, c cfg.Config, isRetail bool) *Book {
 	return NewBookWithMetadata(id, filename, c, isRetail, Metadata{})
@@ -64,12 +74,12 @@ func NewBookWithMetadata(id int, filename string, c cfg.Config, isRetail bool, i
 }
 
 // ShortString returns a short string representation of Epub
-func (e *Book) ShortString() (desc string) {
+func (e *Book) ShortString() string {
 	return e.Metadata.Author() + " (" + e.Metadata.OriginalYear + ") " + e.Metadata.Title()
 }
 
 // String returns a string representation of Epub
-func (e *Book) String() (desc string) {
+func (e *Book) String() string {
 	tags := ""
 	if len(e.Metadata.Tags) != 0 {
 		tags += "[ "
@@ -82,47 +92,47 @@ func (e *Book) String() (desc string) {
 }
 
 // ShowInfo returns a table with relevant information about a book.
-func (e *Book) ShowInfo(fields ...string) (desc string) {
+func (e *Book) ShowInfo(fields ...string) string {
 	if len(fields) == 0 {
 		// select all fields
-		fields = []string{"id", "filename", "author", "title", "year", "edition_year", "publisher", "isbn", "description", "numpages", "language", "category", "genre", "tag", "series", "versions", "progress", "readdate", "averagerating", "rating", "review"}
+		fields = []string{idField, "filename", authorField, titleField, yearField, editionYearField, publisherField, isbnField, descriptionField, numPagesField, languageField, categoryField, genreField, tagsField, seriesField, "versions", progressField, readDateField, averageRatingField, ratingField, reviewField}
 	}
 	var rows [][]string
 	for _, field := range fields {
 		switch field {
-		case "id":
+		case idField:
 			rows = append(rows, []string{"ID", strconv.Itoa(e.ID)})
 		case "filename":
 			rows = append(rows, []string{"Filename", e.MainEpub().Filename})
-		case "author", "authors":
+		case authorField:
 			rows = append(rows, []string{"Author", e.Metadata.Author()})
-		case "title":
+		case titleField:
 			rows = append(rows, []string{"Title", e.Metadata.Title()})
-		case "year":
+		case yearField:
 			rows = append(rows, []string{"Original Publication Year", e.Metadata.OriginalYear})
-		case "edition_year":
+		case editionYearField:
 			rows = append(rows, []string{"Publication Year", e.Metadata.EditionYear})
-		case "publisher":
+		case publisherField:
 			rows = append(rows, []string{"Publisher", e.Metadata.Publisher})
-		case "isbn":
+		case isbnField:
 			rows = append(rows, []string{"ISBN", e.Metadata.ISBN})
-		case "description":
+		case descriptionField:
 			rows = append(rows, []string{"Description", e.Metadata.Description})
-		case "numpages":
+		case numPagesField:
 			if e.Metadata.NumPages != "" {
 				rows = append(rows, []string{"Number of pages", e.Metadata.NumPages})
 			}
-		case "language":
+		case languageField:
 			rows = append(rows, []string{"Language", e.Metadata.Language})
-		case "category":
+		case categoryField:
 			rows = append(rows, []string{"Category", e.Metadata.Category})
-		case "genre", "maingenre":
+		case genreField:
 			rows = append(rows, []string{"Main Genre", e.Metadata.MainGenre})
-		case "tag", "tags":
+		case tagsField:
 			if len(e.Metadata.Tags) != 0 {
 				rows = append(rows, []string{"Tags", e.Metadata.Tags.String()})
 			}
-		case "series":
+		case seriesField:
 			if len(e.Metadata.Series) != 0 {
 				rows = append(rows, []string{"Series", e.Metadata.Series.String()})
 			}
@@ -131,33 +141,33 @@ func (e *Book) ShowInfo(fields ...string) (desc string) {
 			if e.HasRetail() {
 				available += "retail "
 				rows = append(rows, []string{"Retail hash", e.RetailEpub.Hash})
-				if e.RetailEpub.NeedsReplacement == "true" {
+				if e.RetailEpub.NeedsReplacement == trueValue {
 					rows = append(rows, []string{"Retail needs replacement", "TRUE"})
 				}
 			}
 			if e.HasNonRetail() {
 				available += "non-retail"
 				rows = append(rows, []string{"Non-Retail hash", e.NonRetailEpub.Hash})
-				if e.NonRetailEpub.NeedsReplacement == "true" {
+				if e.NonRetailEpub.NeedsReplacement == trueValue {
 					rows = append(rows, []string{"Non-Retail needs replacement", "TRUE"})
 				}
 			}
 			rows = append(rows, []string{"Available versions", available})
-		case "progress":
+		case progressField:
 			rows = append(rows, []string{"Progress", e.Progress})
-		case "readdate", "read_date":
+		case readDateField:
 			if e.ReadDate != "" {
 				rows = append(rows, []string{"Read Date", e.ReadDate})
 			}
-		case "averagerating":
+		case averageRatingField:
 			if e.Metadata.AverageRating != "" {
 				rows = append(rows, []string{"Average Rating", e.Metadata.AverageRating})
 			}
-		case "rating":
+		case ratingField:
 			if e.Rating != "" {
 				rows = append(rows, []string{"Rating", e.Rating})
 			}
-		case "review":
+		case reviewField:
 			if e.Review != "" {
 				rows = append(rows, []string{"Review", e.Review})
 			}
@@ -256,8 +266,8 @@ func (e *Book) generateNewName(fileTemplate string, isRetail bool) (newName stri
 		newName += " [retail]"
 	}
 	// adding extension
-	if filepath.Ext(newName) != ".epub" {
-		newName += ".epub"
+	if filepath.Ext(newName) != epubExtension {
+		newName += epubExtension
 	}
 	// making sure the path is relative
 	if strings.HasPrefix(newName, "/") {
@@ -351,30 +361,30 @@ func (e *Book) ForceMetadataFieldRefresh(field string) (err error) {
 		return err
 	}
 	switch field {
-	case "tags", "tag":
+	case tagsField:
 		e.Metadata.Tags = info.Tags
-	case "series":
+	case seriesField:
 		e.Metadata.Series = info.Series
-	case "author", "authors":
+	case authorField:
 		e.Metadata.Authors = info.Authors
-	case "year":
+	case yearField:
 		e.Metadata.OriginalYear = info.OriginalYear
-	case "edition_year":
+	case editionYearField:
 		e.Metadata.EditionYear = info.EditionYear
-	case "publisher":
+	case publisherField:
 		e.Metadata.Publisher = info.Publisher
-	case "language":
+	case languageField:
 		e.Metadata.Language = info.Language
-	case "category":
+	case categoryField:
 		e.Metadata.Category = info.Category
-	case "maingenre", "main_genre", "genre":
+	case genreField:
 		e.Metadata.MainGenre = info.MainGenre
-	case "isbn":
+	case isbnField:
 		e.Metadata.ISBN = info.ISBN
-	case "title":
+	case titleField:
 		e.Metadata.MainTitle = info.MainTitle
 		e.Metadata.OriginalTitle = info.OriginalTitle
-	case "description":
+	case descriptionField:
 		e.Metadata.Description = info.Description
 	default:
 		h.Debug("Unknown field: " + field)
@@ -473,7 +483,7 @@ func (e *Book) AddEpub(path string, isRetail bool, hash string) (imported bool, 
 	if isRetail {
 		if e.HasRetail() {
 			h.Info("Trying to import retail epub although retail version already exists.")
-			if e.RetailEpub.NeedsReplacement == "true" {
+			if e.RetailEpub.NeedsReplacement == trueValue {
 				// replace retail
 				err = e.removeEpub(isRetail)
 				if err != nil {
@@ -501,7 +511,7 @@ func (e *Book) AddEpub(path string, isRetail bool, hash string) (imported bool, 
 		} else {
 			if e.HasNonRetail() {
 				h.Info("Trying to import non-retail epub although a non-retail version already exists.")
-				if e.NonRetailEpub.NeedsReplacement == "true" {
+				if e.NonRetailEpub.NeedsReplacement == trueValue {
 					// replace ,nonretail
 					h.Warning("Replacing non-retail version, flagged for replacement.")
 					err = e.removeEpub(isRetail)
@@ -679,7 +689,7 @@ func (e *Book) SearchOnline() (err error) {
 
 func (e *Book) editSpecificField(field string, values []string) (err error) {
 	switch field {
-	case "tags", "tag":
+	case tagsField:
 		fmt.Println("NOTE: tags can be edited as a comma-separated list of strings.")
 		newValues, err := h.AssignNewValues(field, e.Metadata.Tags.String(), values)
 		if err != nil {
@@ -698,7 +708,7 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 		if e.Metadata.Tags.AddFromNames(newValues...) {
 			h.Infof("Tags added to %s\n", e.ShortString())
 		}
-	case "series":
+	case seriesField:
 		fmt.Println("NOTE: series can be edited as a comma-separated list of 'series name:index' strings. Index can be empty, or a range.")
 		newValues, err := h.AssignNewValues(field, e.Metadata.Series.rawString(), values)
 		if err != nil {
@@ -715,7 +725,7 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 				}
 			}
 		}
-	case "author", "authors":
+	case authorField:
 		newValues, err := h.AssignNewValues(field, e.Metadata.Author(), values)
 		if err != nil {
 			return err
@@ -725,7 +735,7 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 		for j := range e.Metadata.Authors {
 			e.Metadata.Authors[j] = strings.TrimSpace(e.Metadata.Authors[j])
 		}
-	case "year":
+	case yearField:
 		newValues, err := h.AssignNewValues(field, e.Metadata.OriginalYear, values)
 		if err != nil {
 			return err
@@ -736,7 +746,7 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 			return err
 		}
 		e.Metadata.OriginalYear = newValues[0]
-	case "edition_year":
+	case editionYearField:
 		newValues, err := h.AssignNewValues(field, e.Metadata.EditionYear, values)
 		if err != nil {
 			return err
@@ -747,25 +757,25 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 			return err
 		}
 		e.Metadata.EditionYear = newValues[0]
-	case "language":
+	case languageField:
 		newValues, err := h.AssignNewValues(field, e.Metadata.Language, values)
 		if err != nil {
 			return err
 		}
 		e.Metadata.Language = newValues[0]
-	case "category":
+	case categoryField:
 		newValues, err := h.AssignNewValues(field, e.Metadata.Category, values)
 		if err != nil {
 			return err
 		}
 		e.Metadata.Category = newValues[0]
-	case "maingenre", "main_genre", "genre":
+	case genreField:
 		newValues, err := h.AssignNewValues(field, e.Metadata.MainGenre, values)
 		if err != nil {
 			return err
 		}
 		e.Metadata.MainGenre = newValues[0]
-	case "isbn":
+	case isbnField:
 		newValues, err := h.AssignNewValues(field, e.Metadata.ISBN, values)
 		if err != nil {
 			return err
@@ -776,26 +786,26 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 			return err
 		}
 		e.Metadata.ISBN = isbn
-	case "title":
+	case titleField:
 		newValues, err := h.AssignNewValues(field, e.Metadata.MainTitle, values)
 		if err != nil {
 			return err
 		}
 		e.Metadata.MainTitle = newValues[0]
 		e.Metadata.OriginalTitle = newValues[0]
-	case "description":
+	case descriptionField:
 		newValues, err := h.AssignNewValues(field, e.Metadata.Description, values)
 		if err != nil {
 			return err
 		}
 		e.Metadata.Description = newValues[0]
-	case "publisher":
+	case publisherField:
 		newValues, err := h.AssignNewValues(field, e.Metadata.Publisher, values)
 		if err != nil {
 			return err
 		}
 		e.Metadata.Publisher = newValues[0]
-	case "progress":
+	case progressField:
 		newValues, err := h.AssignNewValues(field, e.Progress, values)
 		if err != nil {
 			return err
@@ -805,7 +815,7 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 		} else {
 			return errors.New(newValues[0] + " is not a valid reading progress")
 		}
-	case "read_date", "readdate":
+	case readDateField:
 		newValues, err := h.AssignNewValues(field, e.ReadDate, values)
 		if err != nil {
 			return err
@@ -816,7 +826,7 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 			return err
 		}
 		e.ReadDate = newValues[0]
-	case "rating":
+	case ratingField:
 		newValues, err := h.AssignNewValues(field, e.Rating, values)
 		if err != nil {
 			return err
@@ -828,7 +838,7 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 			return err
 		}
 		e.Rating = newValues[0]
-	case "review":
+	case reviewField:
 		newValues, err := h.AssignNewValues(field, e.Review, values)
 		if err != nil {
 			return err
