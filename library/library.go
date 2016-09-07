@@ -400,6 +400,7 @@ func (l *Library) DuplicateRetailEpub(id int) (nonRetailEpub *b.Book, err error)
 // RebuildIndexBeforeSearchIfNecessary if index is dirty.
 func (l *Library) RebuildIndexBeforeSearchIfNecessary() (err error) {
 	if cfg.IsIndexDirty() {
+		defer h.TimeTrack(time.Now(), "Indexing")
 		if err := h.SpinWhileThingsHappen("Indexing", l.rebuildIndex); err != nil {
 			return err
 		}

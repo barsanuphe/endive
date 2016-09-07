@@ -10,42 +10,13 @@ import (
 	h "github.com/barsanuphe/endive/helpers"
 
 	"github.com/blevesearch/bleve"
-	"github.com/blevesearch/bleve/analysis/language/en"
 )
-
-func buildIndexMapping() (*bleve.IndexMapping, error) {
-	// TODO index everything
-	// a generic reusable mapping for english text
-	textFieldMapping := bleve.NewTextFieldMapping()
-	textFieldMapping.Analyzer = en.AnalyzerName
-
-	epubMapping := bleve.NewDocumentMapping()
-	epubMapping.AddFieldMappingsAt("progress", textFieldMapping)
-	epubMapping.AddFieldMappingsAt("description", textFieldMapping)
-	epubMapping.AddFieldMappingsAt("language", textFieldMapping)
-	epubMapping.AddFieldMappingsAt("author", textFieldMapping)
-	epubMapping.AddFieldMappingsAt("title", textFieldMapping)
-	epubMapping.AddFieldMappingsAt("year", textFieldMapping)
-	epubMapping.AddFieldMappingsAt("isbn", textFieldMapping)
-	epubMapping.AddFieldMappingsAt("rating", textFieldMapping)
-	epubMapping.AddFieldMappingsAt("tags", textFieldMapping)
-
-	indexMapping := bleve.NewIndexMapping()
-	indexMapping.AddDocumentMapping("epub", epubMapping)
-
-	indexMapping.TypeField = "type"
-	indexMapping.DefaultAnalyzer = "en"
-
-	return indexMapping, nil
-}
 
 func openIndex() (index bleve.Index, isNew bool) {
 	index, err := bleve.Open(getIndexPath())
 	if err == bleve.ErrorIndexPathDoesNotExist {
 		h.Debug("Creating new index...")
-		// create a mapping
-		indexMapping, err := buildIndexMapping()
-		index, err = bleve.New(getIndexPath(), indexMapping)
+		index, err = bleve.New(getIndexPath(), bleve.NewIndexMapping())
 		if err != nil {
 			h.Error(err.Error())
 		}
@@ -74,7 +45,7 @@ func (ldb *DB) Index() (numIndexed uint64, err error) {
 		h.Errorf("Error: %s", err.Error())
 	}
 
-	// index by filename
+	// index by path
 	for _, book := range ldb.Books {
 		index.Index(book.FullPath(), book)
 	}
@@ -84,6 +55,7 @@ func (ldb *DB) Index() (numIndexed uint64, err error) {
 	if err != nil {
 		return
 	}
+
 	h.Debug("Indexed: " + strconv.FormatUint(numIndexed, 10) + " epubs.")
 	return
 }

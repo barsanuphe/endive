@@ -10,6 +10,27 @@ import (
 	h "github.com/barsanuphe/endive/helpers"
 )
 
+// Metadata contains all of the known book metadata.
+type Metadata struct {
+	ID            string   `json:"-" xml:"id"`
+	MainTitle     string   `json:"title" xml:"title"`
+	OriginalTitle string   `json:"original_title" xml:"work>original_title"`
+	ImageURL      string   `json:"image_url" xml:"image_url"`
+	NumPages      string   `json:"num_pages" xml:"num_pages"`
+	Authors       []string `json:"authors" xml:"authors>author>name"`
+	ISBN          string   `json:"isbn" xml:"isbn13"`
+	OriginalYear  string   `json:"year" xml:"work>original_publication_year"`
+	EditionYear   string   `json:"edition_year" xml:"publication_year"`
+	Description   string   `json:"description" xml:"description"`
+	Series        Series   `json:"series" xml:"series_works>series_work"`
+	AverageRating string   `json:"average_rating" xml:"average_rating"`
+	Tags          Tags     `json:"tags" xml:"popular_shelves>shelf"`
+	Category      string   `json:"category"`
+	MainGenre     string   `json:"main_genre"`
+	Language      string   `json:"language" xml:"language_code"`
+	Publisher     string   `json:"publisher" xml:"publisher"`
+}
+
 const (
 	titleField         = "title"
 	descriptionField   = "description"
@@ -37,27 +58,6 @@ const (
 // MetadataFieldNames is a list of valid field names
 var MetadataFieldNames = []string{authorField, titleField, yearField, editionYearField, publisherField, descriptionField, languageField, categoryField, genreField, tagsField, seriesField, isbnField}
 
-// Metadata contains all of the known book metadata.
-type Metadata struct {
-	ID            string   `json:"-" xml:"id"`
-	MainTitle     string   `json:"title" xml:"title"`
-	OriginalTitle string   `json:"original_title" xml:"work>original_title"`
-	ImageURL      string   `json:"image_url" xml:"image_url"`
-	NumPages      string   `json:"num_pages" xml:"num_pages"`
-	Authors       []string `json:"authors" xml:"authors>author>name"`
-	ISBN          string   `json:"isbn" xml:"isbn13"`
-	OriginalYear  string   `json:"year" xml:"work>original_publication_year"`
-	EditionYear   string   `json:"edition_year" xml:"publication_year"`
-	Description   string   `json:"description" xml:"description"`
-	Series        Series   `json:"series" xml:"series_works>series_work"`
-	AverageRating string   `json:"average_rating" xml:"average_rating"`
-	Tags          Tags     `json:"tags" xml:"popular_shelves>shelf"`
-	Category      string   `json:"category"`
-	MainGenre     string   `json:"main_genre"`
-	Language      string   `json:"language" xml:"language_code"`
-	Publisher     string   `json:"publisher" xml:"publisher"`
-}
-
 // String returns a representation of Metadata
 func (i *Metadata) String() string {
 	if len(i.Series) != 0 {
@@ -67,12 +67,12 @@ func (i *Metadata) String() string {
 }
 
 // HasAny checks if metadata was parsed.
-func (i *Metadata) HasAny() (hasMetadata bool) {
+func (i *Metadata) HasAny() bool {
 	// if Metadata does not have a title and author, chances are it's empty.
 	if i.Title() != "" && i.Author() != "" {
 		return true
 	}
-	return
+	return false
 }
 
 // IsComplete checks if metadata looks complete
@@ -225,7 +225,7 @@ func (i *Metadata) MainSeries() SingleSeries {
 }
 
 // IsSimilar checks if metadata is similar to known Metadata.
-func (i *Metadata) IsSimilar(o Metadata) (isSimilar bool) {
+func (i *Metadata) IsSimilar(o Metadata) bool {
 	// TODO tests
 	// check isbn
 	if i.ISBN != "" && o.ISBN != "" && i.ISBN == o.ISBN {
@@ -235,11 +235,11 @@ func (i *Metadata) IsSimilar(o Metadata) (isSimilar bool) {
 	if i.Author() == o.Author() && i.Title() == o.Title() {
 		return true
 	}
-	return
+	return false
 }
 
 // Diff returns differences between Metadatas.
-func (i *Metadata) Diff(o Metadata, firstHeader, secondHeader string) (diff string) {
+func (i *Metadata) Diff(o Metadata, firstHeader, secondHeader string) string {
 	var rows [][]string
 	rows = append(rows, []string{i.String(), o.String()})
 	rows = append(rows, []string{i.Author(), o.Author()})

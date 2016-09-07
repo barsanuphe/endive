@@ -49,12 +49,12 @@ func (s *Series) AddFromString(candidate string) (seriesModified bool, err error
 	switch len(parts) {
 	case 1:
 		// case "series"
-		s.Add(strings.TrimSpace(candidate), 0)
+		s.add(strings.TrimSpace(candidate), 0)
 		seriesModified = true
 	case 2:
 		if parts[1] == "" {
 			// case "series:"
-			s.Add(strings.TrimSpace(parts[0]), 0)
+			s.add(strings.TrimSpace(parts[0]), 0)
 			seriesModified = true
 		} else {
 			// case "series:index1-index2
@@ -73,7 +73,7 @@ func (s *Series) AddFromString(candidate string) (seriesModified bool, err error
 					return false, wrongFormatError
 				}
 				for i := index1; i <= index2; i++ {
-					s.Add(strings.TrimSpace(parts[0]), float32(i))
+					s.add(strings.TrimSpace(parts[0]), float32(i))
 				}
 				seriesModified = true
 			} else {
@@ -82,7 +82,7 @@ func (s *Series) AddFromString(candidate string) (seriesModified bool, err error
 				if e != nil {
 					err = wrongFormatError
 				} else {
-					s.Add(strings.TrimSpace(parts[0]), float32(index))
+					s.add(strings.TrimSpace(parts[0]), float32(index))
 					seriesModified = true
 				}
 			}
@@ -93,8 +93,8 @@ func (s *Series) AddFromString(candidate string) (seriesModified bool, err error
 	return
 }
 
-// Add a series
-func (s *Series) Add(seriesName string, position float32) (seriesModified bool) {
+// add a series with a float index
+func (s *Series) add(seriesName string, position float32) (seriesModified bool) {
 	hasSeries, seriesIndex, currentIndex := s.Has(seriesName)
 	indexStr := strconv.FormatFloat(float64(position), 'f', -1, 32)
 	// if not HasSeries, create new Series and add
@@ -104,23 +104,11 @@ func (s *Series) Add(seriesName string, position float32) (seriesModified bool) 
 		seriesModified = true
 	} else {
 		// if hasSeries, if index is different, update index
+		// TODO will not work is already contains several indexes
 		if currentIndex != indexStr {
 			// TODO order indexes
 			(*s)[seriesIndex].Position += "," + indexStr
 			seriesModified = true
-		}
-	}
-	return
-}
-
-// Remove series from the list
-func (s *Series) Remove(seriesName ...string) (seriesRemoved bool) {
-	for _, series := range seriesName {
-		hasSeries, seriesIndex, _ := s.Has(series)
-		if hasSeries {
-			(*s)[seriesIndex] = (*s)[len(*s)-1]
-			(*s) = (*s)[:len(*s)-1]
-			seriesRemoved = true
 		}
 	}
 	return

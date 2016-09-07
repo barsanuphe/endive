@@ -17,7 +17,7 @@ var languageAliases = map[string][]string{
 }
 
 func cleanLanguage(language string) (clean string) {
-	clean = strings.TrimSpace(language)
+	clean = strings.TrimSpace(strings.ToLower(language))
 	// reducing to main alias
 	for mainalias, aliasList := range languageAliases {
 		_, isIn := h.StringInSlice(language, aliasList)
