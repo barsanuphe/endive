@@ -4,8 +4,9 @@
 [![Build Status](https://travis-ci.org/barsanuphe/endive.svg?branch=master)](https://travis-ci.org/barsanuphe/endive)
 [![Coverage Status](https://coveralls.io/repos/github/barsanuphe/endive/badge.svg?branch=master)](https://coveralls.io/github/barsanuphe/endive?branch=master)
 [![GPLv3](https://img.shields.io/badge/license-GPLv3-blue.svg)](http://www.gnu.org/licenses/gpl-3.0.en.html)
+[![Go Report Card](https://goreportcard.com/badge/github.com/barsanuphe/endive)](https://goreportcard.com/report/github.com/barsanuphe/endive)
 
-In very early development.
+In early development.
 
 Right now, it will probably just delete your precious books and insult you.
 

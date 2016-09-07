@@ -177,7 +177,7 @@ func TestBookRefresh(t *testing.T) {
 		wasRenamed, newName, err := e.Refresh()
 		assert.Nil(err, "Error generating new name")
 		assert.True(wasRenamed[0], "Error renaming "+tempCopy)
-		assert.False(wasRenamed[1], "Error: should not have rename non-existant non-retail epub.")
+		assert.False(wasRenamed[1], "Error: should not have rename non-existent non-retail epub.")
 		assert.Equal(newName[0], testEpub.expectedFormat1Retail, "Error renaming %s "+tempCopy)
 
 		// getting epub path relative to parent dir (ie simulated library root) for comparison

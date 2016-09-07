@@ -35,7 +35,7 @@ type searchResults struct {
 	Works         []work `xml:"results>work"`
 }
 
-// works holds the work information in the xml reponse.
+// works holds the work information in the xml response.
 type work struct {
 	ID     string `xml:"best_book>id"`
 	Author string `xml:"best_book>author>name"`

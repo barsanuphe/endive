@@ -58,7 +58,7 @@ func TestHelpersIsDirEmpty(t *testing.T) {
 
 	// testing on non existing dir
 	nonExistingDir := filepath.Join(currentdir, "doesnotexist")
-	isEmpty, err = IsDirectoryEmpty(nonExistingDir)
+	_, err = IsDirectoryEmpty(nonExistingDir)
 	assert.NotNil(err, "Non existing directory should have triggered error")
 	exists = DirectoryExists(nonExistingDir)
 	assert.False(exists, "Directory does not exist")

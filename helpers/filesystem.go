@@ -60,7 +60,7 @@ func FileExists(path string) (absolutePath string, err error) {
 	if err != nil {
 		return
 	}
-	candidate := ""
+	var candidate string
 	if filepath.IsAbs(path) {
 		candidate = path
 	} else {

@@ -275,8 +275,7 @@ func AskForISBN() (isbn string, err error) {
 		}
 		if errs > 10 {
 			Warning("Too many errors, continuing without ISBN.")
-			err = errors.New("ISBN not set")
-			break
+			return "", errors.New("ISBN not set")
 		}
 	}
 	return
