@@ -1,5 +1,13 @@
 package book
 
+import (
+	"errors"
+	"reflect"
+	"strconv"
+
+	h "github.com/barsanuphe/endive/helpers"
+)
+
 // Books is a slice of Book.
 type Books []Book
 
@@ -12,6 +20,16 @@ func (bks Books) filter(f func(*Book) bool) (filteredBooks Books) {
 		}
 	}
 	return
+}
+
+// findUnique Book with a given function
+func (bks *Books) findUnique(f func(*Book) bool) *Book {
+	for i, v := range *bks {
+		if f(&v) {
+			return &(*bks)[i]
+		}
+	}
+	return &Book{}
 }
 
 // FilterIncomplete among Books.
@@ -37,4 +55,84 @@ func (bks *Books) FilterRetail() Books {
 // FilterNonRetailOnly among Books.
 func (bks *Books) FilterNonRetailOnly() Books {
 	return bks.filter(func(b *Book) bool { return !b.HasRetail() })
+}
+
+// TODO Move other FindBy***********
+
+// FindByID among known Books
+func (bks *Books) FindByID(id int) (b *Book, err error) {
+	b = bks.findUnique(func(b *Book) bool { return b.ID == id })
+	if b.ID == 0 {
+		err = errors.New("Could not find book with ID " + strconv.Itoa(id))
+	}
+	return
+}
+
+//FindByFilename among known Books
+func (bks *Books) FindByFilename(filename string) (b *Book, err error) {
+	b = bks.findUnique(func(b *Book) bool {
+		return b.RetailEpub.FullPath() == filename || b.NonRetailEpub.FullPath() == filename
+	})
+	if b.ID == 0 {
+		err = errors.New("Could not find book with epub " + filename)
+	}
+	return
+}
+
+// Diff detects differences between two sets of Books.
+func (bks Books) Diff(o Books) (newB map[string]Book, modifiedB map[string]Book, deletedB map[string]Book) {
+	newB = make(map[string]Book)
+	modifiedB = make(map[string]Book)
+	deletedB = make(map[string]Book)
+
+	if len(bks) != 0 {
+		// updating config in other Books for comparison
+		// otherwise FullPath will always be different.
+		config := bks[0].Config
+		for i := range o {
+			o[i].Config = config
+			o[i].RetailEpub.Config = config
+			o[i].NonRetailEpub.Config = config
+		}
+	}
+
+	// list current
+	knownIndexed := make(map[string]Book)
+	knownFullPaths := []string{}
+	for _, b := range bks {
+		knownIndexed[b.FullPath()] = b
+		knownFullPaths = append(knownFullPaths, b.FullPath())
+	}
+
+	// list other
+	otherIndexed := make(map[string]Book)
+	otherFullPaths := []string{}
+	for _, b := range o {
+		otherIndexed[b.FullPath()] = b
+		otherFullPaths = append(otherFullPaths, b.FullPath())
+	}
+
+	// if in current and not in other, append to new
+	commonPaths := []string{}
+	for _, k := range knownFullPaths {
+		if _, isIn := h.StringInSlice(k, otherFullPaths); !isIn {
+			newB[k] = knownIndexed[k]
+		} else {
+			commonPaths = append(commonPaths, k)
+		}
+	}
+	// if in other and not in current, append to deleted
+	for _, p := range otherFullPaths {
+		if _, isIn := h.StringInSlice(p, knownFullPaths); !isIn {
+			deletedB[p] = otherIndexed[p]
+		}
+	}
+	// if in both, compare them directly, if different, append to modified
+	for _, v := range commonPaths {
+		// compare
+		if !reflect.DeepEqual(knownIndexed[v], otherIndexed[v]) {
+			modifiedB[v] = knownIndexed[v]
+		}
+	}
+	return
 }

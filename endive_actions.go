@@ -84,7 +84,7 @@ func checkArgsWithID(l *l.Library, args []string) (book *b.Book, other []string,
 		return
 	}
 	// get book from ID
-	book, err = l.FindByID(id)
+	book, err = l.Books.FindByID(id)
 	if err != nil {
 		return
 	}
