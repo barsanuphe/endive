@@ -224,8 +224,8 @@ func ChooseVersion(title, local, remote string) (string, error) {
 // CleanISBN from a string
 func CleanISBN(full string) (isbn13 string, err error) {
 	// cleanup string, only keep numbers
-	re := regexp.MustCompile("[0-9]+")
-	candidate := strings.Join(re.FindAllString(full, -1), "")
+	re := regexp.MustCompile("[0-9]+X?")
+	candidate := strings.Join(re.FindAllString(strings.ToUpper(full), -1), "")
 
 	// if start of isbn detected, try to salvage the situation
 	if len(candidate) > 13 && strings.HasPrefix(candidate, "978") {
