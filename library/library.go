@@ -96,7 +96,7 @@ func (l *Library) Close() (err error) {
 			h.Error(err.Error())
 		}
 		// db has been modified at some point, backup.
-		err = l.Backup()
+		err = l.backup()
 		if err != nil {
 			h.Error(err.Error())
 		}
@@ -180,7 +180,7 @@ func (l *Library) ImportEpubs(allEpubs []string, allHashes []string, isRetail bo
 			// ask if user really wants to import it
 			importConfirmed = h.YesOrNo(fmt.Sprintf("Found %s (%s).\nImport", filepath.Base(path), info.String()))
 		} else {
-			_, err := l.FindByHash(hash)
+			_, err := l.Books.FindByHash(hash)
 			if err != nil {
 				// get Metadata from new epub
 				info, err = e.ReadMetadata()
@@ -205,7 +205,7 @@ func (l *Library) ImportEpubs(allEpubs []string, allHashes []string, isRetail bo
 		if importConfirmed {
 			// loop over Books to find similar Metadata
 			var imported bool
-			knownBook, err := l.FindByMetadata(info)
+			knownBook, err := l.Books.FindByMetadata(info)
 			if err != nil {
 				// new Book
 				h.Debug("Creating new book.")
@@ -272,7 +272,7 @@ func (l *Library) Refresh() (renamed int, err error) {
 		// no error == found Epub
 		if err != nil {
 			// check if hash is known
-			book, err := l.FindByHash(allHashes[i])
+			book, err := l.Books.FindByHash(allHashes[i])
 			if err != nil {
 				// else, it's a new epub, import
 				h.Info("NEW EPUB " + epub + " , will be imported as non-retail.")

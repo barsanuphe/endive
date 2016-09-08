@@ -105,7 +105,7 @@ func (ldb *DB) Save() (hasSaved bool, err error) {
 }
 
 // Backup current database.
-func (ldb *DB) Backup() (err error) {
+func (ldb *DB) backup() (err error) {
 	h.Debug("Backup up database...")
 	// generate archive filename with date.
 	archiveName, err := cfg.GetArchiveUniqueName(ldb.DatabaseFile)
@@ -158,7 +158,7 @@ func (ldb *DB) generateID() (id int) {
 }
 
 // Check all Books
-func (ldb *DB) Check() (err error) {
+func (ldb *DB) Check() error {
 	defer h.TimeTrack(time.Now(), "Checking")
 	for i := range ldb.Books {
 		h.Debug("Checking " + ldb.Books[i].ShortString())
@@ -174,29 +174,7 @@ func (ldb *DB) Check() (err error) {
 			h.Warning("Non-retail epub for book " + ldb.Books[i].ShortString() + " has changed, check if this is normal.")
 		}
 	}
-	return
-}
-
-// FindByMetadata among known Books
-func (ldb *DB) FindByMetadata(i b.Metadata) (result *b.Book, err error) {
-	// TODO tests
-	for j, book := range ldb.Books {
-		if book.Metadata.IsSimilar(i) || book.EpubMetadata.IsSimilar(i) {
-			return &ldb.Books[j], nil
-		}
-	}
-	return &b.Book{}, errors.New("Could not find book with info " + i.String())
-}
-
-//FindByHash among known Books
-func (ldb *DB) FindByHash(hash string) (result *b.Book, err error) {
-	// TODO check valid hash?
-	for i, bk := range ldb.Books {
-		if bk.RetailEpub.Hash == hash || bk.NonRetailEpub.Hash == hash {
-			return &ldb.Books[i], nil
-		}
-	}
-	return &b.Book{}, errors.New("Could not find book with hash " + hash)
+	return nil
 }
 
 // RemoveByID a book from the db

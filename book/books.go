@@ -57,8 +57,6 @@ func (bks *Books) FilterNonRetailOnly() Books {
 	return bks.filter(func(b *Book) bool { return !b.HasRetail() })
 }
 
-// TODO Move other FindBy***********
-
 // FindByID among known Books
 func (bks *Books) FindByID(id int) (b *Book, err error) {
 	b = bks.findUnique(func(b *Book) bool { return b.ID == id })
@@ -75,6 +73,28 @@ func (bks *Books) FindByFilename(filename string) (b *Book, err error) {
 	})
 	if b.ID == 0 {
 		err = errors.New("Could not find book with epub " + filename)
+	}
+	return
+}
+
+// FindByMetadata among known Books
+func (bks *Books) FindByMetadata(i Metadata) (b *Book, err error) {
+	b = bks.findUnique(func(b *Book) bool {
+		return b.Metadata.IsSimilar(i) || b.EpubMetadata.IsSimilar(i)
+	})
+	if b.ID == 0 {
+		err = errors.New("Could not find book with info " + i.String())
+	}
+	return
+}
+
+//FindByHash among known Books
+func (bks *Books) FindByHash(hash string) (b *Book, err error) {
+	b = bks.findUnique(func(b *Book) bool {
+		return b.RetailEpub.Hash == hash || b.NonRetailEpub.Hash == hash
+	})
+	if b.ID == 0 {
+		err = errors.New("Could not find book with hash " + hash)
 	}
 	return
 }
