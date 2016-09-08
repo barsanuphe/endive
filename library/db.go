@@ -123,22 +123,6 @@ func (l *Library) backup() (err error) {
 	return
 }
 
-// generateID for a new Book
-func (l *Library) generateID() (id int) {
-	// id 0 for first Book
-	if len(l.Books) == 0 {
-		return
-	}
-	// find max ID of ldb.Books and add 1
-	for _, book := range l.Books {
-		if book.ID > id {
-			id = book.ID
-		}
-	}
-	id++
-	return
-}
-
 // Check all Books
 func (l *Library) Check() error {
 	defer h.TimeTrack(time.Now(), "Checking")

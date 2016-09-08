@@ -52,15 +52,19 @@ func (l *Library) Close() error {
 	return cfg.RemoveLock()
 }
 
-// ImportRetail imports epubs from the Retail source.
-func (l *Library) ImportRetail() (err error) {
-	h.Title("Importing retail epubs...")
+// importFromSource all detected epubs, tagging them as retail or non-retail as requested.
+func (l *Library) importFromSource(sources []string, retail bool) (err error) {
 	defer h.TimeTrack(time.Now(), "Imported")
+	sourceType := "retail"
+	if !retail {
+		sourceType = "non-retail"
+	}
+	h.Title("Importing " + sourceType + " epubs...")
 
 	// checking all defined sources
 	var allEpubs, allHashes []string
-	for _, source := range l.Config.RetailSource {
-		h.Subtitle("Searching for retail epubs in " + source)
+	for _, source := range sources {
+		h.Subtitle("Searching for " + sourceType + " epubs in " + source)
 		epubs, hashes, err := h.ListEpubsInDirectory(source)
 		if err != nil {
 			return err
@@ -68,26 +72,17 @@ func (l *Library) ImportRetail() (err error) {
 		allEpubs = append(allEpubs, epubs...)
 		allHashes = append(allHashes, hashes...)
 	}
-	return l.ImportEpubs(allEpubs, allHashes, true)
+	return l.ImportEpubs(allEpubs, allHashes, retail)
+}
+
+// ImportRetail imports epubs from the Retail source.
+func (l *Library) ImportRetail() (err error) {
+	return l.importFromSource(l.Config.RetailSource, true)
 }
 
 // ImportNonRetail imports epubs from the Non-Retail source.
 func (l *Library) ImportNonRetail() (err error) {
-	h.Title("Importing non-retail epubs...")
-	defer h.TimeTrack(time.Now(), "Imported")
-
-	// checking all defined sources
-	var allEpubs, allHashes []string
-	for _, source := range l.Config.NonRetailSource {
-		h.Subtitle("Searching for non-retail epubs in " + source)
-		epubs, hashes, err := h.ListEpubsInDirectory(source)
-		if err != nil {
-			return err
-		}
-		allEpubs = append(allEpubs, epubs...)
-		allHashes = append(allHashes, hashes...)
-	}
-	return l.ImportEpubs(allEpubs, allHashes, false)
+	return l.importFromSource(l.Config.NonRetailSource, false)
 }
 
 // ImportEpubs files that are retail, or not.
@@ -199,6 +194,22 @@ func (l *Library) ImportEpubs(allEpubs []string, allHashes []string, isRetail bo
 	} else {
 		h.Debugf("Imported %d non-retail epubs.\n", newEpubs)
 	}
+	return
+}
+
+// generateID for a new Book
+func (l *Library) generateID() (id int) {
+	// id 0 for first Book
+	if len(l.Books) == 0 {
+		return
+	}
+	// find max ID of ldb.Books and add 1
+	for _, book := range l.Books {
+		if book.ID > id {
+			id = book.ID
+		}
+	}
+	id++
 	return
 }
 
