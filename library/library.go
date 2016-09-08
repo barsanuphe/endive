@@ -19,85 +19,32 @@ import (
 	"strconv"
 	"time"
 
+	"strings"
+
 	b "github.com/barsanuphe/endive/book"
 	cfg "github.com/barsanuphe/endive/config"
+	e "github.com/barsanuphe/endive/endive"
 	h "github.com/barsanuphe/endive/helpers"
 )
 
 // Library manages Epubs
 type Library struct {
-	Config      cfg.Config
-	KnownHashes cfg.KnownHashes
-	DB
-}
-
-// OpenLibrary constucts a valid new Library
-func OpenLibrary() (l *Library, err error) {
-	// config
-	configPath, err := cfg.GetConfigPath()
-	if err != nil {
-		return
-	}
-	c := cfg.Config{Filename: configPath}
-	// config load
-	err = c.Load()
-	if err != nil {
-		return
-	}
-	// check config
-	err = c.Check()
-	if err != nil {
-		return
-	}
-
-	// check lock
-	err = cfg.SetLock()
-	if err != nil {
-		return
-	}
-
-	// known hashes
-	hashesPath, err := cfg.GetKnownHashesPath()
-	if err != nil {
-		return
-	}
-	// load known hashes file
-	h := cfg.KnownHashes{Filename: hashesPath}
-	err = h.Load()
-	if err != nil {
-		return
-	}
-
-	l = &Library{Config: c, KnownHashes: h}
-	l.DatabaseFile = c.DatabaseFile
-	err = l.Load()
-	if err != nil {
-		return
-	}
-	// make each Book aware of current Config file
-	for i := range l.Books {
-		l.Books[i].Config = l.Config
-		l.Books[i].NonRetailEpub.Config = l.Config
-		l.Books[i].RetailEpub.Config = l.Config
-	}
-	return l, err
+	Config       cfg.Config
+	KnownHashes  cfg.KnownHashes
+	DatabaseFile string
+	Books        b.Books
+	Index        e.Indexer
 }
 
 // Close the library
-func (l *Library) Close() (err error) {
-	_, err = l.Save()
+func (l *Library) Close() error {
+	hasSaved, err := l.Save()
 	if err != nil {
-		return
+		return err
 	}
-	// write dirty index marker
-	if l.indexNeedsRebuilding {
-		err = cfg.SetDirtyIndexMarker()
-		if err != nil {
-			h.Error(err.Error())
-		}
+	if hasSaved {
 		// db has been modified at some point, backup.
-		err = l.backup()
-		if err != nil {
+		if err := l.backup(); err != nil {
 			h.Error(err.Error())
 		}
 	}
@@ -268,7 +215,7 @@ func (l *Library) Refresh() (renamed int, err error) {
 	newEpubs := []string{}
 	newHashes := []string{}
 	for i, epub := range allEpubs {
-		_, err = l.Books.FindByFilename(epub)
+		_, err = l.Books.FindByFullPath(epub)
 		// no error == found Epub
 		if err != nil {
 			// check if hash is known
@@ -397,32 +344,50 @@ func (l *Library) DuplicateRetailEpub(id int) (nonRetailEpub *b.Book, err error)
 	return
 }
 
-// RebuildIndexBeforeSearchIfNecessary if index is dirty.
-func (l *Library) RebuildIndexBeforeSearchIfNecessary() (err error) {
-	if cfg.IsIndexDirty() {
-		defer h.TimeTrack(time.Now(), "Indexing")
-		if err := h.SpinWhileThingsHappen("Indexing", l.rebuildIndex); err != nil {
-			return err
-		}
-		// remove marker after successful re-indexing
-		if err := cfg.RemoveDirtyIndexMarker(); err != nil {
-			return err
-		}
-	}
-	return
-}
-
 // Search and print the results
-func (l *Library) Search(query, sortBy string, limitFirst, limitLast bool, limitNumber int) (results string, err error) {
-	err = l.RebuildIndexBeforeSearchIfNecessary()
+func (l *Library) Search(query, sortBy string, limitFirst, limitLast bool, limitNumber int) (results b.Books, err error) {
 	if err != nil {
 		return
 	}
-	books, err := l.RunQuery(query)
+	query = l.prepareQuery(query)
+
+	booksPaths, err := l.Index.Query(query)
 	if err != nil {
-		return
+		if err.Error() == "Could not open index" {
+			// rebuild index
+			defer h.TimeTrack(time.Now(), "Indexing")
+			f := func() error {
+				// convert Books to []GenericBook
+				allBooks := []e.GenericBook{}
+				for _, b := range l.Books {
+					allBooks = append(allBooks, &b)
+				}
+				return l.Index.Rebuild(allBooks)
+			}
+			if err := h.SpinWhileThingsHappen("Indexing", f); err != nil {
+				return results, err
+			}
+			// trying again
+			booksPaths, err = l.Index.Query(query)
+			if err != nil {
+				return
+			}
+		} else {
+			return results, err
+		}
 	}
-	if len(books) != 0 {
+	if len(booksPaths) != 0 {
+		// find the Book for each path
+		books := b.Books{}
+		for _, path := range booksPaths {
+			book, err := l.Books.FindByFullPath(path)
+			if err != nil {
+				h.Warning("Could not find Book: " + path)
+			} else {
+				books = append(books, *book)
+			}
+		}
+
 		b.SortBooks(books, sortBy)
 		if limitFirst && len(books) > limitNumber {
 			books = books[:limitNumber]
@@ -430,9 +395,34 @@ func (l *Library) Search(query, sortBy string, limitFirst, limitLast bool, limit
 		if limitLast && len(books) > limitNumber {
 			books = books[len(books)-limitNumber:]
 		}
-		return l.TabulateList(books), err
+		return books, err
 	}
-	return "Nothing.", err
+	return b.Books{}, err
+}
+
+// SearchAndPrint results to a query
+func (l *Library) SearchAndPrint(query, sortBy string, limitFirst, limitLast bool, limitNumber int) (results string, err error) {
+	books, err := l.Search(query, sortBy, limitFirst, limitLast, limitNumber)
+	return l.TabulateList(books), err
+}
+
+// prepareQuery before search
+func (l *Library) prepareQuery(queryString string) string {
+	// replace fields for simpler queries
+	r := strings.NewReplacer(
+		"author:", "metadata.authors:",
+		"title:", "metadata.title:",
+		"year:", "metadata.year:",
+		"language:", "metadata.language:",
+		"series:", "metadata.series.seriesname:",
+		"tags:", "metadata.tags.name:",
+		"tag:", "metadata.tags.name:",
+		"publisher:", "metadata.publisher:",
+		"category:", "metadata.category:",
+		"genre:", "metadata.main_genre:",
+		"description:", "metadata.description:",
+	)
+	return r.Replace(queryString)
 }
 
 // TabulateList of books

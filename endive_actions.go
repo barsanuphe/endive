@@ -230,7 +230,7 @@ func search(lb *l.Library, c *cli.Context) {
 		}
 		query := strings.Join(queryParts, " ")
 		h.Debug("Searching for '" + query + "'...")
-		results, err := lb.Search(query, sortBy, limitFirst, limitLast, number)
+		results, err := lb.SearchAndPrint(query, sortBy, limitFirst, limitLast, number)
 		if err != nil {
 			fmt.Println(err.Error())
 			panic(err)
@@ -282,13 +282,8 @@ func importEpubs(lb *l.Library, c *cli.Context, isRetail bool) {
 
 func exportFilter(lb *l.Library, c *cli.Context) {
 	fmt.Println("Exporting selection to E-Reader...")
-	err := lb.RebuildIndexBeforeSearchIfNecessary()
-	if err != nil {
-		h.Error("Error indexing books before export to e-reader")
-		return
-	}
 	query := strings.Join(c.Args(), " ")
-	books, err := lb.RunQuery(query)
+	books, err := lb.Search(query, "default", false, false, 0)
 	if err != nil {
 		h.Error("Error filtering books for export to e-reader")
 		return

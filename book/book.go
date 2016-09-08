@@ -177,7 +177,7 @@ func (e *Book) ShowInfo(fields ...string) string {
 }
 
 // FullPath of the main Epub of a Book.
-func (e *Book) FullPath() (filename string) {
+func (e *Book) FullPath() string {
 	// assuming at least one epub is defined
 	if e.HasRetail() {
 		return e.RetailEpub.FullPath()

@@ -66,8 +66,8 @@ func (bks *Books) FindByID(id int) (b *Book, err error) {
 	return
 }
 
-//FindByFilename among known Books
-func (bks *Books) FindByFilename(filename string) (b *Book, err error) {
+// FindByFullPath among known Books
+func (bks *Books) FindByFullPath(filename string) (b *Book, err error) {
 	b = bks.findUnique(func(b *Book) bool {
 		return b.RetailEpub.FullPath() == filename || b.NonRetailEpub.FullPath() == filename
 	})

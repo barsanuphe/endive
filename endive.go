@@ -19,10 +19,14 @@ import (
 	b "github.com/barsanuphe/endive/book"
 	cfg "github.com/barsanuphe/endive/config"
 	h "github.com/barsanuphe/endive/helpers"
+	i "github.com/barsanuphe/endive/index"
 	l "github.com/barsanuphe/endive/library"
+
+	"path/filepath"
 
 	"github.com/codegangsta/cli"
 	"github.com/ttacon/chalk"
+	"launchpad.net/go-xdg"
 )
 
 func generateCLI(lb *l.Library) (app *cli.App) {
@@ -272,7 +276,7 @@ func main() {
 	defer h.CloseEndiveLogFile()
 
 	// get library
-	lb, err := l.OpenLibrary()
+	lb, err := OpenLibrary()
 	if err != nil {
 		h.Error("Error opening library.")
 		h.Error(err.Error())
@@ -295,4 +299,75 @@ func main() {
 	// generate CLI interface and run it
 	app := generateCLI(lb)
 	app.Run(os.Args)
+}
+
+const xdgIndexPath string = cfg.Endive + "/" + cfg.Endive + ".index"
+
+// getIndexPath gets the default index path
+func getIndexPath() (path string) {
+	path, err := xdg.Cache.Find(xdgIndexPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			path = filepath.Join(xdg.Cache.Dirs()[0], xdgIndexPath)
+		} else {
+			panic(err)
+		}
+	}
+	return
+}
+
+// OpenLibrary constucts a valid new Library
+func OpenLibrary() (lib *l.Library, err error) {
+	// config
+	configPath, err := cfg.GetConfigPath()
+	if err != nil {
+		return
+	}
+	config := cfg.Config{Filename: configPath}
+	// config load
+	err = config.Load()
+	if err != nil {
+		return
+	}
+	// check config
+	err = config.Check()
+	if err != nil {
+		return
+	}
+
+	// check lock
+	err = cfg.SetLock()
+	if err != nil {
+		return
+	}
+
+	// known hashes
+	hashesPath, err := cfg.GetKnownHashesPath()
+	if err != nil {
+		return
+	}
+	// load known hashes file
+	hashes := cfg.KnownHashes{Filename: hashesPath}
+	err = hashes.Load()
+	if err != nil {
+		return
+	}
+
+	// index
+	index := &i.Index{}
+	index.SetPath(getIndexPath())
+
+	lib = &l.Library{Config: config, KnownHashes: hashes, Index: index}
+	lib.DatabaseFile = config.DatabaseFile
+	err = lib.Load()
+	if err != nil {
+		return
+	}
+	// make each Book aware of current Config file
+	for i := range lib.Books {
+		lib.Books[i].Config = lib.Config
+		lib.Books[i].NonRetailEpub.Config = lib.Config
+		lib.Books[i].RetailEpub.Config = lib.Config
+	}
+	return lib, err
 }

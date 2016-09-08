@@ -8,11 +8,12 @@ import (
 
 	_ "github.com/barsanuphe/endive/book"
 
+	"github.com/barsanuphe/endive/mock"
 	"github.com/stretchr/testify/assert"
 )
 
 var testDbName = "../test/endive.json"
-var l = DB{DatabaseFile: testDbName}
+var l = Library{DatabaseFile: testDbName, Index: &mock.IndexService{}}
 
 func TestLdbLoad(t *testing.T) {
 	assert := assert.New(t)
