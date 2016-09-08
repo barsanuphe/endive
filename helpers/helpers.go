@@ -250,35 +250,37 @@ func CleanISBN(full string) (isbn13 string, err error) {
 }
 
 // AskForISBN when not found in epub
-func AskForISBN() (isbn string, err error) {
-	scanner := bufio.NewReader(os.Stdin)
-	validChoice := false
-	errs := 0
-	for !validChoice {
-		fmt.Print("Enter ISBN: ")
-		choice, _ := scanner.ReadString('\n')
-		choice = strings.TrimSpace(choice)
-		// check valid ISBN
-		isbnCandidate, err := CleanISBN(choice)
-		if err != nil {
-			errs++
-			Warning("Warning: Invalid value.")
-		} else {
-			confirmed := YesOrNo("Confirm: " + choice)
-			if confirmed {
-				isbn = isbnCandidate
-				validChoice = true
+func AskForISBN() (string, error) {
+	manualEdit := YesOrNo("Do you want to enter an ISBN manually")
+	if manualEdit {
+		scanner := bufio.NewReader(os.Stdin)
+		validChoice := false
+		errs := 0
+		for !validChoice {
+			fmt.Print("Enter ISBN: ")
+			choice, _ := scanner.ReadString('\n')
+			choice = strings.TrimSpace(choice)
+			// check valid ISBN
+			isbnCandidate, err := CleanISBN(choice)
+			if err != nil {
+				errs++
+				Warning("Warning: Invalid value.")
 			} else {
+				confirmed := YesOrNo("Confirm: " + choice)
+				if confirmed {
+					validChoice = true
+					return isbnCandidate, nil
+				}
 				errs++
 				fmt.Println("Manual entry not confirmed, trying again.")
 			}
-		}
-		if errs > 10 {
-			Warning("Too many errors, continuing without ISBN.")
-			return "", errors.New("ISBN not set")
+			if errs > 5 {
+				Warning("Too many errors, continuing without ISBN.")
+				break
+			}
 		}
 	}
-	return
+	return "", errors.New("ISBN not set")
 }
 
 // Display text through a pager if necessary.
