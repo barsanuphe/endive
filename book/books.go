@@ -106,13 +106,17 @@ func (bks Books) Diff(o Books) (newB map[string]Book, modifiedB map[string]Book,
 	deletedB = make(map[string]Book)
 
 	if len(bks) != 0 {
-		// updating config in other Books for comparison
+		// updating config, ui in other Books for comparison
 		// otherwise FullPath will always be different.
 		config := bks[0].Config
+		ui := bks[0].UI
 		for i := range o {
+			o[i].UI = ui
 			o[i].Config = config
 			o[i].RetailEpub.Config = config
+			o[i].RetailEpub.UI = ui
 			o[i].NonRetailEpub.Config = config
+			o[i].NonRetailEpub.UI = ui
 		}
 	}
 

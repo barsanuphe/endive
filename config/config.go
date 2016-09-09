@@ -7,8 +7,6 @@ It also deals with the internal database of already imported files (tracked thro
 package config
 
 import (
-	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -31,6 +29,33 @@ const (
 	// XdgArchiveDir is the path where database archives are kept
 	XdgArchiveDir = Endive + "/archives/"
 )
+
+// Constant Error values which can be compared to determine the type of error
+const (
+	ErrorConfigFileCreated Error = iota
+	ErrorCannotLockDB
+	ErrorLibraryRootDoesNotExist
+	WarningGoodReadsAPIKeyMissing
+	WarningRetailSourceDoesNotExist
+	WarningNonRetailSourceDoesNotExist
+)
+
+var errorMessages = map[Error]string{
+	ErrorConfigFileCreated:             "Configuration file " + xdgConfigPath + " created. Populate it.",
+	ErrorCannotLockDB:                  "Cannot lock library, is it running somewhere already?",
+	ErrorLibraryRootDoesNotExist:       "Library root does not exist",
+	WarningGoodReadsAPIKeyMissing:      "GoodReads API key not found! go to https://www.goodreads.com/api/keys to get one.",
+	WarningRetailSourceDoesNotExist:    "At least one retail source does not exist.",
+	WarningNonRetailSourceDoesNotExist: "At least one non-retail source does not exist.",
+}
+
+// Error handles errors found in configuration
+type Error int
+
+// Error implements the error interface
+func (e Error) Error() string {
+	return errorMessages[e]
+}
 
 // Config holds all relevant information
 type Config struct {
@@ -60,7 +85,7 @@ func GetConfigPath() (configFile string, err error) {
 		if err != nil {
 			return
 		}
-		h.Infof("Configuration file %s created. Populate it.", xdgConfigPath)
+		err = ErrorConfigFileCreated
 	}
 	return
 }
@@ -74,7 +99,7 @@ func SetLock() (err error) {
 			return
 		}
 	} else {
-		err = errors.New("Cannot lock library, is it running somewhere already?")
+		err = ErrorCannotLockDB
 	}
 	return
 }
@@ -90,7 +115,6 @@ func RemoveLock() (err error) {
 
 // Load configuration file using viper.
 func (c *Config) Load() (err error) {
-	h.Debugf("Loading Config %s...\n", c.Filename)
 	conf := viper.New()
 	conf.SetConfigType("yaml")
 	conf.SetConfigFile(c.Filename)
@@ -120,33 +144,29 @@ func (c *Config) Load() (err error) {
 	if c.GoodReadsAPIKey == "" {
 		c.GoodReadsAPIKey = os.Getenv("GR_API_KEY")
 		if c.GoodReadsAPIKey == "" {
-			h.Warning("Warning: no GoodReads API key found! go to https://www.goodreads.com/api/keys to get one.")
+			return WarningGoodReadsAPIKeyMissing
 		}
 	}
-
 	return
 }
 
 // Check if the paths in the configuration file are valid, and if the EpubFilename Format is ok.
-func (c *Config) Check() (err error) {
-	h.Debug("Checking Config...")
+func (c *Config) Check() error {
 	if !h.DirectoryExists(c.LibraryRoot) {
-		err = errors.New("Library root " + c.LibraryRoot + " does not exist")
-		h.Error(err.Error())
-		return err
+		return ErrorLibraryRootDoesNotExist
 	}
 	// checking for sources, warnings only.
 	for _, source := range c.RetailSource {
 		if !h.DirectoryExists(source) {
-			h.Warning("Warning: retail source " + source + " does not exist.")
+			return WarningRetailSourceDoesNotExist
 		}
 	}
 	for _, source := range c.NonRetailSource {
 		if !h.DirectoryExists(source) {
-			h.Warning("Warning: non-retail source " + source + " does not exist.")
+			return WarningNonRetailSourceDoesNotExist
 		}
 	}
-	return
+	return nil
 }
 
 // ListAuthorAliases from the configuration file.
@@ -159,7 +179,6 @@ func (c *Config) ListAuthorAliases() (allAliases string) {
 
 // String displays all configuration information.
 func (c *Config) String() string {
-	fmt.Println("Printing Config contents...")
 	var rows [][]string
 	rows = append(rows, []string{"Library directory", c.LibraryRoot})
 	rows = append(rows, []string{"Database file", c.DatabaseFile})

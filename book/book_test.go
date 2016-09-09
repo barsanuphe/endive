@@ -9,6 +9,7 @@ import (
 
 	cfg "github.com/barsanuphe/endive/config"
 	h "github.com/barsanuphe/endive/helpers"
+	"github.com/barsanuphe/endive/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -53,6 +54,7 @@ var epubs = []struct {
 
 var parentDir string
 var standardTestConfig cfg.Config
+var ui *mock.UserInterface
 var isRetail = true
 
 func TestMain(m *testing.M) {
@@ -66,17 +68,14 @@ func TestMain(m *testing.M) {
 	tags["science-fiction"] = []string{"sci-fi"}
 	standardTestConfig = cfg.Config{LibraryRoot: parentDir, TagAliases: tags}
 	// init logger
-	err = h.GetLogger("log_testing")
+	err = ui.InitLogger("log_testing")
 	if err != nil {
 		panic(err)
 	}
 	// do the actual testing
 	retCode := m.Run()
 	// cleanup
-	h.LogFile.Close()
-	if err := os.Remove("log_testing"); err != nil {
-		panic(err)
-	}
+	ui.CloseLog()
 	os.Exit(retCode)
 }
 
@@ -85,7 +84,7 @@ func TestBookJSON(t *testing.T) {
 	fmt.Println("+ Testing Book.JSON()...")
 	assert := assert.New(t)
 	for i, testEpub := range epubs {
-		e := NewBook(i, testEpub.filename, standardTestConfig, isRetail)
+		e := NewBook(ui, i, testEpub.filename, standardTestConfig, isRetail)
 		info, err := e.MainEpub().ReadMetadata()
 		assert.NotNil(err, "Error should be found (no ISBN in test epubs) for "+e.FullPath())
 		if err != nil {
@@ -118,7 +117,7 @@ func TestBookNewName(t *testing.T) {
 	fmt.Println("+ Testing Book.generateNewName()...")
 	assert := assert.New(t)
 	for i, testEpub := range epubs {
-		e := NewBook(i, testEpub.filename, standardTestConfig, !isRetail)
+		e := NewBook(ui, i, testEpub.filename, standardTestConfig, !isRetail)
 		info, err := e.MainEpub().ReadMetadata()
 		assert.NotNil(err, "Error should be found (no ISBN in test epubs) for "+e.FullPath())
 		if err != nil {
@@ -135,7 +134,7 @@ func TestBookNewName(t *testing.T) {
 		assert.Nil(err, "Error generating new name")
 		assert.Equal(newName2, testEpub.expectedFormat2, "Error getting new name")
 
-		e = NewBook(10+i, testEpub.filename, standardTestConfig, isRetail)
+		e = NewBook(ui, 10+i, testEpub.filename, standardTestConfig, isRetail)
 		info, err = e.MainEpub().ReadMetadata()
 		assert.NotNil(err, "Error should be found (no ISBN in test epubs) for "+e.FullPath())
 		if err != nil {
@@ -164,7 +163,7 @@ func TestBookRefresh(t *testing.T) {
 		assert.Nil(err, "Error copying")
 
 		// creating Epub object
-		e := NewBook(i, tempCopy, cfg, isRetail)
+		e := NewBook(ui, i, tempCopy, cfg, isRetail)
 		info, err := e.MainEpub().ReadMetadata()
 		assert.NotNil(err, "Error should be found (no ISBN in test epubs) for "+e.FullPath())
 		if err != nil {
@@ -202,7 +201,7 @@ func TestBookSetReadDate(t *testing.T) {
 	assert := assert.New(t)
 	for i, testEpub := range epubs {
 		currentDate := time.Now().Local().Format("2006-01-02")
-		e := NewBook(i, testEpub.filename, standardTestConfig, isRetail)
+		e := NewBook(ui, i, testEpub.filename, standardTestConfig, isRetail)
 		err := e.SetReadDateToday()
 		assert.Nil(err, "Error setting read date")
 		assert.Equal(e.ReadDate, currentDate, "Error setting read date")
@@ -213,7 +212,7 @@ func TestBookSetReadDate(t *testing.T) {
 func TestBookProgress(t *testing.T) {
 	fmt.Println("+ Testing Book.TestEpubProgress()...")
 	assert := assert.New(t)
-	e := NewBook(0, epubs[0].filename, standardTestConfig, isRetail)
+	e := NewBook(ui, 0, epubs[0].filename, standardTestConfig, isRetail)
 
 	err := e.SetProgress("Shortlisted")
 	assert.Nil(err, "Error setting progress Shortlisted")
@@ -234,8 +233,7 @@ func TestBookSearchOnline(t *testing.T) {
 	standardTestConfig.GoodReadsAPIKey = key
 
 	for i, testEpub := range epubs {
-		fmt.Println(testEpub.filename)
-		e := NewBook(i, testEpub.filename, standardTestConfig, isRetail)
+		e := NewBook(ui, i, testEpub.filename, standardTestConfig, isRetail)
 		info, err := e.MainEpub().ReadMetadata()
 		assert.NotNil(err, "Error should be found (no ISBN in test epubs) for "+e.FullPath())
 		if err != nil {
@@ -246,5 +244,35 @@ func TestBookSearchOnline(t *testing.T) {
 
 		err = e.SearchOnline()
 		assert.NotNil(err, "Expected error searching online, missing user input")
+	}
+}
+
+var paths = []struct {
+	path                  string
+	expectedCleanPath     string
+	expectedVFATCleanPath string
+}{
+	{
+		`a/b\\j`,
+		"a-b--j",
+		`a/b\\j`,
+	},
+	{
+		".a/a",
+		"a-a",
+		".a/a",
+	},
+	{
+		".a : 2002?",
+		"a : 2002?",
+		".a - 2002",
+	},
+}
+
+func TestBookCleanForPath(t *testing.T) {
+	fmt.Println("+ Testing Helpers/CleanForPath()...")
+	for _, el := range paths {
+		assert.Equal(t, el.expectedCleanPath, cleanPath(el.path), "Error cleaning path")
+		assert.Equal(t, el.expectedVFATCleanPath, cleanPathForVFAT(el.path), "Error cleaning path for VFAT filesystems")
 	}
 }

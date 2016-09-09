@@ -37,14 +37,14 @@ func (l *Library) loadBooks() (bks b.Books, jsonContent []byte, err error) {
 
 // Load current DB
 func (l *Library) Load() (err error) {
-	h.Debug("Loading database...")
+	l.UI.Debug("Loading database...")
 	l.Books, _, err = l.loadBooks()
 	return err
 }
 
 // Save current DB
 func (l *Library) Save() (hasSaved bool, err error) {
-	h.Debug("Determining if database should be saved...")
+	l.UI.Debug("Determining if database should be saved...")
 	jsonEpub, err := json.Marshal(l.Books)
 	if err != nil {
 		fmt.Println(err)
@@ -54,11 +54,11 @@ func (l *Library) Save() (hasSaved bool, err error) {
 	// compare with input
 	oldBooks, jsonEpubOld, err := l.loadBooks()
 	if err != nil && !os.IsNotExist(err) {
-		h.Error("Error loading database")
+		l.UI.Error("Error loading database")
 	}
 
 	if !bytes.Equal(jsonEpub, jsonEpubOld) {
-		h.Debug("Changes detected, saving database...")
+		l.UI.Debug("Changes detected, saving database...")
 		// writing db
 		err = ioutil.WriteFile(l.DatabaseFile, jsonEpub, 0777)
 		if err != nil {
@@ -73,8 +73,8 @@ func (l *Library) Save() (hasSaved bool, err error) {
 		// update the index
 		err = l.Index.Update(bookToGeneric(n), bookToGeneric(m), bookToGeneric(d))
 		if err != nil {
-			h.Error("Error updating index, it may be necessary to build it anew")
-			defer h.TimeTrack(time.Now(), "Indexing")
+			l.UI.Error("Error updating index, it may be necessary to build it anew")
+			defer h.TimeTrack(l.UI, time.Now(), "Indexing")
 			f := func() error {
 				// convert Books to []GenericBook
 				allBooks := []e.GenericBook{}
@@ -89,6 +89,7 @@ func (l *Library) Save() (hasSaved bool, err error) {
 			// index is now correct
 			return hasSaved, nil
 		}
+		l.UI.Debug("In index: " + strconv.FormatUint(l.Index.Count(), 10) + " epubs.")
 	}
 	return hasSaved, nil
 }
@@ -103,7 +104,7 @@ func bookToGeneric(x map[string]b.Book) (y map[string]e.GenericBook) {
 
 // Backup current database.
 func (l *Library) backup() (err error) {
-	h.Debug("Backup up database...")
+	l.UI.Debug("Backup up database...")
 	// generate archive filename with date.
 	archiveName, err := cfg.GetArchiveUniqueName(l.DatabaseFile)
 	if err != nil {
@@ -125,9 +126,9 @@ func (l *Library) backup() (err error) {
 
 // Check all Books
 func (l *Library) Check() error {
-	defer h.TimeTrack(time.Now(), "Checking")
+	defer h.TimeTrack(l.UI, time.Now(), "Checking")
 	for i := range l.Books {
-		h.Debug("Checking " + l.Books[i].ShortString())
+		l.UI.Debug("Checking " + l.Books[i].ShortString())
 		retailChanged, nonRetailChanged, err := l.Books[i].Check()
 		if err != nil {
 			return err
@@ -137,7 +138,7 @@ func (l *Library) Check() error {
 			return err
 		}
 		if nonRetailChanged {
-			h.Warning("Non-retail epub for book " + l.Books[i].ShortString() + " has changed, check if this is normal.")
+			l.UI.Warning("Non-retail epub for book " + l.Books[i].ShortString() + " has changed, check if this is normal.")
 		}
 	}
 	return nil
@@ -155,7 +156,7 @@ func (l *Library) RemoveByID(id int) (err error) {
 		}
 	}
 	if found {
-		h.Info("REMOVING from db " + l.Books[removeIndex].ShortString())
+		l.UI.Info("REMOVING from db " + l.Books[removeIndex].ShortString())
 		l.Books = append((l.Books)[:removeIndex], (l.Books)[removeIndex+1:]...)
 	} else {
 		err = errors.New("Did not find book with ID " + strconv.Itoa(id))

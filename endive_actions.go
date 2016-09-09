@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -11,6 +10,9 @@ import (
 	h "github.com/barsanuphe/endive/helpers"
 	l "github.com/barsanuphe/endive/library"
 
+	"fmt"
+
+	e "github.com/barsanuphe/endive/endive"
 	"github.com/codegangsta/cli"
 )
 
@@ -92,24 +94,24 @@ func checkArgsWithID(l *l.Library, args []string) (book *b.Book, other []string,
 	return
 }
 
-func editMetadata(lb *l.Library, c *cli.Context) {
+func editMetadata(lb *l.Library, c *cli.Context, ui e.UserInterface) {
 	book, args, err := checkArgsWithID(lb, c.Args())
 	if err != nil {
 		fmt.Println("Error parsing arguments: " + err.Error())
 		return
 	}
 	if err := book.EditField(args...); err != nil {
-		h.Errorf("Error editing metadata for book ID#%d", book.ID)
+		ui.Errorf("Error editing metadata for book ID#%d", book.ID)
 	}
 	_, _, err = book.Refresh()
 	if err != nil {
-		h.Errorf("Error refreshing book ID#%d", book.ID)
+		ui.Errorf("Error refreshing book ID#%d", book.ID)
 		return
 	}
-	showInfo(lb, c)
+	showInfo(lb, c, ui)
 }
 
-func refreshMetadata(lb *l.Library, c *cli.Context) {
+func refreshMetadata(lb *l.Library, c *cli.Context, ui e.UserInterface) {
 	book, _, err := checkArgsWithID(lb, c.Args())
 	if err != nil {
 		fmt.Println("Error parsing arguments: " + err.Error())
@@ -126,33 +128,34 @@ func refreshMetadata(lb *l.Library, c *cli.Context) {
 			return
 		}
 		// ask for confirmation
-		if h.YesOrNo("Confirm refreshing metadata field " + field + " for " + book.ShortString()) {
+		if ui.YesOrNo("Confirm refreshing metadata field " + field + " for " + book.ShortString()) {
 			err := book.ForceMetadataFieldRefresh(field)
 			if err != nil {
-				h.Errorf("Error reinitializing metadata field "+field+" for book ID#%d", book.ID)
+				ui.Errorf("Error reinitializing metadata field "+field+" for book ID#%d", book.ID)
+				ui.Error(err.Error())
 			}
 		}
 	} else if len(c.Args()) == 1 {
 		// ask for confirmation
-		if h.YesOrNo("Confirm refreshing metadata for " + book.ShortString()) {
+		if ui.YesOrNo("Confirm refreshing metadata for " + book.ShortString()) {
 			err := book.ForceMetadataRefresh()
 			if err != nil {
-				h.Errorf("Error reinitializing metadata for book ID#%d", book.ID)
+				ui.Errorf("Error reinitializing metadata for book ID#%d", book.ID)
 			}
 		}
 	}
 	_, _, err = book.Refresh()
 	if err != nil {
-		h.Errorf("Error refreshing book ID#%d", book.ID)
+		ui.Errorf("Error refreshing book ID#%d", book.ID)
 		return
 	}
-	showInfo(lb, c)
+	showInfo(lb, c, ui)
 }
 
-func markRead(lb *l.Library, c *cli.Context) {
+func markRead(lb *l.Library, c *cli.Context, ui e.UserInterface) {
 	book, args, err := checkArgsWithID(lb, c.Args())
 	if err != nil {
-		fmt.Println("Error parsing arguments: " + err.Error())
+		ui.Error("Error parsing arguments: " + err.Error())
 		return
 	}
 	if len(args) >= 1 {
@@ -166,50 +169,50 @@ func markRead(lb *l.Library, c *cli.Context) {
 	book.SetProgress("read")
 }
 
-func showInfo(lb *l.Library, c *cli.Context) {
+func showInfo(lb *l.Library, c *cli.Context, ui e.UserInterface) {
 	if c.NArg() == 0 {
-		fmt.Println(lb.ShowInfo())
+		ui.Display(lb.ShowInfo())
 	} else {
 		book, _, err := checkArgsWithID(lb, c.Args())
 		if err != nil {
-			fmt.Println("Error parsing arguments: " + err.Error())
+			ui.Error("Error parsing arguments: " + err.Error())
 			return
 		}
-		fmt.Println(book.ShowInfo())
+		ui.Display(book.ShowInfo())
 	}
 }
 
-func listTags(lb *l.Library, c *cli.Context) (err error) {
+func listTags(lb *l.Library, c *cli.Context, ui e.UserInterface) (err error) {
 	book, _, err := checkArgsWithID(lb, c.Args())
 	if err != nil {
 		// list all tags
 		tags := lb.ListTags()
-		h.Display(h.TabulateMap(tags, "Tag", "# of Books"))
+		ui.Display(h.TabulateMap(tags, "Tag", "# of Books"))
 	} else {
 		// if ID, list tags of ID
 		var rows [][]string
 		rows = append(rows, []string{book.ShortString(), book.Metadata.Tags.String()})
-		h.Display(h.TabulateRows(rows, "Book", "Tags"))
+		ui.Display(h.TabulateRows(rows, "Book", "Tags"))
 	}
 	return
 }
 
-func listSeries(lb *l.Library, c *cli.Context) {
+func listSeries(lb *l.Library, c *cli.Context, ui e.UserInterface) {
 	book, _, err := checkArgsWithID(lb, c.Args())
 	if err != nil {
 		// list all series
 		series := lb.ListSeries()
-		h.Display(h.TabulateMap(series, "Series", "# of Books"))
+		ui.Display(h.TabulateMap(series, "Series", "# of Books"))
 	} else {
 		// if ID, list series of ID
 		var rows [][]string
 		rows = append(rows, []string{book.ShortString(), book.Metadata.Series.String()})
-		h.Display(h.TabulateRows(rows, "Book", "Series"))
+		ui.Display(h.TabulateRows(rows, "Book", "Series"))
 	}
 	return
 }
 
-func search(lb *l.Library, c *cli.Context) {
+func search(lb *l.Library, c *cli.Context, ui e.UserInterface) {
 	if c.NArg() == 0 {
 		fmt.Println("No query found!")
 	} else {
@@ -229,17 +232,17 @@ func search(lb *l.Library, c *cli.Context) {
 			queryParts = queryParts[:lastIndex]
 		}
 		query := strings.Join(queryParts, " ")
-		h.Debug("Searching for '" + query + "'...")
+		ui.Debug("Searching for '" + query + "'...")
 		results, err := lb.SearchAndPrint(query, sortBy, limitFirst, limitLast, number)
 		if err != nil {
 			fmt.Println(err.Error())
 			panic(err)
 		}
-		h.Display(results)
+		ui.Display(results)
 	}
 }
 
-func importEpubs(lb *l.Library, c *cli.Context, isRetail bool) {
+func importEpubs(lb *l.Library, c *cli.Context, ui e.UserInterface, isRetail bool) {
 	if len(c.Args()) >= 1 {
 		// check valid path
 		validPaths, validHashes := []string{}, []string{}
@@ -263,13 +266,13 @@ func importEpubs(lb *l.Library, c *cli.Context, isRetail bool) {
 		var err error
 		if isRetail {
 			if len(lb.Config.RetailSource) == 0 {
-				h.Error("No retail source found in configuration file!")
+				ui.Error("No retail source found in configuration file!")
 				return
 			}
 			err = lb.ImportRetail()
 		} else {
 			if len(lb.Config.NonRetailSource) == 0 {
-				h.Error("No non-retail source found in configuration file!")
+				ui.Error("No non-retail source found in configuration file!")
 				return
 			}
 			err = lb.ImportNonRetail()
@@ -280,29 +283,29 @@ func importEpubs(lb *l.Library, c *cli.Context, isRetail bool) {
 	}
 }
 
-func exportFilter(lb *l.Library, c *cli.Context) {
+func exportFilter(lb *l.Library, c *cli.Context, ui e.UserInterface) {
 	fmt.Println("Exporting selection to E-Reader...")
 	query := strings.Join(c.Args(), " ")
 	books, err := lb.Search(query, "default", false, false, 0)
 	if err != nil {
-		h.Error("Error filtering books for export to e-reader")
+		ui.Error("Error filtering books for export to e-reader")
 		return
 	}
 	err = lb.ExportToEReader(books)
 	if err != nil {
-		h.Errorf("Error exporting books to e-reader: %s", err.Error())
+		ui.Errorf("Error exporting books to e-reader: %s", err.Error())
 	}
 }
 
-func exportAll(lb *l.Library, c *cli.Context) {
+func exportAll(lb *l.Library, c *cli.Context, ui e.UserInterface) {
 	fmt.Println("Exporting everything to E-Reader...")
 	err := lb.ExportToEReader(lb.Books)
 	if err != nil {
-		h.Errorf("Error exporting books to e-reader: %s", err.Error())
+		ui.Errorf("Error exporting books to e-reader: %s", err.Error())
 	}
 }
 
-func displayBooks(lb *l.Library, c *cli.Context, books []b.Book) {
+func displayBooks(lb *l.Library, c *cli.Context, ui e.UserInterface, books []b.Book) {
 	if sort, orderBy, _ := checkSortOrder(c); sort {
 		b.SortBooks(books, orderBy)
 	}
@@ -313,5 +316,5 @@ func displayBooks(lb *l.Library, c *cli.Context, books []b.Book) {
 	if limitLast && len(books) > number {
 		books = books[len(books)-number:]
 	}
-	h.Display(lb.TabulateList(books))
+	ui.Display(lb.TabulateList(books))
 }

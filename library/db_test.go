@@ -13,7 +13,7 @@ import (
 )
 
 var testDbName = "../test/endive.json"
-var l = Library{DatabaseFile: testDbName, Index: &mock.IndexService{}}
+var l = Library{DatabaseFile: testDbName, Index: &mock.IndexService{}, UI: &mock.UserInterface{}}
 
 func TestLdbLoad(t *testing.T) {
 	assert := assert.New(t)

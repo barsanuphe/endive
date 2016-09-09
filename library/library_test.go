@@ -2,36 +2,18 @@ package library
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	cfg "github.com/barsanuphe/endive/config"
-	h "github.com/barsanuphe/endive/helpers"
 	"github.com/barsanuphe/endive/mock"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMain(m *testing.M) {
-	// init logger
-	err := h.GetLogger("log_testing")
-	if err != nil {
-		panic(err)
-	}
-	// do the actual testing
-	retCode := m.Run()
-	// cleanup
-	h.LogFile.Close()
-	if err := os.Remove("log_testing"); err != nil {
-		panic(err)
-	}
-	os.Exit(retCode)
-}
-
 func TestLibrarySearch(t *testing.T) {
 	c := cfg.Config{}
 	k := cfg.KnownHashes{}
-	l := Library{Config: c, KnownHashes: k, DatabaseFile: "../test/endive.json", Index: &mock.IndexService{}}
+	l := Library{Config: c, KnownHashes: k, DatabaseFile: "../test/endive.json", Index: &mock.IndexService{}, UI: &mock.UserInterface{}}
 	assert := assert.New(t)
 
 	err := l.Load()

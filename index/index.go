@@ -3,15 +3,13 @@ package index
 import (
 	"errors"
 	"os"
-	"strconv"
-
-	e "github.com/barsanuphe/endive/endive"
-	h "github.com/barsanuphe/endive/helpers"
 
 	"github.com/blevesearch/bleve"
+
+	e "github.com/barsanuphe/endive/endive"
 )
 
-// Index implements IndexService
+// Index implements Indexer
 type Index struct {
 	Path            string
 	NeedsRebuilding bool
@@ -25,7 +23,10 @@ func (i *Index) SetPath(path string) {
 
 // Count the number of indexed GenericBooks.
 func (i *Index) Count() uint64 {
-	index, _ := i.open()
+	index, _, err := i.open()
+	if err != nil {
+		return 0
+	}
 	defer index.Close()
 
 	// check number of indexed documents
@@ -33,7 +34,6 @@ func (i *Index) Count() uint64 {
 	if err != nil {
 		return 0
 	}
-	h.Debug("Indexed: " + strconv.FormatUint(count, 10) + " epubs.")
 	return count
 }
 
@@ -83,7 +83,10 @@ func (i *Index) Query(queryString string) (resultsPaths []string, err error) {
 	// NOTE: second argument is max number of hits
 	search := bleve.NewSearchRequestOptions(query, 1000, 0, false)
 	// open index
-	index, isNew := i.open()
+	index, isNew, err := i.open()
+	if err != nil {
+		return
+	}
 	defer index.Close()
 	if isNew {
 		return resultsPaths, errors.New("Could not open index")
@@ -91,7 +94,6 @@ func (i *Index) Query(queryString string) (resultsPaths []string, err error) {
 
 	searchResults, err := index.Search(search)
 	if err != nil {
-		h.Error(err.Error())
 		return
 	}
 	//fmt.Println(searchResults.Total)
@@ -103,28 +105,26 @@ func (i *Index) Query(queryString string) (resultsPaths []string, err error) {
 	return
 }
 
-func (i *Index) open() (index bleve.Index, isNew bool) {
+func (i *Index) open() (index bleve.Index, isNew bool, err error) {
 	// TODO check Path is set
-	index, err := bleve.Open(i.Path)
+	index, err = bleve.Open(i.Path)
 	if err == bleve.ErrorIndexPathDoesNotExist {
-		h.Debug("Creating new index...")
 		index, err = bleve.New(i.Path, bleve.NewIndexMapping())
 		if err != nil {
-			h.Error(err.Error())
+			return
 		}
 		isNew = true
-	} else if err == nil {
-		//log.Printf("Opening existing index...")
-	} else {
-		h.Error(err.Error())
 	}
-	return index, isNew
+	return index, isNew, err
 }
 
 // indexAdd add Books to index
 func (i *Index) add(books map[string]e.GenericBook) (err error) {
 	// open index
-	index, _ := i.open()
+	index, _, err := i.open()
+	if err != nil {
+		return
+	}
 	defer index.Close()
 
 	for k, v := range books {
@@ -139,7 +139,10 @@ func (i *Index) add(books map[string]e.GenericBook) (err error) {
 // indexDelete delete Books from index
 func (i *Index) delete(books map[string]e.GenericBook) (err error) {
 	// open index
-	index, _ := i.open()
+	index, _, err := i.open()
+	if err != nil {
+		return
+	}
 	defer index.Close()
 
 	for k := range books {

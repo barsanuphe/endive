@@ -16,7 +16,7 @@ func TestTags(t *testing.T) {
 	tag3 := Tag{Name: "forthcoming"}
 	tag4 := Tag{Name: "sci-fi"}
 	tag5 := Tag{Name: "science-fiction"}
-	e := NewBook(0, epubs[0].filename, standardTestConfig, isRetail)
+	e := NewBook(ui, 0, epubs[0].filename, standardTestConfig, isRetail)
 
 	// check empty tags
 	isIn, _ := e.Metadata.Tags.Has(tag1)

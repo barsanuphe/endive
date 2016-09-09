@@ -6,7 +6,7 @@ import (
 	"github.com/barsanuphe/endive/endive"
 )
 
-// IndexService represents a mock implementation of endive.IndexService.
+// IndexService represents a mock implementation of endive.Indexer.
 type IndexService struct {
 	// additional function implementations...
 }

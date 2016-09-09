@@ -77,35 +77,6 @@ func TestHelpersIsDirEmpty(t *testing.T) {
 	require.Nil(t, err, "Could not remove directory")
 }
 
-var paths = []struct {
-	path                  string
-	expectedCleanPath     string
-	expectedVFATCleanPath string
-}{
-	{
-		`a/b\\j`,
-		"a-b--j",
-		"a-b--j",
-	},
-	{
-		".a/a",
-		"a-a",
-		"a-a",
-	},
-	{
-		".a : 2002?",
-		"a : 2002?",
-		"a - 2002",
-	},
-}
-
-func TestHelpersCleanForPath(t *testing.T) {
-	fmt.Println("+ Testing Helpers/CleanForPath()...")
-	for _, el := range paths {
-		assert.Equal(t, CleanPath(el.path), el.expectedCleanPath, "Error cleaning path")
-	}
-}
-
 func TestHelpersCopy(t *testing.T) {
 	fmt.Println("+ Testing Helpers/Copy()...")
 	assert := assert.New(t)

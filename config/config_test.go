@@ -5,27 +5,10 @@ import (
 	"os"
 	"testing"
 
-	h "github.com/barsanuphe/endive/helpers"
 	"github.com/stretchr/testify/assert"
 )
 
 var configFile = "../test/config.yaml"
-
-func TestMain(m *testing.M) {
-	// init logger
-	err := h.GetLogger("log_testing")
-	if err != nil {
-		panic(err)
-	}
-	// do the actual testing
-	retCode := m.Run()
-	// cleanup
-	h.LogFile.Close()
-	if err := os.Remove("log_testing"); err != nil {
-		panic(err)
-	}
-	os.Exit(retCode)
-}
 
 func TestConfigLoad(t *testing.T) {
 	fmt.Println("+ Testing Config.Load()...")
@@ -48,7 +31,7 @@ func TestConfigLoad(t *testing.T) {
 	assert.Nil(err, "Error creating library root")
 	// check should be ok
 	err = c.Check()
-	assert.Nil(err, "Error checking configuration file")
+	assert.NotEqual(ErrorLibraryRootDoesNotExist, err, "Library root should exist now")
 	// cleanup
 	err = os.Remove(c.LibraryRoot)
 	assert.Nil(err, "Error removing library root")

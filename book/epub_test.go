@@ -11,7 +11,7 @@ func TestEpubGetHash(t *testing.T) {
 	fmt.Println("+ Testing Epub.GetHash()...")
 	assert := assert.New(t)
 	for i, testEpub := range epubs {
-		e := NewBook(i, testEpub.filename, standardTestConfig, true)
+		e := NewBook(ui, i, testEpub.filename, standardTestConfig, true)
 		err := e.RetailEpub.GetHash()
 		assert.Nil(err, "Error calculating hash for "+e.FullPath())
 		assert.Equal(e.RetailEpub.Hash, testEpub.expectedSha256, "Error calculating sha256")
@@ -22,7 +22,7 @@ func TestEpubFlagReplacement(t *testing.T) {
 	fmt.Println("+ Testing Epub.FlagForReplacement()...")
 	assert := assert.New(t)
 	for i, testEpub := range epubs {
-		e := NewBook(i, testEpub.filename, standardTestConfig, true)
+		e := NewBook(ui, i, testEpub.filename, standardTestConfig, true)
 		assert.Equal(e.RetailEpub.NeedsReplacement, "false")
 
 		err := e.RetailEpub.FlagForReplacement()
@@ -35,7 +35,7 @@ func TestEpubFlagReplacement(t *testing.T) {
 func TestEpubCheck(t *testing.T) {
 	fmt.Println("+ Testing Epub.SetRetail()...")
 	assert := assert.New(t)
-	e := NewBook(0, epubs[0].filename, standardTestConfig, isRetail)
+	e := NewBook(ui, 0, epubs[0].filename, standardTestConfig, isRetail)
 	e.RetailEpub.GetHash()
 
 	// checking retail

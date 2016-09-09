@@ -10,9 +10,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"io"
 	"os"
-	"os/exec"
 	"regexp"
 	"sort"
 	"strconv"
@@ -22,12 +20,14 @@ import (
 	"github.com/barsanuphe/gotabulate"
 	"github.com/moraes/isbn"
 	"github.com/tj/go-spin"
+
+	e "github.com/barsanuphe/endive/endive"
 )
 
 // TimeTrack helps track the time taken by a function.
-func TimeTrack(start time.Time, name string) {
+func TimeTrack(ui e.UserInterface, start time.Time, name string) {
 	elapsed := time.Since(start)
-	Debugf("-- %s in %s\n", name, elapsed)
+	ui.Debugf("-- %s in %s\n", name, elapsed)
 }
 
 // StringInSlice checks if a string is in a []string.
@@ -88,139 +88,6 @@ func TabulateMap(input map[string]int, firstHeader string, secondHeader string) 
 	return TabulateRows(rows, firstHeader, secondHeader)
 }
 
-// Choose displays a list of candidates and returns the user's pick
-func Choose(localCandidate, remoteCandidate string) (chosenOne string, err error) {
-	fmt.Printf("1. %s\n", localCandidate)
-	fmt.Printf("2. %s\n", remoteCandidate)
-	fmt.Printf(GreenBold("Choose: (1) Local version (2) Remote version (3) Edit (4) Abort "))
-
-	validChoice := false
-	errs := 0
-	for !validChoice {
-		scanner := bufio.NewReader(os.Stdin)
-		choice, _ := scanner.ReadString('\n')
-		choice = strings.TrimSpace(choice)
-		switch choice {
-		case "4":
-			err = errors.New("Abort")
-			validChoice = true
-		case "3":
-			fmt.Print("Enter new value: ")
-			choice, _ = scanner.ReadString('\n')
-			choice = strings.TrimSpace(choice)
-			if choice == "" {
-				fmt.Println("Warning: Empty value detected.")
-			}
-			confirmed := YesOrNo("Confirm: " + choice)
-			if confirmed {
-				chosenOne = choice
-				validChoice = true
-			} else {
-				fmt.Println("Manual entry not confirmed, trying again.")
-			}
-		case "2":
-			chosenOne = remoteCandidate
-			validChoice = true
-		case "1":
-			chosenOne = localCandidate
-			validChoice = true
-		default:
-			fmt.Println("Invalid choice.")
-			fmt.Printf(GreenBold("Choose: (1) Local version (2) Remote version (3) Edit (4) Abort "))
-			errs++
-			if errs > 10 {
-				return "", errors.New("Too many invalid choices.")
-			}
-		}
-	}
-	return
-}
-
-// YesOrNo asks a question and returns the answer
-func YesOrNo(question string) (yes bool) {
-	fmt.Printf(BlueBold("%s y/n? "), question)
-	scanner := bufio.NewReader(os.Stdin)
-	choice, _ := scanner.ReadString('\n')
-	switch strings.TrimSpace(choice) {
-	case "y", "Y", "yes":
-		yes = true
-	}
-	return
-}
-
-// AskForNewValue from user
-func AskForNewValue(field, oldValue string) (newValue string, err error) {
-	fmt.Printf(BlueBold("Modifying %s:\n"), field)
-	fmt.Printf("\t%s\n", oldValue)
-	fmt.Printf(GreenBold("Choose: (1) Keep Value (2) Edit "))
-	validChoice := false
-	errs := 0
-	for !validChoice {
-		scanner := bufio.NewReader(os.Stdin)
-		choice, _ := scanner.ReadString('\n')
-		choice = strings.TrimSpace(choice)
-		switch choice {
-		case "2":
-			fmt.Printf("Enter new value: ")
-			choice, _ = scanner.ReadString('\n')
-			choice = strings.TrimSpace(choice)
-			if choice == "" {
-				fmt.Println("Warning: Empty value detected.")
-			}
-			confirmed := YesOrNo("Confirm: " + choice)
-			if confirmed {
-				newValue = choice
-				validChoice = true
-			} else {
-				fmt.Println("Manual entry not confirmed, trying again.")
-			}
-		case "1":
-			newValue = oldValue
-			validChoice = true
-		default:
-			fmt.Println("Invalid choice.")
-			fmt.Printf(GreenBold("Choose: (1) Keep Value (2) Edit "))
-			errs++
-			if errs > 10 {
-				return "", errors.New("Too many invalid choices.")
-			}
-		}
-	}
-	return
-}
-
-// AssignNewValues from candidates or from user input
-func AssignNewValues(field, oldValue string, candidates []string) (newValues []string, err error) {
-	if len(candidates) == 0 {
-		values, err := AskForNewValue(field, oldValue)
-		if err != nil {
-			return []string{}, err
-		}
-		candidates = append(candidates, values)
-	}
-	// cleanup
-	for i := range candidates {
-		candidates[i] = strings.TrimSpace(candidates[i])
-	}
-	newValues = candidates
-
-	// show old_value => new_value
-	newValuesString := strings.Join(newValues, "|")
-	if oldValue != newValuesString {
-
-		Infof("Changing %s: \n%s\n\t=>\n%s\n", field, oldValue, newValuesString)
-	} else {
-		Info("Nothing to change.")
-	}
-	return
-}
-
-// ChooseVersion among two choices
-func ChooseVersion(title, local, remote string) (string, error) {
-	Subpart(title + ":")
-	return Choose(local, remote)
-}
-
 // CleanISBN from a string
 func CleanISBN(full string) (isbn13 string, err error) {
 	// cleanup string, only keep numbers
@@ -250,8 +117,8 @@ func CleanISBN(full string) (isbn13 string, err error) {
 }
 
 // AskForISBN when not found in epub
-func AskForISBN() (string, error) {
-	manualEdit := YesOrNo("Do you want to enter an ISBN manually")
+func AskForISBN(ui e.UserInterface) (string, error) {
+	manualEdit := ui.YesOrNo("Do you want to enter an ISBN manually")
 	if manualEdit {
 		scanner := bufio.NewReader(os.Stdin)
 		validChoice := false
@@ -264,9 +131,9 @@ func AskForISBN() (string, error) {
 			isbnCandidate, err := CleanISBN(choice)
 			if err != nil {
 				errs++
-				Warning("Warning: Invalid value.")
+				ui.Warning("Warning: Invalid value.")
 			} else {
-				confirmed := YesOrNo("Confirm: " + choice)
+				confirmed := ui.YesOrNo("Confirm: " + choice)
 				if confirmed {
 					validChoice = true
 					return isbnCandidate, nil
@@ -275,39 +142,12 @@ func AskForISBN() (string, error) {
 				fmt.Println("Manual entry not confirmed, trying again.")
 			}
 			if errs > 5 {
-				Warning("Too many errors, continuing without ISBN.")
+				ui.Warning("Too many errors, continuing without ISBN.")
 				break
 			}
 		}
 	}
 	return "", errors.New("ISBN not set")
-}
-
-// Display text through a pager if necessary.
-func Display(output string) {
-	// -e Causes less to automatically exit the second time it reaches end-of-file.
-	// -F or --quit-if-one-screen  Causes less to automatically exit if the entire file can be displayed on the first screen.
-	// -Q Causes totally "quiet" operation: the terminal bell is never rung.
-	// -X or --no-init Disables sending the termcap initialization and deinitialization strings to the terminal. This is sometimes desirable if the deinitialization string does something unnecessary, like clearing the screen.
-	cmd := exec.Command("less", "-e", "-F", "-Q", "-X")
-	r, stdin := io.Pipe()
-	cmd.Stdin = r
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	// create a blocking chan, Run the pager and unblock once it is finished
-	c := make(chan struct{})
-	go func() {
-		defer close(c)
-		cmd.Run()
-	}()
-
-	// send through less
-	fmt.Fprintf(stdin, output)
-	// close stdin (result in pager to exit)
-	stdin.Close()
-	// wait for the pager to be finished
-	<-c
 }
 
 //SpinWhileThingsHappen is a way to launch a function and display a spinner while it is being executed.

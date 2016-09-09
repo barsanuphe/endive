@@ -7,6 +7,7 @@ import (
 	"errors"
 
 	c "github.com/barsanuphe/endive/config"
+	e "github.com/barsanuphe/endive/endive"
 	h "github.com/barsanuphe/endive/helpers"
 )
 
@@ -258,9 +259,9 @@ func (i *Metadata) Diff(o Metadata, firstHeader, secondHeader string) string {
 }
 
 // Merge with another Metadata.
-func (i *Metadata) Merge(o Metadata, cfg c.Config) (err error) {
+func (i *Metadata) Merge(o Metadata, cfg c.Config, ui e.UserInterface) (err error) {
 	for _, field := range MetadataFieldNames {
-		err = i.MergeField(o, field, cfg)
+		err = i.MergeField(o, field, cfg, ui)
 		if err != nil {
 			return
 		}
@@ -274,21 +275,19 @@ func (i *Metadata) Merge(o Metadata, cfg c.Config) (err error) {
 }
 
 // MergeField with another Metadata.
-func (i *Metadata) MergeField(o Metadata, field string, cfg c.Config) (err error) {
+func (i *Metadata) MergeField(o Metadata, field string, cfg c.Config, ui e.UserInterface) (err error) {
 	switch field {
 	case tagsField:
-		h.Subpart("Tags: ")
-		fmt.Println("NOTE: tags can be edited as a comma-separated list of strings.")
-		tagString, e := h.Choose(i.Tags.String(), o.Tags.String())
+		help := "NOTE: tags can be edited as a comma-separated list of strings."
+		tagString, e := ui.Choose(strings.ToTitle(tagsField), help, i.Tags.String(), o.Tags.String())
 		if e != nil {
 			return e
 		}
 		i.Tags = Tags{}
 		i.Tags.AddFromNames(strings.Split(tagString, ",")...)
 	case seriesField:
-		h.Subpart("Series: ")
-		fmt.Println("NOTE: series can be edited as a comma-separated list of 'series name:index' strings. Index can be empty, or a range.")
-		userInput, e := h.Choose(i.Series.rawString(), o.Series.rawString())
+		help := "NOTE: series can be edited as a comma-separated list of 'series name:index' strings. Index can be empty, or a range."
+		userInput, e := ui.Choose(strings.ToTitle(seriesField), help, i.Series.rawString(), o.Series.rawString())
 		if e != nil {
 			return e
 		}
@@ -298,14 +297,13 @@ func (i *Metadata) MergeField(o Metadata, field string, cfg c.Config) (err error
 			for _, s := range strings.Split(userInput, ",") {
 				_, errAdding := i.Series.AddFromString(s)
 				if errAdding != nil {
-					h.Warning("Could not add series " + s + " , " + errAdding.Error())
+					ui.Warning("Could not add series " + s + " , " + errAdding.Error())
 				}
 			}
 		}
 	case authorField:
-		h.Subpart("Authors: ")
-		fmt.Println("NOTE: authors can be edited as a comma-separated list of strings.")
-		userInput, e := h.Choose(i.Author(), o.Author())
+		help := "NOTE: authors can be edited as a comma-separated list of strings."
+		userInput, e := ui.Choose(strings.ToTitle(authorField), help, i.Author(), o.Author())
 		if e != nil {
 			return e
 		}
@@ -315,55 +313,54 @@ func (i *Metadata) MergeField(o Metadata, field string, cfg c.Config) (err error
 			i.Authors[j] = strings.TrimSpace(i.Authors[j])
 		}
 	case yearField:
-		i.OriginalYear, err = h.ChooseVersion("Original Publication year", i.OriginalYear, o.OriginalYear)
+		i.OriginalYear, err = ui.Choose("Original Publication year", "", i.OriginalYear, o.OriginalYear)
 		if err != nil {
 			return
 		}
 	case editionYearField:
-		i.EditionYear, err = h.ChooseVersion("Publication year", i.EditionYear, o.EditionYear)
+		i.EditionYear, err = ui.Choose("Publication year", "", i.EditionYear, o.EditionYear)
 		if err != nil {
 			return
 		}
 	case publisherField:
-		i.Publisher, err = h.ChooseVersion("Publisher", i.Publisher, o.Publisher)
+		i.Publisher, err = ui.Choose(strings.ToTitle(publisherField), "", i.Publisher, o.Publisher)
 		if err != nil {
 			return
 		}
 	case languageField:
-		i.Language, err = h.ChooseVersion("Language", cleanLanguage(i.Language), cleanLanguage(o.Language))
+		i.Language, err = ui.Choose(strings.ToTitle(languageField), "", cleanLanguage(i.Language), cleanLanguage(o.Language))
 		if err != nil {
 			return
 		}
 	case categoryField:
-		i.Category, err = h.ChooseVersion("Category (fiction/nonfiction)", i.Category, o.Category)
+		i.Category, err = ui.Choose(strings.ToTitle(categoryField), "Valid values: fiction/nonfiction.", i.Category, o.Category)
 		if err != nil {
 			return
 		}
 	case genreField:
-		i.MainGenre, err = h.ChooseVersion("Main Genre", i.MainGenre, o.MainGenre)
+		i.MainGenre, err = ui.Choose(strings.ToTitle(genreField), "", i.MainGenre, o.MainGenre)
 		if err != nil {
 			return
 		}
 	case isbnField:
-		i.ISBN, err = h.ChooseVersion("ISBN", i.ISBN, o.ISBN)
+		i.ISBN, err = ui.Choose(strings.ToTitle(isbnField), "ISBN13 for this epub.", i.ISBN, o.ISBN)
 		if err != nil {
 			return
 		}
 	case titleField:
-		h.Subpart("Title:")
-		chosenTitle, e := h.Choose(i.Title(), o.Title())
+		chosenTitle, e := ui.Choose(titleField, "Title, without series information.", i.Title(), o.Title())
 		if e != nil {
 			return e
 		}
 		i.MainTitle = chosenTitle
 		i.OriginalTitle = chosenTitle
 	case descriptionField:
-		i.Description, err = h.ChooseVersion("Description", cleanHTML(i.Description), cleanHTML(o.Description))
+		i.Description, err = ui.Choose("Description", "", cleanHTML(i.Description), cleanHTML(o.Description))
 		if err != nil {
 			return
 		}
 	default:
-		h.Debug("Unknown field: " + field)
+		ui.Debug("Unknown field: " + field)
 		return errors.New("Unknown field: " + field)
 	}
 	i.Clean(cfg)

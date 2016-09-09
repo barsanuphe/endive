@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/barsanuphe/endive/endive"
 	"github.com/tj/go-spin"
 )
 
@@ -76,10 +77,10 @@ func FileExists(path string) (absolutePath string, err error) {
 }
 
 // DeleteEmptyFolders deletes empty folders that may appear after sorting albums.
-func DeleteEmptyFolders(root string) (err error) {
-	defer TimeTrack(time.Now(), "Scanning files")
+func DeleteEmptyFolders(root string, ui endive.UserInterface) (err error) {
+	defer TimeTrack(ui, time.Now(), "Scanning files")
 
-	Debugf("Scanning for empty directories.\n\n")
+	ui.Debugf("Scanning for empty directories.\n\n")
 	deletedDirectories := 0
 	deletedDirectoriesThisTime := 0
 	atLeastOnce := false
@@ -104,7 +105,7 @@ func DeleteEmptyFolders(root string) (err error) {
 					panic(err)
 				}
 				if isEmpty {
-					Debugf("Removing empty directory ", path)
+					ui.Debugf("Removing empty directory ", path)
 					if err := os.Remove(path); err == nil {
 						deletedDirectories++
 						deletedDirectoriesThisTime++
@@ -114,11 +115,11 @@ func DeleteEmptyFolders(root string) (err error) {
 			return
 		})
 		if err != nil {
-			fmt.Printf("Error!")
+			ui.Error("Error removing empty directories")
 		}
 	}
 
-	Debugf("\n### Removed %d albums.\n", deletedDirectories)
+	ui.Debugf("\n### Removed %d albums.\n", deletedDirectories)
 	return
 }
 
@@ -154,32 +155,6 @@ func ListEpubsInDirectory(root string) (epubPaths []string, hashes []string, err
 	})
 	fmt.Print("\r")
 	return
-}
-
-// CleanPath makes sure a string can be used as part of a path
-func CleanPath(md string) string {
-	md = strings.TrimSpace(md)
-	// if it starts with a dot, remove it so it does not become
-	// a hidden file. if it starts with /, weird things happen.
-	if strings.HasPrefix(md, ".") || strings.HasPrefix(md, "/") {
-		md = md[1:]
-	}
-	// clean characters which would be problematic in a filename
-	r := strings.NewReplacer(
-		"/", "-",
-		"\\", "-",
-	)
-	return r.Replace(md)
-}
-
-// CleanPathForVFAT makes sure a string can be used as part of a path
-func CleanPathForVFAT(md string) string {
-	// clean characters which would be problematic in a filename
-	r := strings.NewReplacer(
-		":", "-",
-		"?", "",
-	)
-	return r.Replace(md)
 }
 
 // CopyFile copies a file from src to dst. If src and dst files exist, and are

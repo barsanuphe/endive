@@ -13,7 +13,7 @@ func TestSeries(t *testing.T) {
 	fmt.Println("+ Testing Series...")
 	assert := assert.New(t)
 	for i, epub := range epubs {
-		e := NewBook(i, epub.filename, standardTestConfig, isRetail)
+		e := NewBook(ui, i, epub.filename, standardTestConfig, isRetail)
 		seriesName := "test_é!/?*èç1"
 		seriesName2 := "test2"
 

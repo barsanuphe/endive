@@ -11,7 +11,7 @@ func TestInfo(t *testing.T) {
 	fmt.Println("+ Testing Epub.GetMetaData()...")
 	assert := assert.New(t)
 	for i, testEpub := range epubs {
-		e := NewBook(i, testEpub.filename, standardTestConfig, true)
+		e := NewBook(ui, i, testEpub.filename, standardTestConfig, true)
 
 		// testing HasAny
 		hasMetadata := e.Metadata.HasAny()

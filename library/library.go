@@ -34,6 +34,7 @@ type Library struct {
 	DatabaseFile string
 	Books        b.Books
 	Index        e.Indexer
+	UI           e.UserInterface
 }
 
 // Close the library
@@ -45,7 +46,7 @@ func (l *Library) Close() error {
 	if hasSaved {
 		// db has been modified at some point, backup.
 		if err := l.backup(); err != nil {
-			h.Error(err.Error())
+			l.UI.Error(err.Error())
 		}
 	}
 	// remove lock
@@ -54,17 +55,17 @@ func (l *Library) Close() error {
 
 // importFromSource all detected epubs, tagging them as retail or non-retail as requested.
 func (l *Library) importFromSource(sources []string, retail bool) (err error) {
-	defer h.TimeTrack(time.Now(), "Imported")
+	defer h.TimeTrack(l.UI, time.Now(), "Imported")
 	sourceType := "retail"
 	if !retail {
 		sourceType = "non-retail"
 	}
-	h.Title("Importing " + sourceType + " epubs...")
+	l.UI.Title("Importing " + sourceType + " epubs...")
 
 	// checking all defined sources
 	var allEpubs, allHashes []string
 	for _, source := range sources {
-		h.Subtitle("Searching for " + sourceType + " epubs in " + source)
+		l.UI.SubTitle("Searching for " + sourceType + " epubs in " + source)
 		epubs, hashes, err := h.ListEpubsInDirectory(source)
 		if err != nil {
 			return err
@@ -99,7 +100,7 @@ func (l *Library) ImportEpubs(allEpubs []string, allHashes []string, isRetail bo
 	for i, path := range allEpubs {
 		hash := allHashes[i]
 		importConfirmed := false
-		e := b.Epub{Filename: path}
+		e := b.Epub{Filename: path, UI: l.UI}
 
 		// compare with known hashes
 		info := b.Metadata{}
@@ -108,19 +109,19 @@ func (l *Library) ImportEpubs(allEpubs []string, allHashes []string, isRetail bo
 			info, err = e.ReadMetadata()
 			if err != nil {
 				if err.Error() == "ISBN not found in epub" {
-					isbn, err := h.AskForISBN()
+					isbn, err := h.AskForISBN(l.UI)
 					if err != nil {
-						h.Warning("Warning: ISBN still unknown.")
+						l.UI.Warning("Warning: ISBN still unknown.")
 					} else {
 						info.ISBN = isbn
 					}
 				} else {
-					h.Error("Could not analyze and import " + path)
+					l.UI.Error("Could not analyze and import " + path)
 					continue
 				}
 			}
 			// ask if user really wants to import it
-			importConfirmed = h.YesOrNo(fmt.Sprintf("Found %s (%s).\nImport", filepath.Base(path), info.String()))
+			importConfirmed = l.UI.YesOrNo(fmt.Sprintf("Found %s (%s).\nImport", filepath.Base(path), info.String()))
 		} else {
 			_, err := l.Books.FindByHash(hash)
 			if err != nil {
@@ -128,19 +129,19 @@ func (l *Library) ImportEpubs(allEpubs []string, allHashes []string, isRetail bo
 				info, err = e.ReadMetadata()
 				if err != nil {
 					if err.Error() == "ISBN not found in epub" {
-						isbn, err := h.AskForISBN()
+						isbn, err := h.AskForISBN(l.UI)
 						if err != nil {
-							h.Warning("Warning: ISBN still unknown.")
+							l.UI.Warning("Warning: ISBN still unknown.")
 						} else {
 							info.ISBN = isbn
 						}
 					} else {
-						h.Error("Could not analyze and import " + path)
+						l.UI.Error("Could not analyze and import " + path)
 						continue
 					}
 				}
 				//confirm force import
-				importConfirmed = h.YesOrNo(fmt.Sprintf("File %s has already been imported but is not in the current library. Confirm importing again?", filepath.Base(path)))
+				importConfirmed = l.UI.YesOrNo(fmt.Sprintf("File %s has already been imported but is not in the current library. Confirm importing again?", filepath.Base(path)))
 			}
 		}
 
@@ -150,8 +151,8 @@ func (l *Library) ImportEpubs(allEpubs []string, allHashes []string, isRetail bo
 			knownBook, err := l.Books.FindByMetadata(info)
 			if err != nil {
 				// new Book
-				h.Debug("Creating new book.")
-				bk := b.NewBookWithMetadata(l.generateID(), path, l.Config, isRetail, info)
+				l.UI.Debug("Creating new book.")
+				bk := b.NewBookWithMetadata(l.UI, l.generateID(), path, l.Config, isRetail, info)
 				imported, err = bk.Import(path, isRetail, hash)
 				if err != nil {
 					return err
@@ -159,7 +160,7 @@ func (l *Library) ImportEpubs(allEpubs []string, allHashes []string, isRetail bo
 				l.Books = append(l.Books, *bk)
 			} else {
 				// add to existing book
-				h.Debug("Adding epub to " + knownBook.ShortString())
+				l.UI.Debug("Adding epub to " + knownBook.ShortString())
 				imported, err = knownBook.AddEpub(path, isRetail, hash)
 				if err != nil {
 					return err
@@ -186,13 +187,13 @@ func (l *Library) ImportEpubs(allEpubs []string, allHashes []string, isRetail bo
 				newEpubs++
 			}
 		} else {
-			h.Debug("Ignoring already imported epub " + filepath.Base(path))
+			l.UI.Debug("Ignoring already imported epub " + filepath.Base(path))
 		}
 	}
 	if isRetail {
-		h.Debugf("Imported %d retail epubs.\n", newEpubs)
+		l.UI.Debugf("Imported %d retail epubs.\n", newEpubs)
 	} else {
-		h.Debugf("Imported %d non-retail epubs.\n", newEpubs)
+		l.UI.Debugf("Imported %d non-retail epubs.\n", newEpubs)
 	}
 	return
 }
@@ -215,7 +216,7 @@ func (l *Library) generateID() (id int) {
 
 // Refresh current DB
 func (l *Library) Refresh() (renamed int, err error) {
-	h.Info("Refreshing database...")
+	l.UI.Info("Refreshing database...")
 
 	// scan for new epubs
 	allEpubs, allHashes, err := h.ListEpubsInDirectory(l.Config.LibraryRoot)
@@ -233,7 +234,7 @@ func (l *Library) Refresh() (renamed int, err error) {
 			book, err := l.Books.FindByHash(allHashes[i])
 			if err != nil {
 				// else, it's a new epub, import
-				h.Info("NEW EPUB " + epub + " , will be imported as non-retail.")
+				l.UI.Info("NEW EPUB " + epub + " , will be imported as non-retail.")
 				newEpubs = append(newEpubs, epub)
 				newHashes = append(newHashes, allHashes[i])
 			} else {
@@ -246,9 +247,9 @@ func (l *Library) Refresh() (renamed int, err error) {
 				_, err := h.FileExists(destination)
 				if err == nil {
 					// file already exists
-					h.Errorf("Found epub %s with the same hash as %s, ignoring.", epub, destination)
+					l.UI.Errorf("Found epub %s with the same hash as %s, ignoring.", epub, destination)
 				} else {
-					h.Warning("Found epub %s which is called %s in the database, renaming.", epub, destination)
+					l.UI.Warningf("Found epub %s which is called %s in the database, renaming.", epub, destination)
 					// rename found file to retail name in db
 					err = os.Rename(epub, destination)
 					if err != nil {
@@ -290,7 +291,7 @@ func (l *Library) Refresh() (renamed int, err error) {
 		}
 	}
 	// remove all empty dirs
-	err = h.DeleteEmptyFolders(l.Config.LibraryRoot)
+	err = h.DeleteEmptyFolders(l.Config.LibraryRoot, l.UI)
 	return
 }
 
@@ -300,9 +301,9 @@ func (l *Library) ExportToEReader(books []b.Book) (err error) {
 		return errors.New("E-Reader mount point does not exist: " + l.Config.EReaderMountPoint)
 	}
 	if len(books) != 0 {
-		h.Title("Exporting books.")
+		l.UI.Title("Exporting books.")
 		for _, book := range books {
-			filename := h.CleanPathForVFAT(book.MainEpub().Filename)
+			filename := book.CleanFilename()
 			destination := filepath.Join(l.Config.EReaderMountPoint, filename)
 			if !h.DirectoryExists(filepath.Dir(destination)) {
 				err = os.MkdirAll(filepath.Dir(destination), 0777)
@@ -311,17 +312,17 @@ func (l *Library) ExportToEReader(books []b.Book) (err error) {
 				}
 			}
 			if _, exists := h.FileExists(destination); exists != nil {
-				h.Info(" - Exporting " + book.ShortString())
+				l.UI.Info(" - Exporting " + book.ShortString())
 				err = h.CopyFile(book.MainEpub().FullPath(), destination)
 				if err != nil {
 					return err
 				}
 			} else {
-				h.Info(" - Previously exported: " + book.ShortString())
+				l.UI.Info(" - Previously exported: " + book.ShortString())
 			}
 		}
 	} else {
-		h.Title("Nothing to export.")
+		l.UI.Title("Nothing to export.")
 	}
 	return
 }
@@ -347,7 +348,7 @@ func (l *Library) DuplicateRetailEpub(id int) (nonRetailEpub *b.Book, err error)
 		return &b.Book{}, err
 	}
 	// create new Epub and refresh to get correct name
-	book.NonRetailEpub = b.Epub{Filename: targetFilename, NeedsReplacement: "false", Config: l.Config, Hash: book.RetailEpub.Hash}
+	book.NonRetailEpub = b.Epub{Filename: targetFilename, NeedsReplacement: "false", Config: l.Config, UI: l.UI, Hash: book.RetailEpub.Hash}
 	_, _, err = book.RefreshEpub(book.NonRetailEpub, false)
 	if err != nil {
 		return book, err
@@ -366,7 +367,7 @@ func (l *Library) Search(query, sortBy string, limitFirst, limitLast bool, limit
 	if err != nil {
 		if err.Error() == "Could not open index" {
 			// rebuild index
-			defer h.TimeTrack(time.Now(), "Indexing")
+			defer h.TimeTrack(l.UI, time.Now(), "Indexing")
 			f := func() error {
 				// convert Books to []GenericBook
 				allBooks := []e.GenericBook{}
@@ -393,7 +394,7 @@ func (l *Library) Search(query, sortBy string, limitFirst, limitLast bool, limit
 		for _, path := range booksPaths {
 			book, err := l.Books.FindByFullPath(path)
 			if err != nil {
-				h.Warning("Could not find Book: " + path)
+				l.UI.Warning("Could not find Book: " + path)
 			} else {
 				books = append(books, *book)
 			}

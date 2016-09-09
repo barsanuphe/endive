@@ -25,6 +25,7 @@ import (
 	"time"
 
 	cfg "github.com/barsanuphe/endive/config"
+	"github.com/barsanuphe/endive/endive"
 	h "github.com/barsanuphe/endive/helpers"
 )
 
@@ -34,8 +35,9 @@ var validCategories = []string{"fiction", "nonfiction"}
 // Book can manipulate a book.
 // A Book can have multiple epub files.
 type Book struct {
-	Config cfg.Config `json:"-"`
-	ID     int        `json:"id"`
+	Config cfg.Config           `json:"-"`
+	UI     endive.UserInterface `json:"-"`
+	ID     int                  `json:"id"`
 	// associated files
 	RetailEpub    Epub `json:"retail"`
 	NonRetailEpub Epub `json:"nonretail"`
@@ -60,17 +62,17 @@ const (
 )
 
 // NewBook constructs a valid new Epub
-func NewBook(id int, filename string, c cfg.Config, isRetail bool) *Book {
-	return NewBookWithMetadata(id, filename, c, isRetail, Metadata{})
+func NewBook(ui endive.UserInterface, id int, filename string, c cfg.Config, isRetail bool) *Book {
+	return NewBookWithMetadata(ui, id, filename, c, isRetail, Metadata{})
 }
 
 // NewBookWithMetadata constructs a valid new Epub
-func NewBookWithMetadata(id int, filename string, c cfg.Config, isRetail bool, i Metadata) *Book {
-	f := Epub{Filename: filename, Config: c, NeedsReplacement: "false"}
+func NewBookWithMetadata(ui endive.UserInterface, id int, filename string, c cfg.Config, isRetail bool, i Metadata) *Book {
+	f := Epub{Filename: filename, Config: c, UI: ui, NeedsReplacement: "false"}
 	if isRetail {
-		return &Book{ID: id, RetailEpub: f, Config: c, EpubMetadata: i, Metadata: i, Progress: "unread"}
+		return &Book{ID: id, RetailEpub: f, Config: c, UI: ui, EpubMetadata: i, Metadata: i, Progress: "unread"}
 	}
-	return &Book{ID: id, NonRetailEpub: f, Config: c, EpubMetadata: i, Metadata: i, Progress: "unread"}
+	return &Book{ID: id, NonRetailEpub: f, Config: c, UI: ui, EpubMetadata: i, Metadata: i, Progress: "unread"}
 }
 
 // ShortString returns a short string representation of Epub
@@ -242,7 +244,7 @@ func (e *Book) generateNewName(fileTemplate string, isRetail bool) (newName stri
 	)
 	seriesString := ""
 	if len(e.Metadata.Series) != 0 {
-		seriesString = h.CleanPath("[" + e.Metadata.Series.String() + "]")
+		seriesString = cleanPath("[" + e.Metadata.Series.String() + "]")
 	}
 	retail := "nonretail"
 	if isRetail {
@@ -250,8 +252,8 @@ func (e *Book) generateNewName(fileTemplate string, isRetail bool) (newName stri
 	}
 	// replace with all valid epub parameters
 	tmpl := fmt.Sprintf(`{{$a := "%s"}}{{$y := "%s"}}{{$t := "%s"}}{{$l := "%s"}}{{$i := "%s"}}{{$s := "%s"}}{{$p := "%s"}}{{$c := "%s"}}{{$g := "%s"}}{{$r := "%s"}}%s`,
-		h.CleanPath(e.Metadata.Author()), e.Metadata.OriginalYear,
-		h.CleanPath(e.Metadata.Title()), e.Metadata.Language,
+		cleanPath(e.Metadata.Author()), e.Metadata.OriginalYear,
+		cleanPath(e.Metadata.Title()), e.Metadata.Language,
 		e.Metadata.ISBN, seriesString, e.Progress, e.Metadata.Category,
 		e.Metadata.MainGenre, retail, r.Replace(fileTemplate))
 
@@ -275,8 +277,8 @@ func (e *Book) generateNewName(fileTemplate string, isRetail bool) (newName stri
 	}
 	// making sure the final filename is valid
 	filename := filepath.Base(newName)
-	if filename != h.CleanPath(filename) {
-		newName = filepath.Join(filepath.Dir(newName), strings.TrimSpace(h.CleanPath(filename)))
+	if filename != cleanPath(filename) {
+		newName = filepath.Join(filepath.Dir(newName), strings.TrimSpace(cleanPath(filename)))
 	}
 	return
 }
@@ -295,7 +297,7 @@ func (e *Book) RefreshEpub(epub Epub, isRetail bool) (wasRenamed bool, newName s
 
 	if epub.Filename != newName {
 		origin := epub.FullPath()
-		h.Info("Renaming: \n\t" + origin + "\n   =>\n\t" + newName)
+		e.UI.Info("Renaming: \n\t" + origin + "\n   =>\n\t" + newName)
 		// move to c.LibraryRoot + new name
 		destination := filepath.Join(e.Config.LibraryRoot, newName)
 		// if parent directory does not exist, create
@@ -331,8 +333,7 @@ func (e *Book) ForceMetadataRefresh() (err error) {
 	// get online data
 	err = e.SearchOnline()
 	if err != nil {
-		h.Warning(err.Error())
-		return
+		e.UI.Warning(err.Error())
 	}
 	return
 }
@@ -356,7 +357,7 @@ func (e *Book) ForceMetadataFieldRefresh(field string) (err error) {
 		return err
 	}
 	// merge field
-	err = info.MergeField(onlineInfo, field, e.Config)
+	err = info.MergeField(onlineInfo, field, e.Config, e.UI)
 	if err != nil {
 		return err
 	}
@@ -387,7 +388,6 @@ func (e *Book) ForceMetadataFieldRefresh(field string) (err error) {
 	case descriptionField:
 		e.Metadata.Description = info.Description
 	default:
-		h.Debug("Unknown field: " + field)
 		return errors.New("Unknown field: " + field)
 	}
 	// cleaning all metadata
@@ -397,7 +397,7 @@ func (e *Book) ForceMetadataFieldRefresh(field string) (err error) {
 
 // Refresh the filenames of the Epubs associated with this Book.
 func (e *Book) Refresh() (wasRenamed []bool, newName []string, err error) {
-	h.Debug("Refreshing Epub " + e.ShortString())
+	e.UI.Debug("Refreshing Epub " + e.ShortString())
 
 	// metadata is blank, run GetMetadata
 	if hasMetadata := e.Metadata.HasAny(); !hasMetadata {
@@ -429,7 +429,7 @@ func (e *Book) Refresh() (wasRenamed []bool, newName []string, err error) {
 				e.RetailEpub.Filename = newNameR
 			}
 		} else {
-			h.Warning("MISSING EPUB " + e.RetailEpub.FullPath())
+			e.UI.Warning("MISSING EPUB " + e.RetailEpub.FullPath())
 			e.RetailEpub = Epub{}
 		}
 	}
@@ -441,7 +441,7 @@ func (e *Book) Refresh() (wasRenamed []bool, newName []string, err error) {
 				e.NonRetailEpub.Filename = newNameNR
 			}
 		} else {
-			h.Warning("MISSING EPUB " + e.NonRetailEpub.FullPath())
+			e.UI.Warning("MISSING EPUB " + e.NonRetailEpub.FullPath())
 			e.NonRetailEpub = Epub{}
 		}
 	}
@@ -482,7 +482,7 @@ func (e *Book) AddEpub(path string, isRetail bool, hash string) (imported bool, 
 	// TODO tests
 	if isRetail {
 		if e.HasRetail() {
-			h.Info("Trying to import retail epub although retail version already exists.")
+			e.UI.Info("Trying to import retail epub although retail version already exists.")
 			if e.RetailEpub.NeedsReplacement == trueValue {
 				// replace retail
 				err = e.removeEpub(isRetail)
@@ -498,7 +498,7 @@ func (e *Book) AddEpub(path string, isRetail bool, hash string) (imported bool, 
 
 		if imported && e.HasNonRetail() {
 			// if a non-retail version existed, it is now trumped. Removing epub.
-			h.Warning("Non-retail version trumped, removing.")
+			e.UI.Warning("Non-retail version trumped, removing.")
 			// replace ,nonretail
 			err = e.removeEpub(!isRetail)
 			if err != nil {
@@ -507,13 +507,13 @@ func (e *Book) AddEpub(path string, isRetail bool, hash string) (imported bool, 
 		}
 	} else {
 		if e.HasRetail() {
-			h.Info("Trying to import non-retail epub although retail version exists, ignoring.")
+			e.UI.Info("Trying to import non-retail epub although retail version exists, ignoring.")
 		} else {
 			if e.HasNonRetail() {
-				h.Info("Trying to import non-retail epub although a non-retail version already exists.")
+				e.UI.Info("Trying to import non-retail epub although a non-retail version already exists.")
 				if e.NonRetailEpub.NeedsReplacement == trueValue {
 					// replace ,nonretail
-					h.Warning("Replacing non-retail version, flagged for replacement.")
+					e.UI.Warning("Replacing non-retail version, flagged for replacement.")
 					err = e.removeEpub(isRetail)
 					if err != nil {
 						return
@@ -531,7 +531,7 @@ func (e *Book) AddEpub(path string, isRetail bool, hash string) (imported bool, 
 
 // Import an Epub to the Library
 func (e *Book) Import(path string, isRetail bool, hash string) (imported bool, err error) {
-	h.Debug("Importing " + path)
+	e.UI.Debug("Importing " + path)
 	// copy
 	dest := filepath.Join(e.Config.LibraryRoot, filepath.Base(path))
 	err = h.CopyFile(path, dest)
@@ -539,7 +539,7 @@ func (e *Book) Import(path string, isRetail bool, hash string) (imported bool, e
 		return
 	}
 	// make epub
-	ep := Epub{Filename: dest, Hash: hash, Config: e.Config}
+	ep := Epub{Filename: dest, Hash: hash, Config: e.Config, UI: e.UI}
 	if isRetail {
 		e.RetailEpub = ep
 	} else {
@@ -549,11 +549,11 @@ func (e *Book) Import(path string, isRetail bool, hash string) (imported bool, e
 	// get online data
 	err = e.SearchOnline()
 	if err != nil {
-		h.Debug(err.Error())
-		h.Warning("Could not retrieve information from GoodReads. Manual review.")
+		e.UI.Debug(err.Error())
+		e.UI.Warning("Could not retrieve information from GoodReads. Manual review.")
 		err = e.EditField()
 		if err != nil {
-			h.Error(err.Error())
+			e.UI.Error(err.Error())
 		}
 	}
 
@@ -608,8 +608,7 @@ func (e *Book) Check() (retailHasChanged bool, nonRetailHasChanged bool, err err
 // GetOnlineMetadata retrieves the online info for this book.
 func (e *Book) GetOnlineMetadata() (onlineInfo Metadata, err error) {
 	if e.Config.GoodReadsAPIKey == "" {
-		h.Error("Goodreads API key not found, not getting online information.")
-		return
+		return Metadata{}, cfg.WarningGoodReadsAPIKeyMissing
 	}
 	// TODO tests
 	var g RemoteLibraryAPI
@@ -650,8 +649,8 @@ func (e *Book) SearchOnline() (err error) {
 	}
 
 	// show diff between epub and GR versions, then ask what to do.
-	fmt.Println(e.Metadata.Diff(onlineInfo, "Epub Metadata", "GoodReads"))
-	fmt.Printf(h.GreenBold("Choose: (1) Local version (2) Remote version (3) Edit (4) Abort "))
+	e.UI.Display(e.Metadata.Diff(onlineInfo, "Epub Metadata", "GoodReads"))
+	e.UI.Choice("Choose: (1) Local version (2) Remote version (3) Edit (4) Abort ")
 	validChoice := false
 	errs := 0
 	for !validChoice {
@@ -663,18 +662,18 @@ func (e *Book) SearchOnline() (err error) {
 			err = errors.New("Abort")
 			validChoice = true
 		case "3":
-			h.Info("Going through every field.")
-			err = e.Metadata.Merge(onlineInfo, e.Config)
+			e.UI.Info("Going through every field.")
+			err = e.Metadata.Merge(onlineInfo, e.Config, e.UI)
 			if err != nil {
 				return err
 			}
 			validChoice = true
 		case "2":
-			h.Info("Accepting online version.")
+			e.UI.Info("Accepting online version.")
 			e.Metadata = onlineInfo
 			validChoice = true
 		case "1":
-			h.Info("Keeping epub version.")
+			e.UI.Info("Keeping epub version.")
 			validChoice = true
 		default:
 			fmt.Println("Invalid choice.")
@@ -691,7 +690,7 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 	switch field {
 	case tagsField:
 		fmt.Println("NOTE: tags can be edited as a comma-separated list of strings.")
-		newValues, err := h.AssignNewValues(field, e.Metadata.Tags.String(), values)
+		newValues, err := e.UI.UpdateValues(field, e.Metadata.Tags.String(), values)
 		if err != nil {
 			return err
 		}
@@ -706,11 +705,11 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 		e.Metadata.Tags = Tags{}
 		// add new ones
 		if e.Metadata.Tags.AddFromNames(newValues...) {
-			h.Infof("Tags added to %s\n", e.ShortString())
+			e.UI.Infof("Tags added to %s\n", e.ShortString())
 		}
 	case seriesField:
 		fmt.Println("NOTE: series can be edited as a comma-separated list of 'series name:index' strings. Index can be empty, or a range.")
-		newValues, err := h.AssignNewValues(field, e.Metadata.Series.rawString(), values)
+		newValues, err := e.UI.UpdateValues(field, e.Metadata.Series.rawString(), values)
 		if err != nil {
 			return err
 		}
@@ -721,12 +720,12 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 			for _, s := range strings.Split(newValues[0], ",") {
 				_, err := e.Metadata.Series.AddFromString(s)
 				if err != nil {
-					h.Warning("Could not parse series " + s + ", " + err.Error())
+					e.UI.Warning("Could not parse series " + s + ", " + err.Error())
 				}
 			}
 		}
 	case authorField:
-		newValues, err := h.AssignNewValues(field, e.Metadata.Author(), values)
+		newValues, err := e.UI.UpdateValues(field, e.Metadata.Author(), values)
 		if err != nil {
 			return err
 		}
@@ -736,7 +735,7 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 			e.Metadata.Authors[j] = strings.TrimSpace(e.Metadata.Authors[j])
 		}
 	case yearField:
-		newValues, err := h.AssignNewValues(field, e.Metadata.OriginalYear, values)
+		newValues, err := e.UI.UpdateValues(field, e.Metadata.OriginalYear, values)
 		if err != nil {
 			return err
 		}
@@ -747,7 +746,7 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 		}
 		e.Metadata.OriginalYear = newValues[0]
 	case editionYearField:
-		newValues, err := h.AssignNewValues(field, e.Metadata.EditionYear, values)
+		newValues, err := e.UI.UpdateValues(field, e.Metadata.EditionYear, values)
 		if err != nil {
 			return err
 		}
@@ -758,25 +757,25 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 		}
 		e.Metadata.EditionYear = newValues[0]
 	case languageField:
-		newValues, err := h.AssignNewValues(field, e.Metadata.Language, values)
+		newValues, err := e.UI.UpdateValues(field, e.Metadata.Language, values)
 		if err != nil {
 			return err
 		}
 		e.Metadata.Language = newValues[0]
 	case categoryField:
-		newValues, err := h.AssignNewValues(field, e.Metadata.Category, values)
+		newValues, err := e.UI.UpdateValues(field, e.Metadata.Category, values)
 		if err != nil {
 			return err
 		}
 		e.Metadata.Category = newValues[0]
 	case genreField:
-		newValues, err := h.AssignNewValues(field, e.Metadata.MainGenre, values)
+		newValues, err := e.UI.UpdateValues(field, e.Metadata.MainGenre, values)
 		if err != nil {
 			return err
 		}
 		e.Metadata.MainGenre = newValues[0]
 	case isbnField:
-		newValues, err := h.AssignNewValues(field, e.Metadata.ISBN, values)
+		newValues, err := e.UI.UpdateValues(field, e.Metadata.ISBN, values)
 		if err != nil {
 			return err
 		}
@@ -787,26 +786,26 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 		}
 		e.Metadata.ISBN = isbn
 	case titleField:
-		newValues, err := h.AssignNewValues(field, e.Metadata.MainTitle, values)
+		newValues, err := e.UI.UpdateValues(field, e.Metadata.MainTitle, values)
 		if err != nil {
 			return err
 		}
 		e.Metadata.MainTitle = newValues[0]
 		e.Metadata.OriginalTitle = newValues[0]
 	case descriptionField:
-		newValues, err := h.AssignNewValues(field, e.Metadata.Description, values)
+		newValues, err := e.UI.UpdateValues(field, e.Metadata.Description, values)
 		if err != nil {
 			return err
 		}
 		e.Metadata.Description = newValues[0]
 	case publisherField:
-		newValues, err := h.AssignNewValues(field, e.Metadata.Publisher, values)
+		newValues, err := e.UI.UpdateValues(field, e.Metadata.Publisher, values)
 		if err != nil {
 			return err
 		}
 		e.Metadata.Publisher = newValues[0]
 	case progressField:
-		newValues, err := h.AssignNewValues(field, e.Progress, values)
+		newValues, err := e.UI.UpdateValues(field, e.Progress, values)
 		if err != nil {
 			return err
 		}
@@ -816,7 +815,7 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 			return errors.New(newValues[0] + " is not a valid reading progress")
 		}
 	case readDateField:
-		newValues, err := h.AssignNewValues(field, e.ReadDate, values)
+		newValues, err := e.UI.UpdateValues(field, e.ReadDate, values)
 		if err != nil {
 			return err
 		}
@@ -827,25 +826,25 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 		}
 		e.ReadDate = newValues[0]
 	case ratingField:
-		newValues, err := h.AssignNewValues(field, e.Rating, values)
+		newValues, err := e.UI.UpdateValues(field, e.Rating, values)
 		if err != nil {
 			return err
 		}
 		// checking rating is between 0 and 10
 		val, err := strconv.Atoi(newValues[0])
 		if err != nil || val > 10 || val < 0 {
-			h.Error("Rating must be an integer between 0 and 10.")
+			e.UI.Error("Rating must be an integer between 0 and 10.")
 			return err
 		}
 		e.Rating = newValues[0]
 	case reviewField:
-		newValues, err := h.AssignNewValues(field, e.Review, values)
+		newValues, err := e.UI.UpdateValues(field, e.Review, values)
 		if err != nil {
 			return err
 		}
 		e.Review = newValues[0]
 	default:
-		h.Debug("Unknown field: " + field)
+		e.UI.Debug("Unknown field: " + field)
 		return errors.New("Unknown field: " + field)
 	}
 	// cleaning all metadata
@@ -872,6 +871,37 @@ func (e *Book) EditField(args ...string) (err error) {
 		err = e.editSpecificField(field, values)
 	}
 	return
+}
+
+// cleanPath makes sure a string can be used as part of a path
+func cleanPath(md string) string {
+	md = strings.TrimSpace(md)
+	// if it starts with a dot, remove it so it does not become
+	// a hidden file. if it starts with /, weird things happen.
+	if strings.HasPrefix(md, ".") || strings.HasPrefix(md, "/") {
+		md = md[1:]
+	}
+	// clean characters which would be problematic in a filename
+	r := strings.NewReplacer(
+		"/", "-",
+		"\\", "-",
+	)
+	return r.Replace(md)
+}
+
+// cleanPathForVFAT makes sure a string can be used as part of a path
+func cleanPathForVFAT(md string) string {
+	// clean characters which would be problematic in a filename
+	r := strings.NewReplacer(
+		":", "-",
+		"?", "",
+	)
+	return r.Replace(md)
+}
+
+// CleanFilename returns a filename
+func (e *Book) CleanFilename() string {
+	return cleanPathForVFAT(e.MainEpub().Filename)
 }
 
 // ----------------------------------------------

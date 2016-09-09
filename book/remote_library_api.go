@@ -5,7 +5,6 @@ import (
 	"html"
 	"strconv"
 	"strings"
-	"time"
 
 	h "github.com/barsanuphe/endive/helpers"
 )
@@ -44,13 +43,9 @@ type work struct {
 
 // GetBook returns a GoodreadsBook from its Goodreads ID
 func (g GoodReads) GetBook(id, key string) (Metadata, error) {
-	defer h.TimeTrack(time.Now(), "Getting Book info")
 	uri := apiRoot + "book/show/" + id + ".xml?key=" + key
 	r := response{}
 	err := h.GetXMLData(uri, &r)
-	if err != nil {
-		h.Error(err.Error())
-	}
 	return r.Book, err
 }
 
@@ -62,8 +57,6 @@ func makeSearchQuery(parts ...string) (query string) {
 
 // GetBookIDByQuery gets a Goodreads ID from a query
 func (g GoodReads) GetBookIDByQuery(author, title, key string) (id string, err error) {
-	defer h.TimeTrack(time.Now(), "Getting Book ID by query")
-
 	uri := apiRoot + "search/index.xml?key=" + key + "&q=" + makeSearchQuery(author, title)
 	r := response{}
 	err = h.GetXMLData(uri, &r)
@@ -90,8 +83,6 @@ func (g GoodReads) GetBookIDByQuery(author, title, key string) (id string, err e
 
 // GetBookIDByISBN gets a Goodreads ID from an ISBN
 func (g GoodReads) GetBookIDByISBN(isbn, key string) (id string, err error) {
-	defer h.TimeTrack(time.Now(), "Getting Book ID by ISBN")
-
 	uri := apiRoot + "search/index.xml?key=" + key + "&q=" + isbn
 	r := response{}
 	err = h.GetXMLData(uri, &r)

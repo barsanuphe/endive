@@ -5,16 +5,19 @@ import (
 	"path/filepath"
 
 	cfg "github.com/barsanuphe/endive/config"
+	"github.com/barsanuphe/endive/endive"
 	h "github.com/barsanuphe/endive/helpers"
 	"github.com/barsanuphe/epubgo"
 )
 
 // Epub can manipulate an epub file.
 type Epub struct {
-	Filename         string     `json:"filename"` // relative to LibraryRoot
-	Config           cfg.Config `json:"-"`
-	Hash             string     `json:"hash"`
-	NeedsReplacement string     `json:"replace"`
+	Config cfg.Config           `json:"-"`
+	UI     endive.UserInterface `json:"-"`
+
+	Filename         string `json:"filename"` // relative to LibraryRoot
+	Hash             string `json:"hash"`
+	NeedsReplacement string `json:"replace"`
 }
 
 // FullPath returns the absolute file path.
@@ -60,10 +63,10 @@ func (e *Epub) Check() (hasChanged bool, err error) {
 
 // ReadMetadata from epub file
 func (e *Epub) ReadMetadata() (info Metadata, err error) {
-	h.Debugf("Reading metadata from %s\n", e.FullPath())
+	e.UI.Debugf("Reading metadata from %s\n", e.FullPath())
 	book, err := epubgo.Open(e.FullPath())
 	if err != nil {
-		h.Error("Error parsing EPUB")
+		err = errors.New("Error parsing EPUB")
 		return
 	}
 	defer book.Close()
@@ -71,7 +74,7 @@ func (e *Epub) ReadMetadata() (info Metadata, err error) {
 	// year
 	dateEvents, nonFatalErr := book.MetadataElement("date")
 	if nonFatalErr != nil || len(dateEvents) == 0 {
-		h.Debug("Error parsing EPUB: no date found")
+		e.UI.Warning("Error parsing EPUB: no date found")
 	} else {
 		found := false
 		// try to find date associated with "publication" event
@@ -96,7 +99,7 @@ func (e *Epub) ReadMetadata() (info Metadata, err error) {
 	// by default, assuming it's a first edition
 	info.OriginalYear = info.EditionYear
 	// title
-	results, nonFatalErr := book.MetadataElement(titleField)
+	results, nonFatalErr := book.MetadataElement("title")
 	if nonFatalErr == nil && len(results) != 0 {
 		info.MainTitle = results[0].Content
 	}
@@ -114,7 +117,7 @@ func (e *Epub) ReadMetadata() (info Metadata, err error) {
 		info.Language = results[0].Content
 	}
 	// description
-	results, nonFatalErr = book.MetadataElement(descriptionField)
+	results, nonFatalErr = book.MetadataElement("description")
 	if nonFatalErr == nil && len(results) != 0 {
 		info.Description = results[0].Content
 	}
@@ -136,7 +139,7 @@ func (e *Epub) ReadMetadata() (info Metadata, err error) {
 	// ISBN
 	nonFatalErr = e.findISBN(book, &info)
 	if nonFatalErr != nil {
-		h.Warning("ISBN could not be found in %s!!", e.FullPath())
+		e.UI.Warningf("ISBN could not be found in %s!!", e.FullPath())
 		err = nonFatalErr
 	}
 
@@ -146,7 +149,6 @@ func (e *Epub) ReadMetadata() (info Metadata, err error) {
 }
 
 func (e *Epub) findISBN(book *epubgo.Epub, i *Metadata) error {
-
 	// get the identifier
 	identifiers, nonFatalErr := book.MetadataElement("identifier")
 	if nonFatalErr == nil && len(identifiers) != 0 {
@@ -184,6 +186,5 @@ func (e *Epub) findISBN(book *epubgo.Epub, i *Metadata) error {
 	}
 
 	// if no valid result, return err
-	h.Debugf("ISBN not found in %s", e.FullPath())
 	return errors.New("ISBN not found in epub")
 }
