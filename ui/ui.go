@@ -21,9 +21,11 @@ type UI struct {
 }
 
 // Choose among two choices
-func (ui UI) Choose(title, explanation, local, remote string) (string, error) {
-	ui.SubPart(title + ":")
-	ui.Display(explanation)
+func (ui UI) Choose(title, help, local, remote string) (string, error) {
+	ui.SubPart(title)
+	if help != "" {
+		fmt.Println(ui.Green(help))
+	}
 	return ui.chooseVersion(local, remote)
 }
 
@@ -31,11 +33,11 @@ func (ui UI) Choose(title, explanation, local, remote string) (string, error) {
 func (ui UI) chooseVersion(localCandidate, remoteCandidate string) (chosenOne string, err error) {
 	fmt.Printf("1. %s\n", localCandidate)
 	fmt.Printf("2. %s\n", remoteCandidate)
-	fmt.Printf(ui.GreenBold("Choose: (1) Local version (2) Remote version (3) Edit (4) Abort "))
 
 	validChoice := false
 	errs := 0
 	for !validChoice {
+		ui.Choice("Choose: (1) Local version (2) Remote version (3) Edit (4) Abort : ")
 		scanner := bufio.NewReader(os.Stdin)
 		choice, _ := scanner.ReadString('\n')
 		choice = strings.TrimSpace(choice)
@@ -65,7 +67,6 @@ func (ui UI) chooseVersion(localCandidate, remoteCandidate string) (chosenOne st
 			validChoice = true
 		default:
 			fmt.Println("Invalid choice.")
-			fmt.Printf(ui.GreenBold("Choose: (1) Local version (2) Remote version (3) Edit (4) Abort "))
 			errs++
 			if errs > 10 {
 				return "", errors.New("Too many invalid choices.")
@@ -119,11 +120,11 @@ func (ui UI) updateValue(field, oldValue string) (newValue string, err error) {
 // UpdateValues from candidates or from user input
 func (ui UI) UpdateValues(field, oldValue string, candidates []string) (newValues []string, err error) {
 	if len(candidates) == 0 {
-		values, err := ui.updateValue(field, oldValue)
+		value, err := ui.updateValue(field, oldValue)
 		if err != nil {
 			return []string{}, err
 		}
-		candidates = append(candidates, values)
+		candidates = append(candidates, value)
 	}
 	// cleanup
 	for i := range candidates {

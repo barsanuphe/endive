@@ -146,10 +146,15 @@ func (ui UI) Yellow(in string) string {
 	return chalk.Yellow.Color(in)
 }
 
+// YellowBold outputs a string in yellow.
+func (ui UI) YellowBold(in string) string {
+	return chalk.Bold.TextStyle(chalk.Yellow.Color(in))
+}
+
 // Choice message logging
 func (ui UI) Choice(msg string, args ...interface{}) {
 	msg = fmt.Sprintf(msg, args...)
-	fmt.Println(ui.BlueBold(msg))
+	fmt.Print(ui.BlueBold(msg))
 }
 
 // Title message logging
@@ -167,5 +172,5 @@ func (ui UI) SubTitle(msg string, args ...interface{}) {
 // SubPart message logging
 func (ui UI) SubPart(msg string, args ...interface{}) {
 	msg = fmt.Sprintf(msg, args...)
-	fmt.Println(ui.Yellow(" * " + msg))
+	fmt.Println(ui.Green("\n ──┤") + ui.GreenBold(msg) + ui.Green("├──"))
 }

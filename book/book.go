@@ -657,8 +657,8 @@ func (e *Book) SearchOnline() (err error) {
 	}
 
 	// show diff between epub and GR versions, then ask what to do.
-	e.UI.Display(e.Metadata.Diff(onlineInfo, "Epub Metadata", "GoodReads"))
-	e.UI.Choice("Choose: (1) Local version (2) Remote version (3) Edit (4) Abort ")
+	fmt.Println(e.Metadata.Diff(onlineInfo, "Epub Metadata", "GoodReads"))
+	e.UI.Choice("Choose: (1) Local version (2) Remote version (3) Edit (4) Abort : ")
 	validChoice := false
 	errs := 0
 	for !validChoice {
@@ -670,7 +670,6 @@ func (e *Book) SearchOnline() (err error) {
 			err = errors.New("Abort")
 			validChoice = true
 		case "3":
-			e.UI.Info("Going through every field.")
 			err = e.Metadata.Merge(onlineInfo, e.Config, e.UI)
 			if err != nil {
 				return err
@@ -839,9 +838,9 @@ func (e *Book) editSpecificField(field string, values []string) (err error) {
 			return err
 		}
 		// checking rating is between 0 and 10
-		val, err := strconv.Atoi(newValues[0])
-		if err != nil || val > 10 || val < 0 {
-			e.UI.Error("Rating must be an integer between 0 and 10.")
+		val, err := strconv.ParseFloat(newValues[0], 32)
+		if err != nil || val > 5 || val < 0 {
+			e.UI.Error("Rating must be between 0 and 5.")
 			return err
 		}
 		e.Rating = newValues[0]

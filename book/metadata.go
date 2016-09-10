@@ -209,12 +209,11 @@ func (i *Metadata) useAliases(cfg c.Config) {
 }
 
 // Author returns Metadata's main author.
-func (i *Metadata) Author() (author string) {
-	author = unknown
+func (i *Metadata) Author() string {
 	if len(i.Authors) != 0 {
-		author = strings.Join(i.Authors, ", ")
+		return strings.Join(i.Authors, ", ")
 	}
-	return
+	return unknown
 }
 
 // MainSeries return the main Series of Metadata.
@@ -278,16 +277,16 @@ func (i *Metadata) Merge(o Metadata, cfg c.Config, ui e.UserInterface) (err erro
 func (i *Metadata) MergeField(o Metadata, field string, cfg c.Config, ui e.UserInterface) (err error) {
 	switch field {
 	case tagsField:
-		help := "NOTE: tags can be edited as a comma-separated list of strings."
-		tagString, e := ui.Choose(strings.ToTitle(tagsField), help, i.Tags.String(), o.Tags.String())
+		help := "Tags can be edited as a comma-separated list of strings."
+		tagString, e := ui.Choose(strings.Title(tagsField), help, i.Tags.String(), o.Tags.String())
 		if e != nil {
 			return e
 		}
 		i.Tags = Tags{}
 		i.Tags.AddFromNames(strings.Split(tagString, ",")...)
 	case seriesField:
-		help := "NOTE: series can be edited as a comma-separated list of 'series name:index' strings. Index can be empty, or a range."
-		userInput, e := ui.Choose(strings.ToTitle(seriesField), help, i.Series.rawString(), o.Series.rawString())
+		help := "Series can be edited as a comma-separated list of 'series name:index' strings. Index can be empty, or a range."
+		userInput, e := ui.Choose(strings.Title(seriesField), help, i.Series.rawString(), o.Series.rawString())
 		if e != nil {
 			return e
 		}
@@ -302,8 +301,8 @@ func (i *Metadata) MergeField(o Metadata, field string, cfg c.Config, ui e.UserI
 			}
 		}
 	case authorField:
-		help := "NOTE: authors can be edited as a comma-separated list of strings."
-		userInput, e := ui.Choose(strings.ToTitle(authorField), help, i.Author(), o.Author())
+		help := "Authors can be edited as a comma-separated list of strings."
+		userInput, e := ui.Choose(strings.Title(authorField), help, i.Author(), o.Author())
 		if e != nil {
 			return e
 		}
@@ -323,39 +322,39 @@ func (i *Metadata) MergeField(o Metadata, field string, cfg c.Config, ui e.UserI
 			return
 		}
 	case publisherField:
-		i.Publisher, err = ui.Choose(strings.ToTitle(publisherField), "", i.Publisher, o.Publisher)
+		i.Publisher, err = ui.Choose(strings.Title(publisherField), "", i.Publisher, o.Publisher)
 		if err != nil {
 			return
 		}
 	case languageField:
-		i.Language, err = ui.Choose(strings.ToTitle(languageField), "", cleanLanguage(i.Language), cleanLanguage(o.Language))
+		i.Language, err = ui.Choose(strings.Title(languageField), "", cleanLanguage(i.Language), cleanLanguage(o.Language))
 		if err != nil {
 			return
 		}
 	case categoryField:
-		i.Category, err = ui.Choose(strings.ToTitle(categoryField), "Valid values: fiction/nonfiction.", i.Category, o.Category)
+		i.Category, err = ui.Choose(strings.Title(categoryField), "Valid values: fiction/nonfiction.", i.Category, o.Category)
 		if err != nil {
 			return
 		}
 	case genreField:
-		i.MainGenre, err = ui.Choose(strings.ToTitle(genreField), "", i.MainGenre, o.MainGenre)
+		i.MainGenre, err = ui.Choose(strings.Title(genreField), "", i.MainGenre, o.MainGenre)
 		if err != nil {
 			return
 		}
 	case isbnField:
-		i.ISBN, err = ui.Choose(strings.ToTitle(isbnField), "ISBN13 for this epub.", i.ISBN, o.ISBN)
+		i.ISBN, err = ui.Choose(strings.Title(isbnField), "ISBN13 for this epub.", i.ISBN, o.ISBN)
 		if err != nil {
 			return
 		}
 	case titleField:
-		chosenTitle, e := ui.Choose(titleField, "Title, without series information.", i.Title(), o.Title())
+		chosenTitle, e := ui.Choose(strings.Title(titleField), "Title, without series information.", i.Title(), o.Title())
 		if e != nil {
 			return e
 		}
 		i.MainTitle = chosenTitle
 		i.OriginalTitle = chosenTitle
 	case descriptionField:
-		i.Description, err = ui.Choose("Description", "", cleanHTML(i.Description), cleanHTML(o.Description))
+		i.Description, err = ui.Choose(strings.Title(descriptionField), "", cleanHTML(i.Description), cleanHTML(o.Description))
 		if err != nil {
 			return
 		}
