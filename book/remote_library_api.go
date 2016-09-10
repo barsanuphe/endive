@@ -1,12 +1,14 @@
 package book
 
 import (
+	"encoding/xml"
 	"fmt"
 	"html"
+	"io/ioutil"
+	"net/http"
 	"strconv"
 	"strings"
-
-	h "github.com/barsanuphe/endive/helpers"
+	"time"
 )
 
 // RemoteLibraryAPI is the interface for accessing remote library information.
@@ -14,6 +16,44 @@ type RemoteLibraryAPI interface {
 	GetBook(id, key string) (Metadata, error)
 	GetBookIDByQuery(author, title, key string) (id string, err error)
 	GetBookIDByISBN(isbn, key string) (id string, err error)
+}
+
+// GetXMLData retrieves XML responses from online APIs.
+func getXMLData(uri string, i interface{}) (err error) {
+	currentPass := 0
+	const maxTries = 5
+	var data []byte
+	for currentPass < maxTries {
+		data, err = getRequest(uri)
+		if err != nil {
+			currentPass++
+			// wait a little
+			time.Sleep(5 * time.Second)
+		} else {
+			break
+		}
+	}
+	// test if the last pass was successful
+	if err != nil {
+		return
+	}
+	return xml.Unmarshal(data, i)
+}
+
+func getRequest(uri string) (body []byte, err error) {
+	// 10s timeout
+	timeout := time.Duration(10 * time.Second)
+	client := http.Client{Timeout: timeout}
+	res, err := client.Get(uri)
+	if err != nil {
+		return body, err
+	}
+
+	body, err = ioutil.ReadAll(res.Body)
+	res.Body.Close()
+	if err != nil {
+	}
+	return
 }
 
 // GoodReads implements RemoteLibraryAPI and retrieves information from goodreads.com.
@@ -45,7 +85,7 @@ type work struct {
 func (g GoodReads) GetBook(id, key string) (Metadata, error) {
 	uri := apiRoot + "book/show/" + id + ".xml?key=" + key
 	r := response{}
-	err := h.GetXMLData(uri, &r)
+	err := getXMLData(uri, &r)
 	return r.Book, err
 }
 
@@ -59,7 +99,7 @@ func makeSearchQuery(parts ...string) (query string) {
 func (g GoodReads) GetBookIDByQuery(author, title, key string) (id string, err error) {
 	uri := apiRoot + "search/index.xml?key=" + key + "&q=" + makeSearchQuery(author, title)
 	r := response{}
-	err = h.GetXMLData(uri, &r)
+	err = getXMLData(uri, &r)
 	if err != nil {
 		return
 	}
@@ -85,7 +125,7 @@ func (g GoodReads) GetBookIDByQuery(author, title, key string) (id string, err e
 func (g GoodReads) GetBookIDByISBN(isbn, key string) (id string, err error) {
 	uri := apiRoot + "search/index.xml?key=" + key + "&q=" + isbn
 	r := response{}
-	err = h.GetXMLData(uri, &r)
+	err = getXMLData(uri, &r)
 	if err != nil {
 		return
 	}
