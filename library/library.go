@@ -370,10 +370,7 @@ func (l *Library) Search(query, sortBy string, limitFirst, limitLast bool, limit
 			defer h.TimeTrack(l.UI, time.Now(), "Indexing")
 			f := func() error {
 				// convert Books to []GenericBook
-				allBooks := []e.GenericBook{}
-				for _, b := range l.Books {
-					allBooks = append(allBooks, &b)
-				}
+				allBooks := bookSliceToGeneric(l.Books)
 				return l.Index.Rebuild(allBooks)
 			}
 			if err := h.SpinWhileThingsHappen("Indexing", f); err != nil {

@@ -71,16 +71,13 @@ func (l *Library) Save() (hasSaved bool, err error) {
 		n, m, d := l.Books.Diff(oldBooks)
 
 		// update the index
-		err = l.Index.Update(bookToGeneric(n), bookToGeneric(m), bookToGeneric(d))
+		err = l.Index.Update(bookMapToGeneric(n), bookMapToGeneric(m), bookMapToGeneric(d))
 		if err != nil {
 			l.UI.Error("Error updating index, it may be necessary to build it anew")
 			defer h.TimeTrack(l.UI, time.Now(), "Indexing")
 			f := func() error {
-				// convert Books to []GenericBook
-				allBooks := []e.GenericBook{}
-				for _, b := range l.Books {
-					allBooks = append(allBooks, &b)
-				}
+				// convert to GenericBook
+				allBooks := bookSliceToGeneric(l.Books)
 				return l.Index.Rebuild(allBooks)
 			}
 			if err := h.SpinWhileThingsHappen("Indexing", f); err != nil {
@@ -94,10 +91,18 @@ func (l *Library) Save() (hasSaved bool, err error) {
 	return hasSaved, nil
 }
 
-func bookToGeneric(x map[string]b.Book) (y map[string]e.GenericBook) {
+func bookMapToGeneric(x map[string]b.Book) (y map[string]e.GenericBook) {
 	y = make(map[string]e.GenericBook)
 	for k, v := range x {
 		y[k] = &v
+	}
+	return
+}
+
+func bookSliceToGeneric(x b.Books) (y []e.GenericBook) {
+	y = make([]e.GenericBook, len(x))
+	for i := range x {
+		y[i] = &x[i]
 	}
 	return
 }
