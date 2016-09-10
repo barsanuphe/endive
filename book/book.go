@@ -610,10 +610,19 @@ func (e *Book) GetOnlineMetadata() (onlineInfo Metadata, err error) {
 	if e.Config.GoodReadsAPIKey == "" {
 		return Metadata{}, cfg.WarningGoodReadsAPIKeyMissing
 	}
-	// TODO tests
 	var g RemoteLibraryAPI
 	g = GoodReads{}
 	id := ""
+
+	// If not ISBN is found, ask for input
+	if e.Metadata.ISBN == "" {
+		e.UI.Warning("Could not find ISBN.")
+		isbn, err := h.AskForISBN(e.UI)
+		if err == nil {
+			e.Metadata.ISBN = isbn
+		}
+	}
+	// search by ISBN preferably
 	if e.Metadata.ISBN != "" {
 		id, err = g.GetBookIDByISBN(e.Metadata.ISBN, e.Config.GoodReadsAPIKey)
 		if err != nil {
@@ -630,7 +639,6 @@ func (e *Book) GetOnlineMetadata() (onlineInfo Metadata, err error) {
 	}
 	// if still nothing was found...
 	if id == "" {
-		// TODO ask for user input
 		return Metadata{}, errors.New("Could not find online data for " + e.ShortString())
 	}
 	// get book info

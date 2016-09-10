@@ -118,8 +118,7 @@ func CleanISBN(full string) (isbn13 string, err error) {
 
 // AskForISBN when not found in epub
 func AskForISBN(ui e.UserInterface) (string, error) {
-	manualEdit := ui.YesOrNo("Do you want to enter an ISBN manually")
-	if manualEdit {
+	if ui.YesOrNo("Do you want to enter an ISBN manually") {
 		scanner := bufio.NewReader(os.Stdin)
 		validChoice := false
 		errs := 0
