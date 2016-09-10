@@ -365,7 +365,8 @@ func (l *Library) Search(query, sortBy string, limitFirst, limitLast bool, limit
 
 	booksPaths, err := l.Index.Query(query)
 	if err != nil {
-		if err.Error() == "Could not open index" {
+		// TODO const error in endive package
+		if err.Error() == "Index is empty" {
 			// rebuild index
 			defer h.TimeTrack(l.UI, time.Now(), "Indexing")
 			f := func() error {
