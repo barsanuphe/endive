@@ -99,41 +99,34 @@ func (e *Epub) ReadMetadata() (info Metadata, err error) {
 	// by default, assuming it's a first edition
 	info.OriginalYear = info.EditionYear
 	// title
-	results, nonFatalErr := book.MetadataElement("title")
-	if nonFatalErr == nil && len(results) != 0 {
-		info.MainTitle = results[0].Content
+	if results, err := getFirstFieldValue(book, "title"); err == nil {
+		info.MainTitle = results
 	}
 	// authors
-	results, nonFatalErr = book.MetadataElement("creator")
-	if nonFatalErr == nil && len(results) != 0 {
+	if results, err := getFieldValues(book, "creator"); err == nil {
 		info.Authors = []string{}
 		for _, t := range results {
-			info.Authors = append(info.Authors, t.Content)
+			info.Authors = append(info.Authors, t)
 		}
 	}
 	// language
-	results, nonFatalErr = book.MetadataElement("language")
-	if nonFatalErr == nil && len(results) != 0 {
-		info.Language = results[0].Content
+	if results, err := getFirstFieldValue(book, "language"); err == nil {
+		info.Language = results
 	}
 	// description
-	results, nonFatalErr = book.MetadataElement("description")
-	if nonFatalErr == nil && len(results) != 0 {
-		info.Description = results[0].Content
+	if results, err := getFirstFieldValue(book, "description"); err == nil {
+		info.Publisher = results
 	}
 	// tags
-	results, nonFatalErr = book.MetadataElement("subject")
-	if nonFatalErr == nil && len(results) != 0 {
+	if results, err := getFieldValues(book, "subject"); err == nil {
 		info.Tags = Tags{}
 		for _, t := range results {
-			tag := Tag{Name: t.Content}
-			info.Tags.Add(tag)
+			info.Tags.Add(Tag{Name: t})
 		}
 	}
 	// publisher
-	results, nonFatalErr = book.MetadataElement("publisher")
-	if nonFatalErr == nil && len(results) != 0 {
-		info.Publisher = results[0].Content
+	if results, err := getFirstFieldValue(book, "publisher"); err == nil {
+		info.Publisher = results
 	}
 
 	// ISBN
@@ -146,6 +139,24 @@ func (e *Epub) ReadMetadata() (info Metadata, err error) {
 	// cleaning metadata
 	info.Clean(e.Config)
 	return
+}
+
+func getFirstFieldValue(epub *epubgo.Epub, field string) (string, error) {
+	values, err := getFieldValues(epub, field)
+	if err == nil && len(values) != 0 {
+		return values[0], nil
+	}
+	return "", err
+}
+func getFieldValues(epub *epubgo.Epub, field string) ([]string, error) {
+	values := []string{}
+	results, err := epub.MetadataElement(field)
+	if err == nil {
+		for _, v := range results {
+			values = append(values, v.Content)
+		}
+	}
+	return values, err
 }
 
 func (e *Epub) findISBN(book *epubgo.Epub, i *Metadata) error {
