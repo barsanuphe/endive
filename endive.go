@@ -365,14 +365,6 @@ func OpenLibrary(ui e.UserInterface) (lib *l.Library, err error) {
 	if err != nil {
 		return
 	}
-	// make each Book aware of current Config + UI
-	for i := range lib.Books {
-		lib.Books[i].Config = lib.Config
-		lib.Books[i].UI = lib.UI
-		lib.Books[i].NonRetailEpub.Config = lib.Config
-		lib.Books[i].NonRetailEpub.UI = lib.UI
-		lib.Books[i].RetailEpub.Config = lib.Config
-		lib.Books[i].RetailEpub.UI = lib.UI
-	}
+
 	return lib, err
 }

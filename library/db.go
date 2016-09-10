@@ -33,6 +33,15 @@ func (l *Library) loadBooks() (bks b.Books, jsonContent []byte, err error) {
 	if err != nil {
 		fmt.Println(err)
 	}
+	// make each Book aware of current Config + UI
+	for i := range bks {
+		bks[i].Config = l.Config
+		bks[i].UI = l.UI
+		bks[i].NonRetailEpub.Config = l.Config
+		bks[i].NonRetailEpub.UI = l.UI
+		bks[i].RetailEpub.Config = l.Config
+		bks[i].RetailEpub.UI = l.UI
+	}
 	return
 }
 
