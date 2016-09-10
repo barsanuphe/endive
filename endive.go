@@ -10,6 +10,7 @@ It is in a very early development: things can crash and files disappear.
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -33,30 +34,15 @@ func generateCLI(lb *l.Library, ui e.UserInterface) (app *cli.App) {
 	app = cli.NewApp()
 	app.Name = "E N D I V E"
 	app.Usage = "Organize your epub collection."
-	app.Version = "0.0.1"
+	app.Version = "0.1.0"
 
 	app.Commands = []cli.Command{
 		{
 			Name:    "config",
 			Aliases: []string{"c"},
 			Usage:   "options for configuration",
-			Subcommands: []cli.Command{
-				{
-					Name:    "show",
-					Aliases: []string{"ls"},
-					Usage:   "show configuration",
-					Action: func(c *cli.Context) {
-						ui.Display(lb.Config.String())
-					},
-				},
-				{
-					Name:  "aliases",
-					Usage: "show aliases defined in configuration",
-					Action: func(c *cli.Context) {
-						aliases := lb.Config.ListAuthorAliases()
-						ui.Display(aliases)
-					},
-				},
+			Action: func(c *cli.Context) {
+				ui.Display(lb.Config.String())
 			},
 		},
 		{
@@ -106,13 +92,13 @@ func generateCLI(lb *l.Library, ui e.UserInterface) (app *cli.App) {
 			Aliases: []string{"fsck"},
 			Usage:   "check library",
 			Action: func(c *cli.Context) {
-				ui.Display("Checking...")
+				fmt.Print("Checking...")
 				err := lb.Check()
 				if err != nil {
-					ui.Display(" KO!\n")
+					fmt.Println(" KO!")
 					panic(err)
 				}
-				ui.Display(" OK\n")
+				fmt.Println(" OK")
 			},
 		},
 		{
@@ -272,16 +258,21 @@ func generateCLI(lb *l.Library, ui e.UserInterface) (app *cli.App) {
 func main() {
 	var ui e.UserInterface
 	ui = u.UI{}
-	ui.Display(chalk.Bold.TextStyle("\n# # # E N D I V E # # #\n"))
+	fmt.Println(chalk.Bold.TextStyle("\n# # # E N D I V E # # #\n"))
 
 	err := ui.InitLogger(cfg.XdgLogPath)
 	defer ui.CloseLog()
 
 	// get library
 	lb, err := OpenLibrary(ui)
+
 	if err != nil {
 		ui.Error("Error opening library.")
 		ui.Error(err.Error())
+		// if error other than usage elsewhere, remove lock.
+		if err != cfg.ErrorCannotLockDB {
+			cfg.RemoveLock()
+		}
 		return
 	}
 	defer lb.Close()
@@ -342,7 +333,7 @@ func OpenLibrary(ui e.UserInterface) (lib *l.Library, err error) {
 	err = config.Check()
 	switch err {
 	case cfg.ErrorLibraryRootDoesNotExist:
-		ui.Error(err.Error())
+		return
 	case cfg.WarningNonRetailSourceDoesNotExist, cfg.WarningRetailSourceDoesNotExist:
 		ui.Warning(err.Error())
 	}
@@ -374,11 +365,14 @@ func OpenLibrary(ui e.UserInterface) (lib *l.Library, err error) {
 	if err != nil {
 		return
 	}
-	// make each Book aware of current Config file
+	// make each Book aware of current Config + UI
 	for i := range lib.Books {
 		lib.Books[i].Config = lib.Config
+		lib.Books[i].UI = lib.UI
 		lib.Books[i].NonRetailEpub.Config = lib.Config
+		lib.Books[i].NonRetailEpub.UI = lib.UI
 		lib.Books[i].RetailEpub.Config = lib.Config
+		lib.Books[i].RetailEpub.UI = lib.UI
 	}
 	return lib, err
 }

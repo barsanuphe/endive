@@ -159,26 +159,33 @@ func markRead(lb *l.Library, c *cli.Context, ui e.UserInterface) {
 		return
 	}
 	if len(args) >= 1 {
-		// TODO check rating format
+		// check rating format
+		rating, e := strconv.ParseFloat(args[0], 32)
+		if e != nil || rating < 0 || rating > 5 {
+			ui.Error("Rating must be a number between 0 and 5.")
+			return
+		}
 		book.Rating = args[0]
 	}
 	if len(args) == 2 {
 		book.Review = args[1]
 	}
 	book.SetReadDateToday()
+	// TODO: allow setting the other values!!!
 	book.SetProgress("read")
+	showInfo(lb, c, ui)
 }
 
 func showInfo(lb *l.Library, c *cli.Context, ui e.UserInterface) {
 	if c.NArg() == 0 {
-		ui.Display(lb.ShowInfo())
+		fmt.Println(lb.ShowInfo())
 	} else {
 		book, _, err := checkArgsWithID(lb, c.Args())
 		if err != nil {
 			ui.Error("Error parsing arguments: " + err.Error())
 			return
 		}
-		ui.Display(book.ShowInfo())
+		fmt.Println(book.ShowInfo())
 	}
 }
 
