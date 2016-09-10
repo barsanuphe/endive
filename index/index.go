@@ -89,7 +89,7 @@ func (i *Index) Query(queryString string) (resultsPaths []string, err error) {
 	}
 	defer index.Close()
 	if isNew {
-		return resultsPaths, errors.New("Could not open index")
+		return resultsPaths, errors.New("Index is empty")
 	}
 
 	searchResults, err := index.Search(search)

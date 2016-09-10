@@ -1,60 +1,91 @@
 package index
 
-// TODO mock GenericBook to test this.
-/*
 import (
+	"os"
 	"testing"
 
-	cfg "github.com/barsanuphe/endive/config"
-
 	"github.com/stretchr/testify/assert"
+
+	cfg "github.com/barsanuphe/endive/config"
+	"github.com/barsanuphe/endive/endive"
+	"github.com/barsanuphe/endive/library"
+	"github.com/barsanuphe/endive/mock"
 )
 
 func TestSearch(t *testing.T) {
+	indexPath := "../test/test_index"
 	c := cfg.Config{}
+	ui := &mock.UserInterface{}
 	k := cfg.KnownHashes{}
-	ldb := DB{DatabaseFile: "../test/endive.json"}
 	assert := assert.New(t)
 
-	l := Library{c, k, ldb}
+	l := library.Library{Index: &Index{}, UI: ui, Config: c, KnownHashes: k, DatabaseFile: "../test/endive.json"}
 	err := l.Load()
 	assert.Nil(err, "Error loading epubs from database")
+	l.Index.SetPath(indexPath)
 
 	// search before indexing to check if index is built then.
-	res, err := l.RunQuery("fr")
-	assert.Nil(err, "Error searching fr")
-	assert.EqualValues(len(res), 1, "Error searching fr, unexpected results")
-	assert.Equal(res[0].FullPath(), "test/pg17989.epub", "Error searching fr, unexpected results")
+	_, err = l.Index.Query("fr")
+	assert.NotNil(err, "Index not built yet")
+
 	// index
-	numIndexed, err := l.IndexAll()
+	// convert Books to []GenericBook
+	allBooks := make([]endive.GenericBook, len(l.Books))
+	for i := range l.Books {
+		allBooks[i] = &l.Books[i]
+	}
+	err = l.Index.Rebuild(allBooks)
 	assert.Nil(err, "Error indexing epubs from database")
-	assert.EqualValues(numIndexed, 2, "Error indexing epubs from database, expected 2")
+
+	numIndexed := l.Index.Count()
+	assert.EqualValues(2, numIndexed, "Error indexing epubs from database, expected 2")
+
+	results, err := l.Index.Query("fr")
+	assert.Nil(err, "Error opening index")
+	assert.EqualValues(1, len(results), "Error searching fr, unexpected results")
+	if len(results) >= 1 {
+		assert.Equal("test/pg17989.epub", results[0], "Error searching fr, unexpected results")
+	}
+
 	// metadata.language:fr
-	res, err = l.RunQuery("language:fr")
+	results, err = l.Index.Query("metadata.language:fr")
 	assert.Nil(err, "Error searching language:fr")
-	assert.Equal(len(res), 1, "Error searching language:fr, unexpected results")
-	assert.Equal(res[0].FullPath(), "test/pg17989.epub", "Error searching language:fr, unexpected results")
+	assert.Equal(1, len(results), "Error searching language:fr, unexpected results")
+	if len(results) >= 1 {
+		assert.Equal("test/pg17989.epub", results[0], "Error searching language:fr, unexpected results")
+	}
 	// metadata.authors:dumas
-	res, err = l.RunQuery("author:dumas")
+	results, err = l.Index.Query("metadata.authors:dumas")
 	assert.Nil(err, "Error searching author:dumas")
-	assert.EqualValues(len(res), 1, "Error searching author:dumas, unexpected results")
-	assert.Equal(res[0].FullPath(), "test/pg17989.epub", "Error searching author:dumas, unexpected results")
+	assert.EqualValues(1, len(results), "Error searching author:dumas, unexpected results")
+	if len(results) >= 1 {
+		assert.Equal("test/pg17989.epub", results[0], "Error searching author:dumas, unexpected results")
+	}
 	// metadata.year:2005
-	res, err = l.RunQuery("year:2005")
+	results, err = l.Index.Query("metadata.year:2005")
 	assert.Nil(err, "Error searching year:2005")
-	assert.EqualValues(len(res), 1, "Error searching year:2005, unexpected results")
+	assert.EqualValues(1, len(results), "Error searching year:2005, unexpected results")
+	// metadata.year:2205
+	results, err = l.Index.Query("metadata.year:2205")
+	assert.Nil(err, "Error searching year:2205")
+	assert.EqualValues(0, len(results), "Error searching year:2205, did not expect results")
+
+	// remove index
+	err = os.RemoveAll(indexPath)
+	if err != nil {
+		assert.Nil(err, "Error removing index")
+	}
 
 	// TODO search all fields
 	/*
-  		l.Search("en")
-		l.Search("language:en")
-		l.Search("Dumas")
-		l.Search("author:Dumas")
-		l.Search("Author:Dumas")
-		l.Search("title:Beowulf")
-		l.Search("author:Beowulf")
-		l.Search("tags:littérature")
-		l.Search("tags:sf")
-
+		  		l.Search("en")
+				l.Search("language:en")
+				l.Search("Dumas")
+				l.Search("author:Dumas")
+				l.Search("Author:Dumas")
+				l.Search("title:Beowulf")
+				l.Search("author:Beowulf")
+				l.Search("tags:littérature")
+				l.Search("tags:sf")
+	*/
 }
-*/
