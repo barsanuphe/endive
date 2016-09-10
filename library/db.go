@@ -23,7 +23,8 @@ func (l *Library) loadBooks() (bks b.Books, jsonContent []byte, err error) {
 	jsonContent, err = ioutil.ReadFile(l.DatabaseFile)
 	if err != nil {
 		if os.IsNotExist(err) {
-			// first run
+			// first run, it will be created later.
+			err = nil
 			return
 		}
 		return

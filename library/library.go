@@ -200,9 +200,9 @@ func (l *Library) ImportEpubs(allEpubs []string, allHashes []string, isRetail bo
 
 // generateID for a new Book
 func (l *Library) generateID() (id int) {
-	// id 0 for first Book
+	// id 1 for first Book
 	if len(l.Books) == 0 {
-		return
+		return 1
 	}
 	// find max ID of ldb.Books and add 1
 	for _, book := range l.Books {
