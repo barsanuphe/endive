@@ -4,16 +4,15 @@ import (
 	"errors"
 	"path/filepath"
 
-	cfg "github.com/barsanuphe/endive/config"
-	"github.com/barsanuphe/endive/endive"
-	h "github.com/barsanuphe/endive/helpers"
+	en "github.com/barsanuphe/endive/endive"
+
 	"github.com/barsanuphe/epubgo"
 )
 
 // Epub can manipulate an epub file.
 type Epub struct {
-	Config cfg.Config           `json:"-"`
-	UI     endive.UserInterface `json:"-"`
+	Config en.Config        `json:"-"`
+	UI     en.UserInterface `json:"-"`
 
 	Filename         string `json:"filename"` // relative to LibraryRoot
 	Hash             string `json:"hash"`
@@ -33,7 +32,7 @@ func (e *Epub) FullPath() string {
 
 // GetHash calculates an epub's current hash
 func (e *Epub) GetHash() (err error) {
-	hash, err := h.CalculateSHA256(e.FullPath())
+	hash, err := en.CalculateSHA256(e.FullPath())
 	if err != nil {
 		return
 	}
@@ -50,7 +49,7 @@ func (e *Epub) FlagForReplacement() (err error) {
 // Check the retail epub integrity.
 func (e *Epub) Check() (hasChanged bool, err error) {
 	// get current hash
-	currentHash, err := h.CalculateSHA256(e.FullPath())
+	currentHash, err := en.CalculateSHA256(e.FullPath())
 	if err != nil {
 		return
 	}
@@ -166,7 +165,7 @@ func (e *Epub) findISBN(book *epubgo.Epub, i *Metadata) error {
 		// try to find isbn
 		for _, el := range identifiers {
 			// try to find isbn in content
-			isbn, err := h.CleanISBN(el.Content)
+			isbn, err := en.CleanISBN(el.Content)
 			if err == nil {
 				i.ISBN = isbn
 				return err
@@ -174,7 +173,7 @@ func (e *Epub) findISBN(book *epubgo.Epub, i *Metadata) error {
 			// try to find isbn in the attributes
 			// it shouldn't be there, but retail epubs have awful metadata
 			for _, evt := range el.Attr {
-				isbn, err = h.CleanISBN(evt)
+				isbn, err = en.CleanISBN(evt)
 				if err == nil {
 					i.ISBN = isbn
 					return err
@@ -188,7 +187,7 @@ func (e *Epub) findISBN(book *epubgo.Epub, i *Metadata) error {
 		// try to find isbn
 		for _, el := range sources {
 			// clean results
-			isbn, err := h.CleanISBN(el.Content)
+			isbn, err := en.CleanISBN(el.Content)
 			if err == nil {
 				i.ISBN = isbn
 				return err

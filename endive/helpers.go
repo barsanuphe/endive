@@ -1,10 +1,4 @@
-/*
-Package helpers is a subpackage of Endive.
-
-It is a mix of helper functions, for file manipulation, logging, remote API access, and display.
-
-*/
-package helpers
+package endive
 
 import (
 	"bufio"
@@ -20,12 +14,10 @@ import (
 	"github.com/barsanuphe/gotabulate"
 	"github.com/moraes/isbn"
 	"github.com/tj/go-spin"
-
-	e "github.com/barsanuphe/endive/endive"
 )
 
 // TimeTrack helps track the time taken by a function.
-func TimeTrack(ui e.UserInterface, start time.Time, name string) {
+func TimeTrack(ui UserInterface, start time.Time, name string) {
 	elapsed := time.Since(start)
 	ui.Debugf("-- %s in %s\n", name, elapsed)
 }
@@ -117,7 +109,7 @@ func CleanISBN(full string) (isbn13 string, err error) {
 }
 
 // AskForISBN when not found in epub
-func AskForISBN(ui e.UserInterface) (string, error) {
+func AskForISBN(ui UserInterface) (string, error) {
 	if ui.YesOrNo("Do you want to enter an ISBN manually") {
 		scanner := bufio.NewReader(os.Stdin)
 		validChoice := false

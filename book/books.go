@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"strconv"
 
-	h "github.com/barsanuphe/endive/helpers"
+	e "github.com/barsanuphe/endive/endive"
 )
 
 // Books is a slice of Book.
@@ -139,7 +139,7 @@ func (bks Books) Diff(o Books) (newB map[string]Book, modifiedB map[string]Book,
 	// if in current and not in other, append to new
 	commonPaths := []string{}
 	for _, k := range knownFullPaths {
-		if _, isIn := h.StringInSlice(k, otherFullPaths); !isIn {
+		if _, isIn := e.StringInSlice(k, otherFullPaths); !isIn {
 			newB[k] = knownIndexed[k]
 		} else {
 			commonPaths = append(commonPaths, k)
@@ -147,7 +147,7 @@ func (bks Books) Diff(o Books) (newB map[string]Book, modifiedB map[string]Book,
 	}
 	// if in other and not in current, append to deleted
 	for _, p := range otherFullPaths {
-		if _, isIn := h.StringInSlice(p, knownFullPaths); !isIn {
+		if _, isIn := e.StringInSlice(p, knownFullPaths); !isIn {
 			deletedB[p] = otherIndexed[p]
 		}
 	}

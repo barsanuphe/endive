@@ -1,14 +1,11 @@
 package book
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
-	"errors"
-
-	c "github.com/barsanuphe/endive/config"
 	e "github.com/barsanuphe/endive/endive"
-	h "github.com/barsanuphe/endive/helpers"
 )
 
 // Metadata contains all of the known book metadata.
@@ -100,7 +97,7 @@ func (i *Metadata) Title() string {
 }
 
 // Clean cleans up the Metadata
-func (i *Metadata) Clean(cfg c.Config) {
+func (i *Metadata) Clean(cfg e.Config) {
 	// default year
 	if i.OriginalYear == "" {
 		if i.EditionYear != "" {
@@ -168,11 +165,11 @@ func (i *Metadata) Clean(cfg c.Config) {
 }
 
 // useAliases updates Metadata fields, using the configuration file.
-func (i *Metadata) useAliases(cfg c.Config) {
+func (i *Metadata) useAliases(cfg e.Config) {
 	// author aliases
 	for j, author := range i.Authors {
 		for mainAlias, aliases := range cfg.AuthorAliases {
-			_, isIn := h.StringInSlice(author, aliases)
+			_, isIn := e.StringInSlice(author, aliases)
 			if isIn {
 				i.Authors[j] = mainAlias
 				break
@@ -184,7 +181,7 @@ func (i *Metadata) useAliases(cfg c.Config) {
 	for _, tag := range i.Tags {
 		added := false
 		for mainAlias, aliases := range cfg.TagAliases {
-			_, isIn := h.StringInSlice(tag.Name, aliases)
+			_, isIn := e.StringInSlice(tag.Name, aliases)
 			if isIn {
 				cleanTags.AddFromNames(mainAlias)
 				added = true
@@ -200,7 +197,7 @@ func (i *Metadata) useAliases(cfg c.Config) {
 
 	// publisher aliases
 	for mainAlias, aliases := range cfg.PublisherAliases {
-		_, isIn := h.StringInSlice(i.Publisher, aliases)
+		_, isIn := e.StringInSlice(i.Publisher, aliases)
 		if isIn {
 			i.Publisher = mainAlias
 			break
@@ -254,11 +251,11 @@ func (i *Metadata) Diff(o Metadata, firstHeader, secondHeader string) string {
 	rows = append(rows, []string{i.Series.String(), o.Series.String()})
 	rows = append(rows, []string{i.Language, o.Language})
 	rows = append(rows, []string{i.ISBN, o.ISBN})
-	return h.TabulateRows(rows, firstHeader, secondHeader)
+	return e.TabulateRows(rows, firstHeader, secondHeader)
 }
 
 // Merge with another Metadata.
-func (i *Metadata) Merge(o Metadata, cfg c.Config, ui e.UserInterface) (err error) {
+func (i *Metadata) Merge(o Metadata, cfg e.Config, ui e.UserInterface) (err error) {
 	for _, field := range MetadataFieldNames {
 		err = i.MergeField(o, field, cfg, ui)
 		if err != nil {
@@ -274,7 +271,7 @@ func (i *Metadata) Merge(o Metadata, cfg c.Config, ui e.UserInterface) (err erro
 }
 
 // MergeField with another Metadata.
-func (i *Metadata) MergeField(o Metadata, field string, cfg c.Config, ui e.UserInterface) (err error) {
+func (i *Metadata) MergeField(o Metadata, field string, cfg e.Config, ui e.UserInterface) (err error) {
 	switch field {
 	case tagsField:
 		help := "Tags can be edited as a comma-separated list of strings."

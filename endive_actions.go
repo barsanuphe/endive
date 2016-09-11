@@ -2,17 +2,15 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"path/filepath"
 	"strconv"
 	"strings"
 
 	b "github.com/barsanuphe/endive/book"
-	h "github.com/barsanuphe/endive/helpers"
+	e "github.com/barsanuphe/endive/endive"
 	l "github.com/barsanuphe/endive/library"
 
-	"fmt"
-
-	e "github.com/barsanuphe/endive/endive"
 	"github.com/codegangsta/cli"
 )
 
@@ -22,7 +20,7 @@ func checkSortOrder(c *cli.Context) (orderDefined bool, sortBy string, lastIndex
 	}
 	sortBy = "default"
 	for i, arg := range c.Args() {
-		_, isIn := h.StringInSliceCaseInsensitive(arg, []string{"orderby", "sortby"})
+		_, isIn := e.StringInSliceCaseInsensitive(arg, []string{"orderby", "sortby"})
 		if isIn && i < c.NArg()-1 {
 			// check args is valid
 			if b.CheckValidSortOrder(c.Args()[i+1]) {
@@ -122,7 +120,7 @@ func refreshMetadata(lb *l.Library, c *cli.Context, ui e.UserInterface) {
 	if len(c.Args()) == 2 {
 		field := c.Args()[1]
 		// check if valid field name
-		_, isIn := h.StringInSlice(strings.ToLower(field), b.MetadataFieldNames)
+		_, isIn := e.StringInSlice(strings.ToLower(field), b.MetadataFieldNames)
 		if !isIn {
 			fmt.Println("Invalid metadata field " + field)
 			return
@@ -194,12 +192,12 @@ func listTags(lb *l.Library, c *cli.Context, ui e.UserInterface) (err error) {
 	if err != nil {
 		// list all tags
 		tags := lb.ListTags()
-		ui.Display(h.TabulateMap(tags, "Tag", "# of Books"))
+		ui.Display(e.TabulateMap(tags, "Tag", "# of Books"))
 	} else {
 		// if ID, list tags of ID
 		var rows [][]string
 		rows = append(rows, []string{book.ShortString(), book.Metadata.Tags.String()})
-		ui.Display(h.TabulateRows(rows, "Book", "Tags"))
+		ui.Display(e.TabulateRows(rows, "Book", "Tags"))
 	}
 	return
 }
@@ -209,12 +207,12 @@ func listSeries(lb *l.Library, c *cli.Context, ui e.UserInterface) {
 	if err != nil {
 		// list all series
 		series := lb.ListSeries()
-		ui.Display(h.TabulateMap(series, "Series", "# of Books"))
+		ui.Display(e.TabulateMap(series, "Series", "# of Books"))
 	} else {
 		// if ID, list series of ID
 		var rows [][]string
 		rows = append(rows, []string{book.ShortString(), book.Metadata.Series.String()})
-		ui.Display(h.TabulateRows(rows, "Book", "Series"))
+		ui.Display(e.TabulateRows(rows, "Book", "Series"))
 	}
 	return
 }
@@ -254,10 +252,10 @@ func importEpubs(lb *l.Library, c *cli.Context, ui e.UserInterface, isRetail boo
 		// check valid path
 		validPaths, validHashes := []string{}, []string{}
 		for _, path := range c.Args() {
-			validPath, err := h.FileExists(path)
+			validPath, err := e.FileExists(path)
 			if err == nil && filepath.Ext(validPath) == ".epub" {
 				validPaths = append(validPaths, validPath)
-				validHash, err := h.CalculateSHA256(path)
+				validHash, err := e.CalculateSHA256(path)
 				if err != nil {
 					return
 				}

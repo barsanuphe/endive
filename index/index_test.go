@@ -6,17 +6,16 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	cfg "github.com/barsanuphe/endive/config"
-	"github.com/barsanuphe/endive/endive"
+	e "github.com/barsanuphe/endive/endive"
 	"github.com/barsanuphe/endive/library"
 	"github.com/barsanuphe/endive/mock"
 )
 
 func TestSearch(t *testing.T) {
 	indexPath := "../test/test_index"
-	c := cfg.Config{}
+	c := e.Config{}
 	ui := &mock.UserInterface{}
-	k := cfg.KnownHashes{}
+	k := e.KnownHashes{}
 	assert := assert.New(t)
 
 	l := library.Library{Index: &Index{}, UI: ui, Config: c, KnownHashes: k, DatabaseFile: "../test/endive.json"}
@@ -30,7 +29,7 @@ func TestSearch(t *testing.T) {
 
 	// index
 	// convert Books to []GenericBook
-	allBooks := make([]endive.GenericBook, len(l.Books))
+	allBooks := make([]e.GenericBook, len(l.Books))
 	for i := range l.Books {
 		allBooks[i] = &l.Books[i]
 	}

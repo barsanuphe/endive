@@ -1,4 +1,4 @@
-package helpers
+package endive
 
 import (
 	"crypto/sha256"
@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/barsanuphe/endive/endive"
 	"github.com/tj/go-spin"
 )
 
@@ -77,7 +76,7 @@ func FileExists(path string) (absolutePath string, err error) {
 }
 
 // DeleteEmptyFolders deletes empty folders that may appear after sorting albums.
-func DeleteEmptyFolders(root string, ui endive.UserInterface) (err error) {
+func DeleteEmptyFolders(root string, ui UserInterface) (err error) {
 	defer TimeTrack(ui, time.Now(), "Scanning files")
 
 	ui.Debugf("Scanning for empty directories.\n\n")

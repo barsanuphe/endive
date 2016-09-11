@@ -4,7 +4,7 @@ import (
 	"errors"
 	"strings"
 
-	h "github.com/barsanuphe/endive/helpers"
+	e "github.com/barsanuphe/endive/endive"
 
 	"github.com/kennygrant/sanitize"
 )
@@ -20,7 +20,7 @@ func cleanLanguage(language string) (clean string) {
 	clean = strings.TrimSpace(strings.ToLower(language))
 	// reducing to main alias
 	for mainalias, aliasList := range languageAliases {
-		_, isIn := h.StringInSlice(language, aliasList)
+		_, isIn := e.StringInSlice(language, aliasList)
 		if isIn {
 			clean = mainalias
 			break
@@ -82,7 +82,7 @@ func cleanCategory(category string) (clean string, err error) {
 	if err != nil {
 		return "", err
 	}
-	if _, isIn := h.StringInSlice(cleanName, validCategories); !isIn {
+	if _, isIn := e.StringInSlice(cleanName, validCategories); !isIn {
 		err = errors.New("Invalid category " + category)
 	} else {
 		clean = cleanName

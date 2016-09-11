@@ -11,10 +11,8 @@ import (
 	"time"
 
 	b "github.com/barsanuphe/endive/book"
-	cfg "github.com/barsanuphe/endive/config"
-	h "github.com/barsanuphe/endive/helpers"
-
 	e "github.com/barsanuphe/endive/endive"
+
 	"github.com/jhoonb/archivex"
 )
 
@@ -84,13 +82,13 @@ func (l *Library) Save() (hasSaved bool, err error) {
 		err = l.Index.Update(bookMapToGeneric(n), bookMapToGeneric(m), bookMapToGeneric(d))
 		if err != nil {
 			l.UI.Error("Error updating index, it may be necessary to build it anew")
-			defer h.TimeTrack(l.UI, time.Now(), "Indexing")
+			defer e.TimeTrack(l.UI, time.Now(), "Indexing")
 			f := func() error {
 				// convert to GenericBook
 				allBooks := bookSliceToGeneric(l.Books)
 				return l.Index.Rebuild(allBooks)
 			}
-			if err := h.SpinWhileThingsHappen("Indexing", f); err != nil {
+			if err := e.SpinWhileThingsHappen("Indexing", f); err != nil {
 				return hasSaved, err
 			}
 			// index is now correct
@@ -121,7 +119,7 @@ func bookSliceToGeneric(x b.Books) (y []e.GenericBook) {
 func (l *Library) backup() (err error) {
 	l.UI.Debug("Backup up database...")
 	// generate archive filename with date.
-	archiveName, err := cfg.GetArchiveUniqueName(l.DatabaseFile)
+	archiveName, err := e.GetArchiveUniqueName(l.DatabaseFile)
 	if err != nil {
 		return
 	}
@@ -141,7 +139,7 @@ func (l *Library) backup() (err error) {
 
 // Check all Books
 func (l *Library) Check() error {
-	defer h.TimeTrack(l.UI, time.Now(), "Checking")
+	defer e.TimeTrack(l.UI, time.Now(), "Checking")
 	for i := range l.Books {
 		l.UI.Debug("Checking " + l.Books[i].ShortString())
 		retailChanged, nonRetailChanged, err := l.Books[i].Check()

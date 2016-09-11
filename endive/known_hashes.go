@@ -1,4 +1,4 @@
-package config
+package endive
 
 import (
 	"encoding/json"
@@ -7,8 +7,6 @@ import (
 	"io/ioutil"
 	"os"
 	"strconv"
-
-	h "github.com/barsanuphe/endive/helpers"
 
 	"launchpad.net/go-xdg"
 )
@@ -99,6 +97,6 @@ func (k *KnownHashes) IsIn(hash string) (isIn bool) {
 		// no need to check
 		return
 	}
-	_, isIn = h.StringInSlice(hash, k.Hashes)
+	_, isIn = StringInSlice(hash, k.Hashes)
 	return
 }

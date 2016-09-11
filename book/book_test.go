@@ -7,8 +7,7 @@ import (
 	"testing"
 	"time"
 
-	cfg "github.com/barsanuphe/endive/config"
-	h "github.com/barsanuphe/endive/helpers"
+	e "github.com/barsanuphe/endive/endive"
 	"github.com/barsanuphe/endive/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -53,7 +52,7 @@ var epubs = []struct {
 }
 
 var parentDir string
-var standardTestConfig cfg.Config
+var standardTestConfig e.Config
 var ui *mock.UserInterface
 var isRetail = true
 
@@ -66,7 +65,7 @@ func TestMain(m *testing.M) {
 	parentDir = filepath.Dir(wd)
 	tags := make(map[string][]string)
 	tags["science-fiction"] = []string{"sci-fi"}
-	standardTestConfig = cfg.Config{LibraryRoot: parentDir, TagAliases: tags}
+	standardTestConfig = e.Config{LibraryRoot: parentDir, TagAliases: tags}
 	// init logger
 	err = ui.InitLogger("log_testing")
 	if err != nil {
@@ -151,7 +150,7 @@ func TestBookNewName(t *testing.T) {
 
 func TestBookRefresh(t *testing.T) {
 	fmt.Println("+ Testing Book.Refresh()...")
-	cfg := cfg.Config{EpubFilenameFormat: "$a $y $t", LibraryRoot: parentDir}
+	cfg := e.Config{EpubFilenameFormat: "$a $y $t", LibraryRoot: parentDir}
 	assert := assert.New(t)
 	for i, testEpub := range epubs {
 		// copy testEpub.filename
@@ -159,7 +158,7 @@ func TestBookRefresh(t *testing.T) {
 		epubDir := filepath.Dir(testEpub.filename)
 		tempCopy := filepath.Join(parentDir, epubDir, "temp_"+epubFilename)
 
-		err := h.CopyFile(filepath.Join(parentDir, testEpub.filename), tempCopy)
+		err := e.CopyFile(filepath.Join(parentDir, testEpub.filename), tempCopy)
 		assert.Nil(err, "Error copying")
 
 		// creating Epub object

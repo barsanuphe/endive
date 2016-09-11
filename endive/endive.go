@@ -1,3 +1,11 @@
+/*
+Package endive is the root package of endive.
+
+It defines the main interfaces.
+It manages the configuration file and also deals with the internal database of
+already imported files (tracked through their SHA256 hashes).
+It also contains functions that are used by other endive subpackages.
+*/
 package endive
 
 // GenericBook interface for Books

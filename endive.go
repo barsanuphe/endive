@@ -18,9 +18,7 @@ import (
 	"syscall"
 
 	b "github.com/barsanuphe/endive/book"
-	cfg "github.com/barsanuphe/endive/config"
 	e "github.com/barsanuphe/endive/endive"
-	h "github.com/barsanuphe/endive/helpers"
 	i "github.com/barsanuphe/endive/index"
 	l "github.com/barsanuphe/endive/library"
 	u "github.com/barsanuphe/endive/ui"
@@ -221,7 +219,7 @@ func generateCLI(lb *l.Library, ui e.UserInterface) (app *cli.App) {
 					Usage:   "list authors.",
 					Action: func(c *cli.Context) {
 						authors := lb.ListAuthors()
-						ui.Display(h.TabulateMap(authors, "Author", "# of Books"))
+						ui.Display(e.TabulateMap(authors, "Author", "# of Books"))
 					},
 				},
 				{
@@ -230,7 +228,7 @@ func generateCLI(lb *l.Library, ui e.UserInterface) (app *cli.App) {
 					Usage:   "list publishers.",
 					Action: func(c *cli.Context) {
 						publishers := lb.ListPublishers()
-						ui.Display(h.TabulateMap(publishers, "Publisher", "# of Books"))
+						ui.Display(e.TabulateMap(publishers, "Publisher", "# of Books"))
 					},
 				},
 				{
@@ -260,7 +258,7 @@ func main() {
 	ui = u.UI{}
 	fmt.Println(chalk.Bold.TextStyle("\n# # # E N D I V E # # #\n"))
 
-	err := ui.InitLogger(cfg.XdgLogPath)
+	err := ui.InitLogger(e.XdgLogPath)
 	defer ui.CloseLog()
 
 	// get library
@@ -270,8 +268,8 @@ func main() {
 		ui.Error("Error opening library.")
 		ui.Error(err.Error())
 		// if error other than usage elsewhere, remove lock.
-		if err != cfg.ErrorCannotLockDB {
-			cfg.RemoveLock()
+		if err != e.ErrorCannotLockDB {
+			e.RemoveLock()
 		}
 		return
 	}
@@ -294,7 +292,7 @@ func main() {
 	app.Run(os.Args)
 }
 
-const xdgIndexPath string = cfg.Endive + "/" + cfg.Endive + ".index"
+const xdgIndexPath string = e.Endive + "/" + e.Endive + ".index"
 
 // getIndexPath gets the default index path
 func getIndexPath() (path string) {
@@ -312,16 +310,16 @@ func getIndexPath() (path string) {
 // OpenLibrary constucts a valid new Library
 func OpenLibrary(ui e.UserInterface) (lib *l.Library, err error) {
 	// config
-	configPath, err := cfg.GetConfigPath()
+	configPath, err := e.GetConfigPath()
 	if err != nil {
 		return
 	}
-	config := cfg.Config{Filename: configPath}
+	config := e.Config{Filename: configPath}
 	// config load
 	ui.Debugf("Loading Config %s.\n", config.Filename)
 	err = config.Load()
 	if err != nil {
-		if err == cfg.WarningGoodReadsAPIKeyMissing {
+		if err == e.WarningGoodReadsAPIKeyMissing {
 			ui.Warning(err.Error())
 		} else {
 			ui.Error(err.Error())
@@ -332,24 +330,24 @@ func OpenLibrary(ui e.UserInterface) (lib *l.Library, err error) {
 	ui.Debug("Checking Config...")
 	err = config.Check()
 	switch err {
-	case cfg.ErrorLibraryRootDoesNotExist:
+	case e.ErrorLibraryRootDoesNotExist:
 		return
-	case cfg.WarningNonRetailSourceDoesNotExist, cfg.WarningRetailSourceDoesNotExist:
+	case e.WarningNonRetailSourceDoesNotExist, e.WarningRetailSourceDoesNotExist:
 		ui.Warning(err.Error())
 	}
 	// check lock
-	err = cfg.SetLock()
+	err = e.SetLock()
 	if err != nil {
 		return
 	}
 
 	// known hashes
-	hashesPath, err := cfg.GetKnownHashesPath()
+	hashesPath, err := e.GetKnownHashesPath()
 	if err != nil {
 		return
 	}
 	// load known hashes file
-	hashes := cfg.KnownHashes{Filename: hashesPath}
+	hashes := e.KnownHashes{Filename: hashesPath}
 	err = hashes.Load()
 	if err != nil {
 		return

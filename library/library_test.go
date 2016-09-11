@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"testing"
 
-	cfg "github.com/barsanuphe/endive/config"
+	e "github.com/barsanuphe/endive/endive"
 	"github.com/barsanuphe/endive/mock"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestLibrarySearch(t *testing.T) {
-	c := cfg.Config{}
-	k := cfg.KnownHashes{}
+	c := e.Config{}
+	k := e.KnownHashes{}
 	l := Library{Config: c, KnownHashes: k, DatabaseFile: "../test/endive.json", Index: &mock.IndexService{}, UI: &mock.UserInterface{}}
 	assert := assert.New(t)
 

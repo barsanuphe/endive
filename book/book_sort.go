@@ -4,7 +4,7 @@ import (
 	"sort"
 	"strings"
 
-	h "github.com/barsanuphe/endive/helpers"
+	e "github.com/barsanuphe/endive/endive"
 )
 
 // TODO add all possible orders
@@ -12,7 +12,7 @@ var validSortOrder = []string{idField, authorField, titleField, seriesField, gen
 
 // CheckValidSortOrder checks if a sorting field is valid.
 func CheckValidSortOrder(sortBy string) (valid bool) {
-	_, valid = h.StringInSlice(strings.ToLower(sortBy), validSortOrder)
+	_, valid = e.StringInSlice(strings.ToLower(sortBy), validSortOrder)
 	return
 }
 

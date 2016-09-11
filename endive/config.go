@@ -1,17 +1,9 @@
-/*
-Package config is a subpackage of Endive.
-
-It aims at reading and checking the Endive configuration file.
-It also deals with the internal database of already imported files (tracked through their SHA256 hashes).
-*/
-package config
+package endive
 
 import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	h "github.com/barsanuphe/endive/helpers"
 
 	"github.com/spf13/viper"
 	"launchpad.net/go-xdg"
@@ -74,7 +66,7 @@ type Config struct {
 
 // GetArchiveUniqueName in the endive archive directory.
 func GetArchiveUniqueName(filename string) (archive string, err error) {
-	return h.GetUniqueTimestampedFilename(filepath.Join(xdg.Data.Dirs()[0], XdgArchiveDir), filename)
+	return GetUniqueTimestampedFilename(filepath.Join(xdg.Data.Dirs()[0], XdgArchiveDir), filename)
 }
 
 // GetConfigPath gets the default path for configuration.
@@ -152,17 +144,17 @@ func (c *Config) Load() (err error) {
 
 // Check if the paths in the configuration file are valid, and if the EpubFilename Format is ok.
 func (c *Config) Check() error {
-	if !h.DirectoryExists(c.LibraryRoot) {
+	if !DirectoryExists(c.LibraryRoot) {
 		return ErrorLibraryRootDoesNotExist
 	}
 	// checking for sources, warnings only.
 	for _, source := range c.RetailSource {
-		if !h.DirectoryExists(source) {
+		if !DirectoryExists(source) {
 			return WarningRetailSourceDoesNotExist
 		}
 	}
 	for _, source := range c.NonRetailSource {
-		if !h.DirectoryExists(source) {
+		if !DirectoryExists(source) {
 			return WarningNonRetailSourceDoesNotExist
 		}
 	}
@@ -198,5 +190,5 @@ func (c *Config) String() string {
 	for mainalias, aliases := range c.PublisherAliases {
 		rows = append(rows, []string{"Publisher alias: " + mainalias, strings.Join(aliases, ", ")})
 	}
-	return h.TabulateRows(rows, "Config", "Value")
+	return TabulateRows(rows, "Config", "Value")
 }
