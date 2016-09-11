@@ -90,13 +90,13 @@ func generateCLI(lb *l.Library, ui e.UserInterface) (app *cli.App) {
 			Aliases: []string{"fsck"},
 			Usage:   "check library",
 			Action: func(c *cli.Context) {
-				fmt.Print("Checking...")
 				err := lb.Check()
 				if err != nil {
-					fmt.Println(" KO!")
-					panic(err)
+					ui.Error("Check found errors! " + err.Error())
+				} else {
+					ui.Info("No errors found.")
 				}
-				fmt.Println(" OK")
+
 			},
 		},
 		{

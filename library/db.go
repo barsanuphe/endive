@@ -137,9 +137,7 @@ func (l *Library) backup() (err error) {
 	return
 }
 
-// Check all Books
-func (l *Library) Check() error {
-	defer e.TimeTrack(l.UI, time.Now(), "Checking")
+func (l *Library) checkBooks() error {
 	for i := range l.Books {
 		l.UI.Debug("Checking " + l.Books[i].ShortString())
 		retailChanged, nonRetailChanged, err := l.Books[i].Check()
@@ -154,6 +152,19 @@ func (l *Library) Check() error {
 			l.UI.Warning("Non-retail epub for book " + l.Books[i].ShortString() + " has changed, check if this is normal.")
 		}
 	}
+	return nil
+}
+
+
+// Check all Books
+func (l *Library) Check() error {
+	defer e.TimeTrack(l.UI, time.Now(), "Checking")
+	f := func() error {
+		return l.checkBooks()
+	}
+	if err := e.SpinWhileThingsHappen("Checking", f); err != nil {
+				return err
+			}
 	return nil
 }
 
