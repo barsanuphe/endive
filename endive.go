@@ -59,7 +59,7 @@ func generateCLI(lb *l.Library, ui e.UserInterface) (app *cli.App) {
 				},
 				{
 					Name:    "nonretail",
-					Aliases: []string{"n"},
+					Aliases: []string{"nr"},
 					Usage:   "import non-retail epubs",
 					Action: func(c *cli.Context) {
 						importEpubs(lb, c, ui, false)
@@ -114,7 +114,7 @@ func generateCLI(lb *l.Library, ui e.UserInterface) (app *cli.App) {
 				},
 				{
 					Name:    "edit",
-					Aliases: []string{"modify"},
+					Aliases: []string{"modify", "e"},
 					Usage:   "edit metadata field using book ID: metadata edit ID field values",
 					Action: func(c *cli.Context) {
 						editMetadata(lb, c, ui)
@@ -159,7 +159,7 @@ func generateCLI(lb *l.Library, ui e.UserInterface) (app *cli.App) {
 		{
 			Name:     "search",
 			Category: "searching",
-			Aliases:  []string{"c"},
+			Aliases:  []string{"s", "find"},
 			Usage:    "search the epub collection",
 			Action: func(c *cli.Context) {
 				search(lb, c, ui)
