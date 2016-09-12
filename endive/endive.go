@@ -30,11 +30,10 @@ type Indexer interface {
 	SetPath(path string)
 	Rebuild(all []GenericBook) error
 	Update(new map[string]GenericBook, mod map[string]GenericBook, del map[string]GenericBook) error
+	Check(all []GenericBook) error
 	Query(query string) ([]string, error)
 	Count() uint64
 }
-
-// TODO: Check(all []GenericBook) error : checks all books have an entry + no extraneous ones
 
 /*
 // Database is the interface for loading/saving Book information

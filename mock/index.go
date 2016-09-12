@@ -28,6 +28,12 @@ func (s *IndexService) Update(new map[string]endive.GenericBook, mod map[string]
 	return nil
 }
 
+// Check for mock Indexer
+func (s *IndexService) Check(all []endive.GenericBook) error {
+	fmt.Println("mock Index: Check")
+	return nil
+}
+
 // Query for mock Indexer
 func (s *IndexService) Query(query string) ([]string, error) {
 	fmt.Println("mock Index: Runquery")

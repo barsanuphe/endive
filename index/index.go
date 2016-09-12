@@ -77,6 +77,17 @@ func (i *Index) Update(newB map[string]e.GenericBook, modB map[string]e.GenericB
 	return
 }
 
+// Check all GenericBooks are indexed, add them otherwise
+func (i *Index) Check(all []e.GenericBook) error {
+	// indexing db
+	books := make(map[string]e.GenericBook)
+	for _, b := range all {
+		books[b.FullPath()] = b
+	}
+	return i.check(books)
+
+}
+
 // Query on current Index
 func (i *Index) Query(queryString string) (resultsPaths []string, err error) {
 	query := bleve.NewQueryStringQuery(queryString)
@@ -152,5 +163,29 @@ func (i *Index) delete(books map[string]e.GenericBook) (err error) {
 		}
 	}
 
+	return
+}
+
+// check books in index
+func (i *Index) check(books map[string]e.GenericBook) (err error) {
+	// open index
+	index, _, err := i.open()
+	if err != nil {
+		return
+	}
+	defer index.Close()
+
+	for k, v := range books {
+		d, err := index.Document(k)
+		if err != nil {
+			return err
+		}
+		if d == nil {
+			err = index.Index(k, v)
+			if err != nil {
+				return err
+			}
+		}
+	}
 	return
 }

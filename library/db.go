@@ -120,6 +120,17 @@ func (l *Library) RebuildIndex() error {
 	return e.SpinWhileThingsHappen("Indexing", f)
 }
 
+// CheckIndex from scratch if necessary
+func (l *Library) CheckIndex() error {
+	defer e.TimeTrack(l.UI, time.Now(), "Checking index")
+	f := func() error {
+		// convert to GenericBook
+		allBooks := bookSliceToGeneric(l.Books)
+		return l.Index.Check(allBooks)
+	}
+	return e.SpinWhileThingsHappen("Checking index", f)
+}
+
 // Backup current database.
 func (l *Library) backup() (err error) {
 	l.UI.Debug("Backup up database...")

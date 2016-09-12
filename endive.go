@@ -136,6 +136,16 @@ func generateCLI(lb *l.Library, ui e.UserInterface) (app *cli.App) {
 						}
 					},
 				},
+				{
+					Name:    "check",
+					Aliases: []string{"c", "fsck"},
+					Usage:   "check all books are in the index, add them otherwise",
+					Action: func(c *cli.Context) {
+						if err := lb.CheckIndex(); err != nil {
+							ui.Error(err.Error())
+						}
+					},
+				},
 			},
 		},
 		{
