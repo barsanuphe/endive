@@ -98,6 +98,7 @@ func editMetadata(lb *l.Library, c *cli.Context, ui e.UserInterface) {
 		fmt.Println("Error parsing arguments: " + err.Error())
 		return
 	}
+	ui.Title("Editing metadata for " + book.ShortString() + "\n")
 	if err := book.EditField(args...); err != nil {
 		ui.Errorf("Error editing metadata for book ID#%d", book.ID)
 	}

@@ -78,9 +78,9 @@ func (ui UI) chooseVersion(localCandidate, remoteCandidate string) (chosenOne st
 
 // askForNewValue from user
 func (ui UI) updateValue(field, oldValue string) (newValue string, err error) {
-	fmt.Printf(ui.BlueBold("Modifying %s:\n"), field)
-	fmt.Printf("\t%s\n", oldValue)
-	fmt.Printf(ui.GreenBold("Choose: (1) Keep Value (2) Edit "))
+	ui.SubPart("Modifying " + field)
+	fmt.Printf("Current value: %s\n", oldValue)
+	ui.Choice("Choose: (1) Keep Value (2) Edit : ")
 	validChoice := false
 	errs := 0
 	for !validChoice {
