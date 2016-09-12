@@ -82,13 +82,7 @@ func (l *Library) Save() (hasSaved bool, err error) {
 		err = l.Index.Update(bookMapToGeneric(n), bookMapToGeneric(m), bookMapToGeneric(d))
 		if err != nil {
 			l.UI.Error("Error updating index, it may be necessary to build it anew")
-			defer e.TimeTrack(l.UI, time.Now(), "Indexing")
-			f := func() error {
-				// convert to GenericBook
-				allBooks := bookSliceToGeneric(l.Books)
-				return l.Index.Rebuild(allBooks)
-			}
-			if err := e.SpinWhileThingsHappen("Indexing", f); err != nil {
+			if err := l.RebuildIndex(); err != nil {
 				return hasSaved, err
 			}
 			// index is now correct
@@ -113,6 +107,17 @@ func bookSliceToGeneric(x b.Books) (y []e.GenericBook) {
 		y[i] = &x[i]
 	}
 	return
+}
+
+// RebuildIndex from scratch if necessary
+func (l *Library) RebuildIndex() error {
+	defer e.TimeTrack(l.UI, time.Now(), "Indexing")
+	f := func() error {
+		// convert to GenericBook
+		allBooks := bookSliceToGeneric(l.Books)
+		return l.Index.Rebuild(allBooks)
+	}
+	return e.SpinWhileThingsHappen("Indexing", f)
 }
 
 // Backup current database.
@@ -155,7 +160,6 @@ func (l *Library) checkBooks() error {
 	return nil
 }
 
-
 // Check all Books
 func (l *Library) Check() error {
 	defer e.TimeTrack(l.UI, time.Now(), "Checking")
@@ -163,8 +167,8 @@ func (l *Library) Check() error {
 		return l.checkBooks()
 	}
 	if err := e.SpinWhileThingsHappen("Checking", f); err != nil {
-				return err
-			}
+		return err
+	}
 	return nil
 }
 

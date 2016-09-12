@@ -366,13 +366,7 @@ func (l *Library) Search(query, sortBy string, limitFirst, limitLast bool, limit
 		// TODO const error in endive package
 		if err.Error() == "Index is empty" {
 			// rebuild index
-			defer e.TimeTrack(l.UI, time.Now(), "Indexing")
-			f := func() error {
-				// convert Books to []GenericBook
-				allBooks := bookSliceToGeneric(l.Books)
-				return l.Index.Rebuild(allBooks)
-			}
-			if err := e.SpinWhileThingsHappen("Indexing", f); err != nil {
+			if err := l.RebuildIndex(); err != nil {
 				return results, err
 			}
 			// trying again

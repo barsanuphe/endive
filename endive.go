@@ -123,6 +123,22 @@ func generateCLI(lb *l.Library, ui e.UserInterface) (app *cli.App) {
 			},
 		},
 		{
+			Name:  "index",
+			Usage: "manipulate index",
+			Subcommands: []cli.Command{
+				{
+					Name:    "rebuild",
+					Aliases: []string{"r"},
+					Usage:   "rebuild index from scratch",
+					Action: func(c *cli.Context) {
+						if err := lb.RebuildIndex(); err != nil {
+							ui.Error(err.Error())
+						}
+					},
+				},
+			},
+		},
+		{
 			Name:    "refresh",
 			Aliases: []string{"r"},
 			Usage:   "refresh library",
