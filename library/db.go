@@ -82,11 +82,8 @@ func (l *Library) Save() (hasSaved bool, err error) {
 		err = l.Index.Update(bookMapToGeneric(n), bookMapToGeneric(m), bookMapToGeneric(d))
 		if err != nil {
 			l.UI.Error("Error updating index, it may be necessary to build it anew")
-			if err := l.RebuildIndex(); err != nil {
-				return hasSaved, err
-			}
-			// index is now correct
-			return hasSaved, nil
+			err = l.RebuildIndex()
+			return hasSaved, err
 		}
 		l.UI.Debug("In index: " + strconv.FormatUint(l.Index.Count(), 10) + " epubs.")
 	}
@@ -177,10 +174,7 @@ func (l *Library) Check() error {
 	f := func() error {
 		return l.checkBooks()
 	}
-	if err := e.SpinWhileThingsHappen("Checking", f); err != nil {
-		return err
-	}
-	return nil
+	return e.SpinWhileThingsHappen("Checking", f)
 }
 
 // RemoveByID a book from the db

@@ -107,7 +107,7 @@ func (ui UI) updateValue(field, oldValue string) (newValue string, err error) {
 			validChoice = true
 		default:
 			fmt.Println("Invalid choice.")
-			fmt.Printf(ui.GreenBold("Choose: (1) Keep Value (2) Edit "))
+			fmt.Print(ui.GreenBold("Choose: (1) Keep Value (2) Edit "))
 			errs++
 			if errs > 10 {
 				return "", errors.New("Too many invalid choices.")
