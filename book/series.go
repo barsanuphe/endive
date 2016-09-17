@@ -3,6 +3,7 @@ package book
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -16,6 +17,45 @@ type SingleSeries struct {
 // String outputs a single series info.
 func (s SingleSeries) String() string {
 	return fmt.Sprintf("%s #%s", s.Name, s.Position)
+}
+
+// addIndex to SingleSeries Position
+func (s *SingleSeries) addIndex(position float64) error {
+	// convert Position to []float
+	indexes := strings.Split(s.Position, ",")
+	floatIndexes := []float64{}
+	for _, v := range indexes {
+		index, e := strconv.ParseFloat(v, 64)
+		if e != nil {
+			return errors.New("Invalid series index: " + v)
+		}
+		floatIndexes = append(floatIndexes, index)
+	}
+
+	modified := false
+	// insert position
+	sort.Float64s(floatIndexes)
+	i := sort.SearchFloat64s(floatIndexes, position)
+	if i == len(floatIndexes) {
+		floatIndexes = append(floatIndexes, position)
+		modified = true
+	} else {
+		// insert if not already in slice
+		if floatIndexes[i] != position {
+			// i is the index where position needs to be inserted
+			floatIndexes = append(floatIndexes[:i], append([]float64{position}, floatIndexes[i:]...)...)
+			modified = true
+		}
+	}
+	// make into string again.
+	s.Position = strconv.FormatFloat(floatIndexes[0], 'f', -1, 64)
+	for _, v := range floatIndexes[1:] {
+		s.Position += "," + strconv.FormatFloat(v, 'f', -1, 64)
+	}
+	if !modified {
+		return errors.New("Series not modified")
+	}
+	return nil
 }
 
 // Series can track a series and an epub's position.
@@ -43,71 +83,67 @@ func (s Series) rawString() string {
 func (s *Series) AddFromString(candidate string) (seriesModified bool, err error) {
 	wrongFormatError := errors.New("Series index must be empty, a float, or a range, got: " + candidate)
 
-	// split again name:index
-	parts := strings.Split(candidate, ":")
-
-	switch len(parts) {
-	case 1:
+	candidate = strings.TrimSpace(candidate)
+	lastSemiColonIndex := strings.LastIndex(candidate, ":")
+	if lastSemiColonIndex == -1 {
 		// case "series"
 		s.add(strings.TrimSpace(candidate), 0)
 		seriesModified = true
-	case 2:
-		if parts[1] == "" {
+	} else {
+		seriesName := strings.TrimSpace(candidate[:lastSemiColonIndex])
+		if lastSemiColonIndex == len(candidate)-1 {
 			// case "series:"
-			s.add(strings.TrimSpace(parts[0]), 0)
+			s.add(seriesName, 0)
 			seriesModified = true
 		} else {
+			seriesIndex := strings.TrimSpace(candidate[lastSemiColonIndex+1:])
 			// case "series:index1-index2
-			if strings.Contains(parts[1], "-") {
-				indexes := strings.Split(strings.TrimSpace(parts[1]), "-")
+			if strings.Contains(seriesIndex, "-") {
+				indexes := strings.Split(seriesIndex, "-")
 				if len(indexes) != 2 {
 					return false, wrongFormatError
 				}
 				// parse as float both indexes
-				index1, e := strconv.ParseFloat(indexes[0], 32)
+				index1, e := strconv.ParseFloat(indexes[0], 64)
 				if e != nil {
 					return false, wrongFormatError
 				}
-				index2, e := strconv.ParseFloat(indexes[1], 32)
+				index2, e := strconv.ParseFloat(indexes[1], 64)
 				if e != nil {
 					return false, wrongFormatError
 				}
 				for i := index1; i <= index2; i++ {
-					s.add(strings.TrimSpace(parts[0]), float32(i))
+					// if at least one index is added, series is modified
+					if s.add(seriesName, i) {
+						seriesModified = true
+					}
 				}
-				seriesModified = true
 			} else {
 				// case "series:float"
-				index, e := strconv.ParseFloat(parts[1], 32)
+				index, e := strconv.ParseFloat(seriesIndex, 64)
 				if e != nil {
 					err = wrongFormatError
 				} else {
-					s.add(strings.TrimSpace(parts[0]), float32(index))
-					seriesModified = true
+					seriesModified = s.add(seriesName, index)
 				}
 			}
 		}
-	default:
-		err = wrongFormatError
 	}
 	return
 }
 
 // add a series with a float index
-func (s *Series) add(seriesName string, position float32) (seriesModified bool) {
-	hasSeries, seriesIndex, currentIndex := s.Has(seriesName)
-	indexStr := strconv.FormatFloat(float64(position), 'f', -1, 32)
+func (s *Series) add(seriesName string, position float64) (seriesModified bool) {
+	hasSeries, seriesIndex, _ := s.Has(seriesName)
+	indexStr := strconv.FormatFloat(position, 'f', -1, 64)
 	// if not HasSeries, create new Series and add
 	if !hasSeries {
 		ss := SingleSeries{Name: seriesName, Position: indexStr}
 		*s = append(*s, ss)
 		seriesModified = true
 	} else {
-		// if hasSeries, if index is different, update index
-		// TODO will not work is already contains several indexes
-		if currentIndex != indexStr {
-			// TODO order indexes
-			(*s)[seriesIndex].Position += "," + indexStr
+		err := (*s)[seriesIndex].addIndex(position)
+		if err == nil {
 			seriesModified = true
 		}
 	}
