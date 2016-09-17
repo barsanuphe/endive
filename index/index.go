@@ -11,8 +11,7 @@ import (
 
 // Index implements Indexer
 type Index struct {
-	Path            string
-	NeedsRebuilding bool
+	Path string
 }
 
 // SetPath for Index

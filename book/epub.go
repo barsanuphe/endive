@@ -104,9 +104,7 @@ func (e *Epub) ReadMetadata() (info Metadata, err error) {
 	// authors
 	if results, err := getFieldValues(book, "creator"); err == nil {
 		info.Authors = []string{}
-		for _, t := range results {
-			info.Authors = append(info.Authors, t)
-		}
+		info.Authors = append(info.Authors, results...)
 	}
 	// language
 	if results, err := getFirstFieldValue(book, "language"); err == nil {

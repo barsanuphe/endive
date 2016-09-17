@@ -1,10 +1,8 @@
 package book
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -293,9 +291,10 @@ func (b *Book) SearchOnline() (err error) {
 	validChoice := false
 	errs := 0
 	for !validChoice {
-		scanner := bufio.NewReader(os.Stdin)
-		choice, _ := scanner.ReadString('\n')
-		choice = strings.TrimSpace(choice)
+		choice, scanErr := b.UI.GetInput()
+		if scanErr != nil {
+			return scanErr
+		}
 		switch choice {
 		case "4":
 			err = errors.New("Abort")

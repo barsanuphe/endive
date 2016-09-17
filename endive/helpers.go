@@ -1,10 +1,8 @@
 package endive
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
-	"os"
 	"regexp"
 	"sort"
 	"strconv"
@@ -111,13 +109,14 @@ func CleanISBN(full string) (isbn13 string, err error) {
 // AskForISBN when not found in epub
 func AskForISBN(ui UserInterface) (string, error) {
 	if ui.YesOrNo("Do you want to enter an ISBN manually") {
-		scanner := bufio.NewReader(os.Stdin)
 		validChoice := false
 		errs := 0
 		for !validChoice {
 			fmt.Print("Enter ISBN: ")
-			choice, _ := scanner.ReadString('\n')
-			choice = strings.TrimSpace(choice)
+			choice, scanErr := ui.GetInput()
+			if scanErr != nil {
+				return "", scanErr
+			}
 			// check valid ISBN
 			isbnCandidate, err := CleanISBN(choice)
 			if err != nil {
@@ -149,7 +148,7 @@ func SpinWhileThingsHappen(title string, f func() error) (err error) {
 	// first routine for the spinner
 	ticker := time.NewTicker(time.Millisecond * 100)
 	go func() {
-		for _ = range ticker.C {
+		for range ticker.C {
 			c1 <- true
 		}
 	}()

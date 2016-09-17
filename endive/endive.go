@@ -50,6 +50,7 @@ type Database interface {
 // UserInterface deals with user input, output and logging.
 type UserInterface interface {
 	// input
+	GetInput() (string, error)
 	YesOrNo(string) bool
 	Choose(string, string, string, string) (string, error)
 	UpdateValues(string, string, []string) ([]string, error)
