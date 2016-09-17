@@ -21,11 +21,11 @@ func TestSeries(t *testing.T) {
 		assert.False(hasAny, "Error: did not expect to have any series.")
 
 		// testing adding series
-		seriesModified := e.Metadata.Series.add(seriesName, float32(i))
+		seriesModified := e.Metadata.Series.add(seriesName, float64(i))
 		assert.True(seriesModified, "Error adding Series %s - %f for epub %s", seriesName, float32(i), e.FullPath())
 
 		// testing adding second series
-		seriesModified = e.Metadata.Series.add(seriesName2, float32(i))
+		seriesModified = e.Metadata.Series.add(seriesName2, float64(i))
 		assert.True(seriesModified, "Error adding Series %s - %f for epub %s", seriesName2, float32(i), e.FullPath())
 
 		hasAny = e.Metadata.Series.HasAny()
@@ -48,7 +48,7 @@ func TestSeries(t *testing.T) {
 		assert.False(hasSeries, "Error:  did not expect epub %s to have series %s", e.FullPath(), seriesName+"ç")
 
 		// testing updating series index
-		seriesModified = e.Metadata.Series.add(seriesName, float32(i)+0.5)
+		seriesModified = e.Metadata.Series.add(seriesName, float64(i)+0.5)
 		assert.True(seriesModified, "Error adding Series %s - %f for epub %s", seriesName, float32(i)+0.5, e.FullPath())
 
 		// testing having modified series
@@ -78,6 +78,10 @@ func TestSeries(t *testing.T) {
 
 		seriesModified, err = e.Metadata.Series.AddFromString("test4:7-9")
 		assert.True(seriesModified, "Error: series should be modified")
+		assert.Nil(err)
+
+		seriesModified, err = e.Metadata.Series.AddFromString("test4:8")
+		assert.False(seriesModified, "Error: series should not have been modified")
 		assert.Nil(err)
 
 		assert.Equal("test #1.5,2.5, test2 #0, test3 #0, test4 #7,8,9", e.Metadata.Series.String())
