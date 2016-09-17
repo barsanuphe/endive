@@ -43,23 +43,23 @@ func (s Series) rawString() string {
 func (s *Series) AddFromString(candidate string) (seriesModified bool, err error) {
 	wrongFormatError := errors.New("Series index must be empty, a float, or a range, got: " + candidate)
 
-	// split again name:index
-	parts := strings.Split(candidate, ":")
-
-	switch len(parts) {
-	case 1:
+	candidate = strings.TrimSpace(candidate)
+	lastSemiColonIndex := strings.LastIndex(candidate, ":")
+	if lastSemiColonIndex == -1 {
 		// case "series"
 		s.add(strings.TrimSpace(candidate), 0)
 		seriesModified = true
-	case 2:
-		if parts[1] == "" {
+	} else {
+		seriesName := strings.TrimSpace(candidate[:lastSemiColonIndex])
+		if lastSemiColonIndex == len(candidate)-1 {
 			// case "series:"
-			s.add(strings.TrimSpace(parts[0]), 0)
+			s.add(seriesName, 0)
 			seriesModified = true
 		} else {
+			seriesIndex := strings.TrimSpace(candidate[lastSemiColonIndex+1:])
 			// case "series:index1-index2
-			if strings.Contains(parts[1], "-") {
-				indexes := strings.Split(strings.TrimSpace(parts[1]), "-")
+			if strings.Contains(seriesIndex, "-") {
+				indexes := strings.Split(seriesIndex, "-")
 				if len(indexes) != 2 {
 					return false, wrongFormatError
 				}
@@ -73,22 +73,20 @@ func (s *Series) AddFromString(candidate string) (seriesModified bool, err error
 					return false, wrongFormatError
 				}
 				for i := index1; i <= index2; i++ {
-					s.add(strings.TrimSpace(parts[0]), float32(i))
+					s.add(seriesName, float32(i))
 				}
 				seriesModified = true
 			} else {
 				// case "series:float"
-				index, e := strconv.ParseFloat(parts[1], 32)
+				index, e := strconv.ParseFloat(seriesIndex, 32)
 				if e != nil {
 					err = wrongFormatError
 				} else {
-					s.add(strings.TrimSpace(parts[0]), float32(index))
+					s.add(seriesName, float32(index))
 					seriesModified = true
 				}
 			}
 		}
-	default:
-		err = wrongFormatError
 	}
 	return
 }

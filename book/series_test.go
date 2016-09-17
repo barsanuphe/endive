@@ -81,5 +81,14 @@ func TestSeries(t *testing.T) {
 		assert.Nil(err)
 
 		assert.Equal("test #1.5,2.5, test2 #0, test3 #0, test4 #7,8,9", e.Metadata.Series.String())
+
+		seriesModified, err = e.Metadata.Series.AddFromString("series: with a semicolon :7-9")
+		assert.True(seriesModified, "Error: series should be modified")
+		assert.Nil(err)
+
+		// testing having modified series
+		hasSeries, _, seriesIndex = e.Metadata.Series.Has("series: with a semicolon")
+		assert.True(hasSeries, "Error:  expected epub %s to have series %s", e.FullPath(), "series: with a semicolon")
+		assert.Equal("7,8,9", seriesIndex, "Error:  expected epub %s to have series %s, book %f and not %s", e.FullPath(), seriesName, float32(i), seriesIndex)
 	}
 }
