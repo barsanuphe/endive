@@ -1,107 +1,80 @@
 package library
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
-	"fmt"
-	"io/ioutil"
-	"os"
 	"strconv"
 	"time"
 
 	b "github.com/barsanuphe/endive/book"
 	e "github.com/barsanuphe/endive/endive"
-
-	"github.com/jhoonb/archivex"
 )
 
-// load JSON contents into Books
-func (l *Library) loadBooks() (bks b.Books, jsonContent []byte, err error) {
-	jsonContent, err = ioutil.ReadFile(l.DatabaseFile)
+// Backup current database.
+func (l *Library) backup() (err error) {
+	l.UI.Debug("Backup up database...")
+	// generate archive filename with date.
+	archiveName, err := e.GetArchiveUniqueName(l.DB.Path())
 	if err != nil {
-		if os.IsNotExist(err) {
-			// first run, it will be created later.
-			err = nil
-			return
-		}
 		return
 	}
-	err = json.Unmarshal(jsonContent, &bks)
-	if err != nil {
-		fmt.Println(err)
-	}
+	return l.DB.Backup(archiveName)
+}
+
+// updateBooks to be aware of Config and UI.
+func (l *Library) updateBooks() {
 	// make each Book aware of current Config + UI
-	for i := range bks {
-		bks[i].Config = l.Config
-		bks[i].UI = l.UI
-		bks[i].NonRetailEpub.Config = l.Config
-		bks[i].NonRetailEpub.UI = l.UI
-		bks[i].RetailEpub.Config = l.Config
-		bks[i].RetailEpub.UI = l.UI
+	for i := range l.Books {
+		l.Books[i].Config = l.Config
+		l.Books[i].UI = l.UI
+		l.Books[i].NonRetailEpub.Config = l.Config
+		l.Books[i].NonRetailEpub.UI = l.UI
+		l.Books[i].RetailEpub.Config = l.Config
+		l.Books[i].RetailEpub.UI = l.UI
 	}
 	return
 }
 
 // Load current DB
-func (l *Library) Load() (err error) {
+func (l *Library) Load() error {
 	l.UI.Debug("Loading database...")
-	l.Books, _, err = l.loadBooks()
+	var c e.Collection
+	c = &l.Books
+	err := l.DB.Load(c)
+	if err == nil {
+		l.updateBooks()
+	}
 	return err
 }
 
 // Save current DB
 func (l *Library) Save() (hasSaved bool, err error) {
 	l.UI.Debug("Determining if database should be saved...")
-	jsonEpub, err := json.Marshal(l.Books)
+	// getting old contents for reference
+	var oldBooks e.Collection
+	oldBooks = &b.Books{}
+	err = l.DB.Load(oldBooks)
 	if err != nil {
-		fmt.Println(err)
 		return
 	}
-
-	// compare with input
-	oldBooks, jsonEpubOld, err := l.loadBooks()
-	if err != nil && !os.IsNotExist(err) {
-		l.UI.Error("Error loading database")
+	// saving
+	var c e.Collection
+	c = &l.Books
+	hasSaved, err = l.DB.Save(c)
+	if err != nil {
+		return
 	}
-
-	if !bytes.Equal(jsonEpub, jsonEpubOld) {
-		l.UI.Debug("Changes detected, saving database...")
-		// writing db
-		err = ioutil.WriteFile(l.DatabaseFile, jsonEpub, 0777)
-		if err != nil {
-			return
-		}
-		hasSaved = true
-
+	if hasSaved {
 		// index what is needed.
 		// diff to check the changes
 		n, m, d := l.Books.Diff(oldBooks)
 
 		// update the index
-		err = l.Index.Update(bookMapToGeneric(n), bookMapToGeneric(m), bookMapToGeneric(d))
+		err = l.Index.Update(n, m, d)
 		if err != nil {
 			l.UI.Error("Error updating index, it may be necessary to build it anew")
-			err = l.RebuildIndex()
-			return hasSaved, err
+			return hasSaved, l.RebuildIndex()
 		}
 		l.UI.Debug("In index: " + strconv.FormatUint(l.Index.Count(), 10) + " epubs.")
-	}
-	return hasSaved, nil
-}
-
-func bookMapToGeneric(x map[string]b.Book) (y map[string]e.GenericBook) {
-	y = make(map[string]e.GenericBook)
-	for k, v := range x {
-		y[k] = &v
-	}
-	return
-}
-
-func bookSliceToGeneric(x b.Books) (y []e.GenericBook) {
-	y = make([]e.GenericBook, len(x))
-	for i := range x {
-		y[i] = &x[i]
 	}
 	return
 }
@@ -110,9 +83,10 @@ func bookSliceToGeneric(x b.Books) (y []e.GenericBook) {
 func (l *Library) RebuildIndex() error {
 	defer e.TimeTrack(l.UI, time.Now(), "Indexing")
 	f := func() error {
-		// convert to GenericBook
-		allBooks := bookSliceToGeneric(l.Books)
-		return l.Index.Rebuild(allBooks)
+		// convert to Collection
+		var c e.Collection
+		c = &l.Books
+		return l.Index.Rebuild(c)
 	}
 	return e.SpinWhileThingsHappen("Indexing", f)
 }
@@ -121,33 +95,12 @@ func (l *Library) RebuildIndex() error {
 func (l *Library) CheckIndex() error {
 	defer e.TimeTrack(l.UI, time.Now(), "Checking index")
 	f := func() error {
-		// convert to GenericBook
-		allBooks := bookSliceToGeneric(l.Books)
-		return l.Index.Check(allBooks)
+		// convert to Collection
+		var c e.Collection
+		c = &l.Books
+		return l.Index.Check(c)
 	}
 	return e.SpinWhileThingsHappen("Checking index", f)
-}
-
-// Backup current database.
-func (l *Library) backup() (err error) {
-	l.UI.Debug("Backup up database...")
-	// generate archive filename with date.
-	archiveName, err := e.GetArchiveUniqueName(l.DatabaseFile)
-	if err != nil {
-		return
-	}
-	// creating tarball
-	tar := new(archivex.TarFile)
-	err = tar.Create(archiveName)
-	if err != nil {
-		return
-	}
-	err = tar.AddFile(l.DatabaseFile)
-	if err != nil {
-		return
-	}
-	tar.Close()
-	return
 }
 
 func (l *Library) checkBooks() error {

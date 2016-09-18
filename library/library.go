@@ -27,12 +27,12 @@ import (
 
 // Library manages Epubs
 type Library struct {
-	Config       e.Config
-	KnownHashes  e.KnownHashes
-	DatabaseFile string
-	Books        b.Books
-	Index        e.Indexer
-	UI           e.UserInterface
+	Config      e.Config
+	KnownHashes e.KnownHashes
+	Books       b.Books
+	Index       e.Indexer
+	UI          e.UserInterface
+	DB          e.Database
 }
 
 // Close the library
@@ -327,7 +327,6 @@ func (l *Library) ExportToEReader(books []b.Book) (err error) {
 
 // DuplicateRetailEpub copies a retail epub to make a non-retail version.
 func (l *Library) DuplicateRetailEpub(id int) (nonRetailEpub *b.Book, err error) {
-	// TODO tests
 	// find book from ID
 	book, err := l.Books.FindByID(id)
 	if err != nil {

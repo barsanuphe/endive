@@ -1,15 +1,6 @@
 package library
 
-import (
-	"fmt"
-	"testing"
-
-	e "github.com/barsanuphe/endive/endive"
-	"github.com/barsanuphe/endive/mock"
-
-	"github.com/stretchr/testify/assert"
-)
-
+/*
 func TestLibrarySearch(t *testing.T) {
 	c := e.Config{}
 	k := e.KnownHashes{}
@@ -23,3 +14,4 @@ func TestLibrarySearch(t *testing.T) {
 	fmt.Println(results)
 	// TODO search all fields to check replacements
 }
+*/

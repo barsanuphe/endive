@@ -23,6 +23,7 @@ import (
 	l "github.com/barsanuphe/endive/library"
 	u "github.com/barsanuphe/endive/ui"
 
+	"github.com/barsanuphe/endive/db"
 	"github.com/codegangsta/cli"
 	"github.com/ttacon/chalk"
 	"launchpad.net/go-xdg"
@@ -382,9 +383,11 @@ func OpenLibrary(ui e.UserInterface) (lib *l.Library, err error) {
 	// index
 	index := &i.Index{}
 	index.SetPath(getIndexPath())
+	// db
+	db := &db.JSONDB{}
+	db.SetPath(config.DatabaseFile)
 
-	lib = &l.Library{Config: config, KnownHashes: hashes, Index: index, UI: ui}
-	lib.DatabaseFile = config.DatabaseFile
+	lib = &l.Library{Config: config, KnownHashes: hashes, Index: index, UI: ui, DB: db}
 	err = lib.Load()
 	if err != nil {
 		return
