@@ -26,23 +26,24 @@ type Indexer interface {
 
 // Collection interface for slices of Books
 type Collection interface {
-	Add(...GenericBook) error
-	Remove(id int) error
-	FindByID(string) (*GenericBook, error)
-	FindByHash(string) (*GenericBook, error)
-	FindByMetadata(string) (*GenericBook, error)
-	FindByFullPath(string) (*GenericBook, error)
 	Books() []GenericBook
-	Diff(Collection) ([]GenericBook, []GenericBook, []GenericBook, error)
-	Check() error
+	Add(...GenericBook)
+//	Remove(id int) error
+	Diff(Collection) (Collection, Collection, Collection, error)
+//	FindByID(string) (*GenericBook, error)
+//	FindByHash(string) (*GenericBook, error)
+//	FindByMetadata(string) (*GenericBook, error)
+//	FindByFullPath(string) (*GenericBook, error)
+// 	Check() error
 }
 
 // Database is the interface for loading/saving Book information
 type Database interface {
 	SetPath(string)
+	Path() string
 	Equals(Database) bool
-	Load([]GenericBook) error
-	Save([]GenericBook) error
+	Load(Collection) error
+	Save(Collection) (bool, error)
 	Backup(string) error
 }
 

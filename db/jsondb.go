@@ -24,36 +24,41 @@ func (db *JSONDB) SetPath(path string) {
 	db.path = path
 }
 
+// Path of database
+func (db *JSONDB) Path() string {
+	return db.path
+}
+
 // Equals to another Database
 func (db *JSONDB) Equals(o endive.Database) bool {
 	// load local books into a collection
-	dbBooks := []endive.GenericBook{}
+	var dbBooks endive.Collection
 	if err := db.Load(dbBooks); err != nil {
 		return false
 	}
+
 	var dbCollection endive.Collection
-	if err := dbCollection.Add(dbBooks...); err != nil {
-		return false
-	}
+	dbCollection.Add(dbBooks.Books()...)
+
 	// load books from the other database
-	oBooks := []endive.GenericBook{}
+	var oBooks endive.Collection
 	if err := o.Load(oBooks); err != nil {
 		return false
 	}
 	var oCollection endive.Collection
-	if err := oCollection.Add(oBooks...); err != nil {
-		return false
-	}
+	oCollection.Add(oBooks.Books()...)
 	// return true if diff of collections is blank
 	newB, modB, delB, err := dbCollection.Diff(oCollection)
 	if err == nil && newB == nil && modB == nil && delB == nil {
 		return true
 	}
+
+
 	return false
 }
 
 // Load database
-func (db *JSONDB) Load(bks []endive.GenericBook) error {
+func (db *JSONDB) Load(bks endive.Collection) error {
 	jsonContent, err := ioutil.ReadFile(db.path)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -68,7 +73,7 @@ func (db *JSONDB) Load(bks []endive.GenericBook) error {
 }
 
 // Save database
-func (db *JSONDB) Save(bks []endive.GenericBook) (hasSaved bool, err error) {
+func (db *JSONDB) Save(bks endive.Collection) (hasSaved bool, err error) {
 	jsonToSave, err := json.Marshal(bks)
 	if err != nil {
 		return hasSaved, err

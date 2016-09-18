@@ -19,15 +19,15 @@ func (db *DB) Equals(o DB) bool {
 }
 
 // Load for mock Database
-func (db *DB) Load() ([]Book, error) {
+func (db *DB) Load(Collection) error {
 	fmt.Println("mock DB: Load")
-	return []Book{}, nil
+	return nil
 }
 
 // Save for mock Database
-func (db *DB) Save(bks []Book) error {
+func (db *DB) Save(c Collection) (bool, error) {
 	fmt.Println("mock DB: Save")
-	return nil
+	return true, nil
 }
 
 // Backup for mock Database
