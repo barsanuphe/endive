@@ -11,6 +11,28 @@ import (
 // Books is a slice of Book.
 type Books []Book
 
+func bookSliceToGeneric(x Books) (y []e.GenericBook) {
+	y = make([]e.GenericBook, len(x))
+	for i := range x {
+		y[i] = &x[i]
+	}
+	return
+}
+
+// Books returns GenericBooks
+func (bks *Books) Books() []e.GenericBook {
+	return bookSliceToGeneric(*bks)
+}
+
+// Add a Book
+func (bks *Books) Add(books ...e.GenericBook) {
+	for _, b := range books {
+		var book Book
+		book = *b.(*Book)
+		*bks = append(*bks, book)
+	}
+}
+
 // filter Books with a given function
 func (bks Books) filter(f func(*Book) bool) (filteredBooks Books) {
 	filteredBooks = make(Books, 0)
@@ -100,62 +122,58 @@ func (bks *Books) FindByHash(hash string) (b *Book, err error) {
 }
 
 // Diff detects differences between two sets of Books.
-func (bks Books) Diff(o Books) (newB map[string]Book, modifiedB map[string]Book, deletedB map[string]Book) {
-	newB = make(map[string]Book)
-	modifiedB = make(map[string]Book)
-	deletedB = make(map[string]Book)
+func (bks Books) Diff(o e.Collection) (newB e.Collection, modifiedB e.Collection, deletedB e.Collection) {
+	// convert o from Collection to Books
+	var oBooks Books
+	oBooks.Add(o.Books()...)
 
 	if len(bks) != 0 {
 		// updating config, ui in other Books for comparison
 		// otherwise FullPath will always be different.
 		config := bks[0].Config
 		ui := bks[0].UI
-		for i := range o {
-			o[i].UI = ui
-			o[i].Config = config
-			o[i].RetailEpub.Config = config
-			o[i].RetailEpub.UI = ui
-			o[i].NonRetailEpub.Config = config
-			o[i].NonRetailEpub.UI = ui
+		for i := range oBooks {
+			oBooks[i].UI = ui
+			oBooks[i].Config = config
+			oBooks[i].RetailEpub.Config = config
+			oBooks[i].RetailEpub.UI = ui
+			oBooks[i].NonRetailEpub.Config = config
+			oBooks[i].NonRetailEpub.UI = ui
 		}
 	}
 
 	// list current
-	knownIndexed := make(map[string]Book)
 	knownFullPaths := []string{}
 	for _, b := range bks {
-		knownIndexed[b.FullPath()] = b
 		knownFullPaths = append(knownFullPaths, b.FullPath())
 	}
-
 	// list other
-	otherIndexed := make(map[string]Book)
 	otherFullPaths := []string{}
-	for _, b := range o {
-		otherIndexed[b.FullPath()] = b
+	for _, b := range oBooks {
 		otherFullPaths = append(otherFullPaths, b.FullPath())
 	}
 
 	// if in current and not in other, append to new
-	commonPaths := []string{}
-	for _, k := range knownFullPaths {
-		if _, isIn := e.StringInSlice(k, otherFullPaths); !isIn {
-			newB[k] = knownIndexed[k]
+	commonBooks := []Book{}
+	for _, k := range bks {
+		if _, isIn := e.StringInSlice(k.FullPath(), otherFullPaths); !isIn {
+			newB.Add(&k)
 		} else {
-			commonPaths = append(commonPaths, k)
+			commonBooks = append(commonBooks, k)
 		}
 	}
 	// if in other and not in current, append to deleted
-	for _, p := range otherFullPaths {
-		if _, isIn := e.StringInSlice(p, knownFullPaths); !isIn {
-			deletedB[p] = otherIndexed[p]
+	for _, p := range oBooks {
+		if _, isIn := e.StringInSlice(p.FullPath(), knownFullPaths); !isIn {
+			deletedB.Add(&p)
 		}
 	}
 	// if in both, compare them directly, if different, append to modified
-	for _, v := range commonPaths {
+	for _, v := range commonBooks {
 		// compare
-		if !reflect.DeepEqual(knownIndexed[v], otherIndexed[v]) {
-			modifiedB[v] = knownIndexed[v]
+		ov, _ := oBooks.FindByFullPath(v.FullPath())
+		if !reflect.DeepEqual(v, ov) {
+			modifiedB.Add(&v)
 		}
 	}
 	return

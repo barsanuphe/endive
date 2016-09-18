@@ -389,7 +389,6 @@ func (b *Book) HasEpub() bool {
 
 // AddEpub to the Library
 func (b *Book) AddEpub(path string, isRetail bool, hash string) (imported bool, err error) {
-	// TODO tests
 	if isRetail {
 		if b.HasRetail() {
 			b.UI.Info("Trying to import retail epub although retail version already exists.")

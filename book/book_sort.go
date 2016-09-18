@@ -51,8 +51,6 @@ func (s *bookSorter) Less(i, j int) bool {
 
 // SortBooks using a specific field.
 func SortBooks(books []Book, orderBy string) {
-	// TODO : tests
-
 	if !CheckValidSortOrder(orderBy) {
 		return
 	}

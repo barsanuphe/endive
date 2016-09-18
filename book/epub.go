@@ -23,7 +23,6 @@ type Epub struct {
 // if it is in the library, prepends LibraryRoot.
 // if it is outside, return Filename directly.
 func (e *Epub) FullPath() string {
-	// TODO: tests
 	if filepath.IsAbs(e.Filename) {
 		return e.Filename
 	}

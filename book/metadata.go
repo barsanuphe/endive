@@ -222,7 +222,6 @@ func (i *Metadata) MainSeries() SingleSeries {
 
 // IsSimilar checks if metadata is similar to known Metadata.
 func (i *Metadata) IsSimilar(o Metadata) bool {
-	// TODO tests
 	// check isbn
 	if i.ISBN != "" && o.ISBN != "" && i.ISBN == o.ISBN {
 		return true
