@@ -14,17 +14,6 @@ type GenericBook interface {
 	ShortString() string
 }
 
-/*
-// GenericBooks interface for slices of Books
-type GenericBooks interface {
-	FindByID(string) (*GenericBook, error)
-	FindByHash(string) (*GenericBook, error)
-	FindByMetadata(string) (*GenericBook, error)
-	FindByFullPath(string) (*GenericBook, error)
-	Books() []GenericBook
-}
-*/
-
 // Indexer provides an interface ofr indexing books.
 type Indexer interface {
 	SetPath(path string)
@@ -36,16 +25,28 @@ type Indexer interface {
 }
 
 /*
-// Database is the interface for loading/saving Book information
-type Database interface {
-	SetPath(string)
+// GenericBooks interface for slices of Books
+type Collection interface {
 	Add(*GenericBook) error
 	Remove(id int) error
-	Save() error
-	Load() error
+	FindByID(string) (*GenericBook, error)
+	FindByHash(string) (*GenericBook, error)
+	FindByMetadata(string) (*GenericBook, error)
+	FindByFullPath(string) (*GenericBook, error)
+	Books() []GenericBook
+	Diff(Collection) error // see what output is needed: new/mod/del?
 	Check() error
 }
 */
+
+// Database is the interface for loading/saving Book information
+type Database interface {
+	SetPath(string)
+	Equals(Database) bool
+	Save([]GenericBook) error
+	Load() ([]GenericBook, error)
+	Backup(string) error
+}
 
 // UserInterface deals with user input, output and logging.
 type UserInterface interface {

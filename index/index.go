@@ -1,3 +1,6 @@
+/*
+Package index is the endive subpackage that implements the Indexer interface.
+*/
 package index
 
 import (
