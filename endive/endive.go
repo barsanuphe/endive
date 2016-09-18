@@ -14,12 +14,12 @@ type GenericBook interface {
 	ShortString() string
 }
 
-// Indexer provides an interface ofr indexing books.
+// Indexer provides an interface for indexing books.
 type Indexer interface {
 	SetPath(path string)
-	Rebuild(all []GenericBook) error
-	Update(new map[string]GenericBook, mod map[string]GenericBook, del map[string]GenericBook) error
-	Check(all []GenericBook) error
+	Rebuild(Collection) error
+	Update(Collection, Collection, Collection) error
+	Check(Collection) error
 	Query(query string) ([]string, error)
 	Count() uint64
 }
@@ -28,13 +28,13 @@ type Indexer interface {
 type Collection interface {
 	Books() []GenericBook
 	Add(...GenericBook)
-//	Remove(id int) error
-	Diff(Collection) (Collection, Collection, Collection, error)
-//	FindByID(string) (*GenericBook, error)
-//	FindByHash(string) (*GenericBook, error)
-//	FindByMetadata(string) (*GenericBook, error)
-//	FindByFullPath(string) (*GenericBook, error)
-// 	Check() error
+	//	Remove(id int) error
+	Diff(Collection) (Collection, Collection, Collection)
+	//	FindByID(string) (*GenericBook, error)
+	//	FindByHash(string) (*GenericBook, error)
+	//	FindByMetadata(string) (*GenericBook, error)
+	//	FindByFullPath(string) (*GenericBook, error)
+	// 	Check() error
 }
 
 // Database is the interface for loading/saving Book information

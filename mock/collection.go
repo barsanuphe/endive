@@ -2,6 +2,7 @@ package mock
 
 import (
 	"fmt"
+
 	"github.com/barsanuphe/endive/endive"
 )
 
@@ -17,12 +18,12 @@ func (c *Collection) Books() []endive.GenericBook {
 }
 
 // Add implementation for tests
-func (c *Collection) Add(books ...endive.GenericBook)  {
+func (c *Collection) Add(books ...endive.GenericBook) {
 	fmt.Println("mock Collection: Add")
 }
 
 // Diff implementation for tests
-func (c *Collection) Diff(Collection) (Collection, Collection, Collection, error) {
+func (c *Collection) Diff(Collection) (Collection, Collection, Collection) {
 	fmt.Println("mock Collection: Diff")
-	return Collection{}, Collection{}, Collection{}, nil
+	return Collection{}, Collection{}, Collection{}
 }

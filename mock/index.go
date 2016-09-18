@@ -2,8 +2,6 @@ package mock
 
 import (
 	"fmt"
-
-	"github.com/barsanuphe/endive/endive"
 )
 
 // IndexService represents a mock implementation of endive.Indexer.
@@ -17,19 +15,19 @@ func (s *IndexService) SetPath(path string) {
 }
 
 // Rebuild for mock Indexer
-func (s *IndexService) Rebuild(all []endive.GenericBook) error {
+func (s *IndexService) Rebuild(all Collection) error {
 	fmt.Println("mock Index: Rebuild")
 	return nil
 }
 
 // Update for mock Indexer
-func (s *IndexService) Update(new map[string]endive.GenericBook, mod map[string]endive.GenericBook, del map[string]endive.GenericBook) error {
+func (s *IndexService) Update(new Collection, mod Collection, del Collection) error {
 	fmt.Println("mock Index: Update")
 	return nil
 }
 
 // Check for mock Indexer
-func (s *IndexService) Check(all []endive.GenericBook) error {
+func (s *IndexService) Check(all Collection) error {
 	fmt.Println("mock Index: Check")
 	return nil
 }

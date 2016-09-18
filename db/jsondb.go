@@ -48,11 +48,10 @@ func (db *JSONDB) Equals(o endive.Database) bool {
 	var oCollection endive.Collection
 	oCollection.Add(oBooks.Books()...)
 	// return true if diff of collections is blank
-	newB, modB, delB, err := dbCollection.Diff(oCollection)
-	if err == nil && newB == nil && modB == nil && delB == nil {
+	newB, modB, delB := dbCollection.Diff(oCollection)
+	if newB == nil && modB == nil && delB == nil {
 		return true
 	}
-
 
 	return false
 }

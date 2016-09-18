@@ -40,22 +40,18 @@ func (i *Index) Count() uint64 {
 }
 
 // Rebuild for all GenericBooks
-func (i *Index) Rebuild(all []e.GenericBook) error {
+func (i *Index) Rebuild(all e.Collection) error {
 	// remove old index
 	err := os.RemoveAll(i.Path)
 	if err != nil {
 		return err
 	}
 	// indexing db
-	books := make(map[string]e.GenericBook)
-	for _, b := range all {
-		books[b.FullPath()] = b
-	}
-	return i.add(books)
+	return i.add(all)
 }
 
 // Update existing index
-func (i *Index) Update(newB map[string]e.GenericBook, modB map[string]e.GenericBook, delB map[string]e.GenericBook) (err error) {
+func (i *Index) Update(newB e.Collection, modB e.Collection, delB e.Collection) (err error) {
 	// delete books
 	err = i.delete(delB)
 	if err != nil {
@@ -80,14 +76,27 @@ func (i *Index) Update(newB map[string]e.GenericBook, modB map[string]e.GenericB
 }
 
 // Check all GenericBooks are indexed, add them otherwise
-func (i *Index) Check(all []e.GenericBook) error {
-	// indexing db
-	books := make(map[string]e.GenericBook)
-	for _, b := range all {
-		books[b.FullPath()] = b
+func (i *Index) Check(all e.Collection) error {
+	// open index
+	index, _, err := i.open()
+	if err != nil {
+		return err
 	}
-	return i.check(books)
+	defer index.Close()
 
+	for _, v := range all.Books() {
+		d, err := index.Document(v.FullPath())
+		if err != nil {
+			return err
+		}
+		if d == nil {
+			err = index.Index(v.FullPath(), v)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // Query on current Index
@@ -132,7 +141,7 @@ func (i *Index) open() (index bleve.Index, isNew bool, err error) {
 }
 
 // indexAdd add Books to index
-func (i *Index) add(books map[string]e.GenericBook) (err error) {
+func (i *Index) add(books e.Collection) (err error) {
 	// open index
 	index, _, err := i.open()
 	if err != nil {
@@ -140,8 +149,8 @@ func (i *Index) add(books map[string]e.GenericBook) (err error) {
 	}
 	defer index.Close()
 
-	for k, v := range books {
-		err = index.Index(k, v)
+	for _, v := range books.Books() {
+		err = index.Index(v.FullPath(), v)
 		if err != nil {
 			return
 		}
@@ -150,7 +159,7 @@ func (i *Index) add(books map[string]e.GenericBook) (err error) {
 }
 
 // indexDelete delete Books from index
-func (i *Index) delete(books map[string]e.GenericBook) (err error) {
+func (i *Index) delete(books e.Collection) (err error) {
 	// open index
 	index, _, err := i.open()
 	if err != nil {
@@ -158,36 +167,12 @@ func (i *Index) delete(books map[string]e.GenericBook) (err error) {
 	}
 	defer index.Close()
 
-	for k := range books {
-		err = index.Delete(k)
+	for _, k := range books.Books() {
+		err = index.Delete(k.FullPath())
 		if err != nil {
 			return
 		}
 	}
 
-	return
-}
-
-// check books in index
-func (i *Index) check(books map[string]e.GenericBook) (err error) {
-	// open index
-	index, _, err := i.open()
-	if err != nil {
-		return
-	}
-	defer index.Close()
-
-	for k, v := range books {
-		d, err := index.Document(k)
-		if err != nil {
-			return err
-		}
-		if d == nil {
-			err = index.Index(k, v)
-			if err != nil {
-				return err
-			}
-		}
-	}
 	return
 }
