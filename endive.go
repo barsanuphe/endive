@@ -1,397 +1,327 @@
-/*
-Endive is a tool to keep your epub library in great shape.
-
-It can rename and organize your library from the epub metadata, and can keep
-track of retail and non-retail versions.
-
-It is in a very early development: things can crash and files disappear.
-
-*/
 package main
 
 import (
 	"fmt"
 	"os"
-	"os/signal"
 	"path/filepath"
-	"strconv"
-	"syscall"
+	"time"
 
 	b "github.com/barsanuphe/endive/book"
-	e "github.com/barsanuphe/endive/endive"
+	"github.com/barsanuphe/endive/db"
+	en "github.com/barsanuphe/endive/endive"
 	i "github.com/barsanuphe/endive/index"
 	l "github.com/barsanuphe/endive/library"
 	u "github.com/barsanuphe/endive/ui"
-
-	"github.com/barsanuphe/endive/db"
-	"github.com/codegangsta/cli"
-	"github.com/ttacon/chalk"
-	"launchpad.net/go-xdg"
 )
 
-func generateCLI(lb *l.Library, ui e.UserInterface) (app *cli.App) {
-	app = cli.NewApp()
-	app.Name = "E N D I V E"
-	app.Usage = "Organize your epub collection."
-	app.Version = "0.1.0"
-
-	app.Commands = []cli.Command{
-		{
-			Name:    "config",
-			Aliases: []string{"c"},
-			Usage:   "options for configuration",
-			Action: func(c *cli.Context) {
-				ui.Display(lb.Config.String())
-			},
-		},
-		{
-			Name:     "import",
-			Category: "importing",
-			Aliases:  []string{"i"},
-			Usage:    "options for importing epubs",
-			Subcommands: []cli.Command{
-				{
-					Name:    "retail",
-					Aliases: []string{"r"},
-					Usage:   "import retail epubs",
-					Action: func(c *cli.Context) {
-						importEpubs(lb, c, ui, true)
-					},
-				},
-				{
-					Name:    "nonretail",
-					Aliases: []string{"nr"},
-					Usage:   "import non-retail epubs",
-					Action: func(c *cli.Context) {
-						importEpubs(lb, c, ui, false)
-					},
-				},
-			},
-		},
-		{
-			Name:    "export",
-			Aliases: []string{"x"},
-			Usage:   "export to E-Reader",
-			Action: func(c *cli.Context) {
-				exportFilter(lb, c, ui)
-			},
-			Subcommands: []cli.Command{
-				{
-					Name:    "all",
-					Aliases: []string{"books"},
-					Usage:   "export everything.",
-					Action: func(c *cli.Context) {
-						exportAll(lb, c, ui)
-					},
-				},
-			},
-		},
-		{
-			Name:    "check",
-			Aliases: []string{"fsck"},
-			Usage:   "check library",
-			Action: func(c *cli.Context) {
-				err := lb.Check()
-				if err != nil {
-					ui.Error("Check found errors! " + err.Error())
-				} else {
-					ui.Info("No errors found.")
-				}
-
-			},
-		},
-		{
-			Name:    "metadata",
-			Aliases: []string{"md"},
-			Usage:   "edit book metadata",
-			Subcommands: []cli.Command{
-				{
-					Name:    "refresh",
-					Aliases: []string{"r"},
-					Usage:   "reload metadata from epub and online sources (overwrites previous changes).",
-					Action: func(c *cli.Context) {
-						refreshMetadata(lb, c, ui)
-					},
-				},
-				{
-					Name:    "edit",
-					Aliases: []string{"modify", "e"},
-					Usage:   "edit metadata field using book ID: metadata edit ID field values",
-					Action: func(c *cli.Context) {
-						editMetadata(lb, c, ui)
-					},
-				},
-			},
-		},
-		{
-			Name:  "index",
-			Usage: "manipulate index",
-			Subcommands: []cli.Command{
-				{
-					Name:    "rebuild",
-					Aliases: []string{"r"},
-					Usage:   "rebuild index from scratch",
-					Action: func(c *cli.Context) {
-						if err := lb.RebuildIndex(); err != nil {
-							ui.Error(err.Error())
-						}
-					},
-				},
-				{
-					Name:    "check",
-					Aliases: []string{"c", "fsck"},
-					Usage:   "check all books are in the index, add them otherwise",
-					Action: func(c *cli.Context) {
-						if err := lb.CheckIndex(); err != nil {
-							ui.Error(err.Error())
-						}
-					},
-				},
-			},
-		},
-		{
-			Name:    "refresh",
-			Aliases: []string{"r"},
-			Usage:   "refresh library",
-			Action: func(c *cli.Context) {
-				if c.NArg() != 0 {
-					ui.Display("refresh subcommand does not require arguments.")
-					return
-				}
-				ui.Display("Refreshing library...")
-				renamed, err := lb.Refresh()
-				if err != nil {
-					panic(err)
-				}
-				ui.Display("Refresh done, renamed " + strconv.Itoa(renamed) + " epubs.")
-			},
-		},
-		{
-			Name:    "read",
-			Aliases: []string{"rd"},
-			Usage:   "mark as read: read ID [rating [review]]",
-			Action: func(c *cli.Context) {
-				markRead(lb, c, ui)
-			},
-		},
-		{
-			Name:     "info",
-			Category: "information",
-			Aliases:  []string{"information"},
-			Usage:    "get info about a specific book",
-			Action: func(c *cli.Context) {
-				showInfo(lb, c, ui)
-			},
-		},
-		{
-			Name:     "search",
-			Category: "searching",
-			Aliases:  []string{"s", "find"},
-			Usage:    "search the epub collection",
-			Action: func(c *cli.Context) {
-				search(lb, c, ui)
-			},
-		},
-		{
-			Name:     "list",
-			Category: "searching",
-			Aliases:  []string{"ls"},
-			Usage:    "list epubs in the collection",
-			Subcommands: []cli.Command{
-				{
-					Name:    "books",
-					Aliases: []string{"b"},
-					Usage:   "list all books: endive list books [sortBy CRITERIA]",
-					Action: func(c *cli.Context) {
-						books := make([]b.Book, len(lb.Books), len(lb.Books))
-						copy(books, lb.Books)
-						displayBooks(lb, c, ui, books)
-					},
-				},
-				{
-					Name:    "untagged",
-					Aliases: []string{"u"},
-					Usage:   "list untagged epubs.",
-					Action: func(c *cli.Context) {
-						displayBooks(lb, c, ui, lb.ListUntagged())
-					},
-				},
-				{
-					Name:    "incomplete",
-					Aliases: []string{"i"},
-					Usage:   "list books with incomplete epubs.",
-					Action: func(c *cli.Context) {
-						displayBooks(lb, c, ui, lb.ListIncomplete())
-					},
-				},
-				{
-					Name:    "tags",
-					Aliases: []string{"t"},
-					Usage:   "list tags",
-					Action: func(c *cli.Context) {
-						listTags(lb, c, ui)
-					},
-				},
-				{
-					Name:    "series",
-					Aliases: []string{"s"},
-					Usage:   "list series.",
-					Action: func(c *cli.Context) {
-						listSeries(lb, c, ui)
-					},
-				},
-				{
-					Name:    "authors",
-					Aliases: []string{"a"},
-					Usage:   "list authors.",
-					Action: func(c *cli.Context) {
-						authors := lb.ListAuthors()
-						ui.Display(e.TabulateMap(authors, "Author", "# of Books"))
-					},
-				},
-				{
-					Name:    "publishers",
-					Aliases: []string{"p"},
-					Usage:   "list publishers.",
-					Action: func(c *cli.Context) {
-						publishers := lb.ListPublishers()
-						ui.Display(e.TabulateMap(publishers, "Publisher", "# of Books"))
-					},
-				},
-				{
-					Name:    "nonretail",
-					Aliases: []string{"nrt"},
-					Usage:   "list books that only have non-retail versions.",
-					Action: func(c *cli.Context) {
-						displayBooks(lb, c, ui, lb.ListNonRetailOnly())
-					},
-				},
-				{
-					Name:    "retail",
-					Aliases: []string{"rt"},
-					Usage:   "list books that have retail versions.",
-					Action: func(c *cli.Context) {
-						displayBooks(lb, c, ui, lb.ListRetail())
-					},
-				},
-			},
-		},
-	}
-	return
+// Endive is the main struct here.
+type Endive struct {
+	hashes  en.KnownHashes
+	Config  en.Config
+	UI      en.UserInterface
+	Library l.Library
 }
 
-func main() {
-	var ui e.UserInterface
+// NewEndive constructs a valid new Epub
+func NewEndive() (*Endive, error) {
+	// init ui
+	var ui en.UserInterface
 	ui = u.UI{}
-	fmt.Println(chalk.Bold.TextStyle("\n# # # E N D I V E # # #\n"))
-
-	err := ui.InitLogger(e.XdgLogPath)
-	defer ui.CloseLog()
-
-	// get library
-	lb, err := OpenLibrary(ui)
-
-	if err != nil {
-		ui.Error("Error opening library.")
-		ui.Error(err.Error())
-		// if error other than usage elsewhere, remove lock.
-		if err != e.ErrorCannotLockDB {
-			e.RemoveLock()
-		}
-		return
+	if err := ui.InitLogger(en.XdgLogPath); err != nil {
+		return nil, err
 	}
-	defer lb.Close()
 
-	// handle interrupt
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	signal.Notify(c, syscall.SIGTERM)
-	go func() {
-		<-c
-		ui.Error("Interrupt!")
-		ui.Error("Stopping everything, saving what can be.")
-		lb.Close()
-		os.Exit(1)
-	}()
+	// init known hashes
+	hashesPath, err := en.GetKnownHashesPath()
+	if err != nil {
+		return nil, err
+	}
+	hashes := en.KnownHashes{Filename: hashesPath}
+	err = hashes.Load()
+	if err != nil {
+		return nil, err
+	}
 
-	// generate CLI interface and run it
-	app := generateCLI(lb, ui)
-	app.Run(os.Args)
+	// create Endive
+	e := &Endive{UI: ui, hashes: hashes}
+	// open Config
+	if err := e.openConfig(); err != nil {
+		return e, err
+	}
+	// open library
+	if err := e.openLibrary(); err != nil {
+		return e, err
+	}
+
+	// check lock
+	err = en.SetLock()
+	return e, err
 }
 
-const xdgIndexPath string = e.Endive + "/" + e.Endive + ".index"
-
-// getIndexPath gets the default index path
-func getIndexPath() (path string) {
-	path, err := xdg.Cache.Find(xdgIndexPath)
+func (e *Endive) openConfig() error {
+	// config
+	configPath, err := en.GetConfigPath()
 	if err != nil {
-		if os.IsNotExist(err) {
-			path = filepath.Join(xdg.Cache.Dirs()[0], xdgIndexPath)
-		} else {
-			panic(err)
-		}
+		return err
 	}
-	return
+	config := en.Config{Filename: configPath}
+	// config load
+	e.UI.Debugf("Loading Config %s.\n", config.Filename)
+	err = config.Load()
+	if err != nil {
+		if err == en.WarningGoodReadsAPIKeyMissing {
+			e.UI.Warning(err.Error())
+		} else {
+			e.UI.Error(err.Error())
+		}
+		return err
+	}
+	// check config
+	e.UI.Debug("Checking Config...")
+	err = config.Check()
+	if err == en.WarningNonRetailSourceDoesNotExist || err == en.WarningRetailSourceDoesNotExist {
+		e.UI.Warning(err.Error())
+	}
+	return err
 }
 
 // OpenLibrary constucts a valid new Library
-func OpenLibrary(ui e.UserInterface) (lib *l.Library, err error) {
-	// config
-	configPath, err := e.GetConfigPath()
-	if err != nil {
-		return
-	}
-	config := e.Config{Filename: configPath}
-	// config load
-	ui.Debugf("Loading Config %s.\n", config.Filename)
-	err = config.Load()
-	if err != nil {
-		if err == e.WarningGoodReadsAPIKeyMissing {
-			ui.Warning(err.Error())
-		} else {
-			ui.Error(err.Error())
-		}
-		return
-	}
-	// check config
-	ui.Debug("Checking Config...")
-	err = config.Check()
-	switch err {
-	case e.ErrorLibraryRootDoesNotExist:
-		return
-	case e.WarningNonRetailSourceDoesNotExist, e.WarningRetailSourceDoesNotExist:
-		ui.Warning(err.Error())
-	}
-	// check lock
-	err = e.SetLock()
-	if err != nil {
-		return
-	}
-
-	// known hashes
-	hashesPath, err := e.GetKnownHashesPath()
-	if err != nil {
-		return
-	}
-	// load known hashes file
-	hashes := e.KnownHashes{Filename: hashesPath}
-	err = hashes.Load()
-	if err != nil {
-		return
-	}
-
+func (e *Endive) openLibrary() error {
 	// index
 	index := &i.Index{}
-	index.SetPath(getIndexPath())
+	index.SetPath(en.GetIndexPath())
 	// db
 	db := &db.JSONDB{}
-	db.SetPath(config.DatabaseFile)
+	db.SetPath(e.Config.DatabaseFile)
+	e.Library = l.Library{Collection: &b.Books{}, Config: e.Config, Index: index, UI: e.UI, DB: db}
+	return e.Library.Load()
+}
 
-	lib = &l.Library{Config: config, KnownHashes: hashes, Index: index, UI: ui, DB: db}
-	err = lib.Load()
+// importFromSource all detected epubs, tagging them as retail or non-retail as requested.
+func (e *Endive) importFromSource(sources []string, retail bool) error {
+	defer en.TimeTrack(e.UI, time.Now(), "Imported")
+	sourceType := "retail"
+	if !retail {
+		sourceType = "non-retail"
+	}
+	e.UI.Title("Importing " + sourceType + " epubs...")
+
+	// checking all defined sources
+	var allEpubs, allHashes []string
+	for _, source := range sources {
+		e.UI.SubTitle("Searching for " + sourceType + " epubs in " + source)
+		epubs, hashes, err := en.ListEpubsInDirectory(source)
+		if err != nil {
+			return err
+		}
+		allEpubs = append(allEpubs, epubs...)
+		allHashes = append(allHashes, hashes...)
+	}
+	return e.ImportEpubs(allEpubs, allHashes, retail)
+}
+
+// ImportRetail imports epubs from the Retail source.
+func (e *Endive) ImportRetail() error {
+	return e.importFromSource(e.Config.RetailSource, true)
+}
+
+// ImportNonRetail imports epubs from the Non-Retail source.
+func (e *Endive) ImportNonRetail() error {
+	return e.importFromSource(e.Config.NonRetailSource, false)
+}
+
+// ImportEpubs files that are retail, or not.
+func (e *Endive) ImportEpubs(allEpubs []string, allHashes []string, isRetail bool) (err error) {
+	// force reload if it has changed
+	err = e.hashes.Load()
 	if err != nil {
 		return
 	}
+	defer e.hashes.Save()
 
-	return lib, err
+	newEpubs := 0
+	// importing what is necessary
+	for i, path := range allEpubs {
+		hash := allHashes[i]
+		importConfirmed := false
+		ep := b.Epub{Filename: path, UI: e.UI}
+
+		// compare with known hashes
+		info := b.Metadata{}
+		if !e.hashes.IsIn(hash) {
+			// get Metadata from new epub
+			info, err = ep.ReadMetadata()
+			if err != nil {
+				if err.Error() == "ISBN not found in epub" {
+					isbn, err := en.AskForISBN(e.UI)
+					if err != nil {
+						e.UI.Warning("Warning: ISBN still unknown.")
+					} else {
+						info.ISBN = isbn
+					}
+				} else {
+					e.UI.Error("Could not analyze and import " + path)
+					continue
+				}
+			}
+			// ask if user really wants to import it
+			importConfirmed = e.UI.YesOrNo(fmt.Sprintf("Found %s (%s).\nImport", filepath.Base(path), info.String()))
+		} else {
+			_, err := e.Library.Collection.FindByHash(hash)
+			if err != nil {
+				// get Metadata from new epub
+				info, err = ep.ReadMetadata()
+				if err != nil {
+					if err.Error() == "ISBN not found in epub" {
+						isbn, err := en.AskForISBN(e.UI)
+						if err != nil {
+							e.UI.Warning("Warning: ISBN still unknown.")
+						} else {
+							info.ISBN = isbn
+						}
+					} else {
+						e.UI.Error("Could not analyze and import " + path)
+						continue
+					}
+				}
+				//confirm force import
+				importConfirmed = e.UI.YesOrNo(fmt.Sprintf("File %s has already been imported but is not in the current library. Confirm importing again?", filepath.Base(path)))
+			}
+		}
+
+		if importConfirmed {
+			// loop over Books to find similar Metadata
+			var imported bool
+			knownBook, err := e.Library.Collection.FindByMetadata(info.ISBN, info.Author(), info.Title())
+			if err != nil {
+				// new Book
+				e.UI.Debug("Creating new book.")
+				bk := b.NewBookWithMetadata(e.UI, e.Library.GenerateID(), path, e.Config, isRetail, info)
+				imported, err = bk.Import(path, isRetail, hash)
+				if err != nil {
+					return err
+				}
+				e.Library.Collection.Add(bk)
+			} else {
+				// add to existing book
+				e.UI.Debug("Adding epub to " + knownBook.ShortString())
+				imported, err = knownBook.AddEpub(path, isRetail, hash)
+				if err != nil {
+					return err
+				}
+			}
+
+			if imported {
+				// add hash to known hashes
+				// NOTE: otherwise it'll pop up every other time
+				added, err := e.hashes.Add(hash)
+				if !added || err != nil {
+					return err
+				}
+				// saving now == saving import progress, in case of interruption
+				_, err = e.hashes.Save()
+				if err != nil {
+					return err
+				}
+				// saving database also
+				_, err = e.Library.Save()
+				if err != nil {
+					return err
+				}
+				newEpubs++
+			}
+		} else {
+			e.UI.Debug("Ignoring already imported epub " + filepath.Base(path))
+		}
+	}
+	if isRetail {
+		e.UI.Debugf("Imported %d retail epubs.\n", newEpubs)
+	} else {
+		e.UI.Debugf("Imported %d non-retail epubs.\n", newEpubs)
+	}
+	return
+}
+
+// Refresh current DB
+func (e *Endive) Refresh() (renamed int, err error) {
+	e.UI.Info("Refreshing database...")
+
+	// scan for new epubs
+	allEpubs, allHashes, err := en.ListEpubsInDirectory(e.Config.LibraryRoot)
+	if err != nil {
+		return
+	}
+	// compare allEpubs with l.Epubs
+	newEpubs := []string{}
+	newHashes := []string{}
+	for i, epub := range allEpubs {
+		_, err = e.Library.Collection.FindByFullPath(epub)
+		// no error == found Epub
+		if err != nil {
+			// check if hash is known
+			gBook, err := e.Library.Collection.FindByHash(allHashes[i])
+			if err != nil {
+				// else, it's a new epub, import
+				e.UI.Info("NEW EPUB " + epub + " , will be imported as non-retail.")
+				newEpubs = append(newEpubs, epub)
+				newHashes = append(newHashes, allHashes[i])
+			} else {
+				var book *b.Book
+				book = gBook.(*b.Book)
+				// if it is, rename found file to filename in DB
+				destination := book.RetailEpub.FullPath()
+				if book.NonRetailEpub.Hash == allHashes[i] {
+					destination = book.NonRetailEpub.FullPath()
+				}
+				// check if retail epub already exists
+				_, err := en.FileExists(destination)
+				if err == nil {
+					// file already exists
+					e.UI.Errorf("Found epub %s with the same hash as %s, ignoring.", epub, destination)
+				} else {
+					e.UI.Warningf("Found epub %s which is called %s in the database, renaming.", epub, destination)
+					// rename found file to retail name in db
+					err = os.Rename(epub, destination)
+					if err != nil {
+						return 0, err
+					}
+				}
+			}
+		}
+	}
+	// import new books as non-retail
+	err = e.ImportEpubs(newEpubs, newHashes, false)
+	if err != nil {
+		return
+	}
+	// refresh all books
+	deletedBooks := []int{}
+	for i := range e.Library.Collection.Books() {
+		wasRenamed, _, err := e.Library.Collection.Books()[i].Refresh()
+		if err != nil {
+			return renamed, err
+		}
+		if !e.Library.Collection.Books()[i].HasEpub() {
+			// mark for deletion
+			deletedBooks = append(deletedBooks, e.Library.Collection.Books()[i].ID())
+		}
+		if wasRenamed[0] {
+			renamed++
+		}
+		if wasRenamed[1] {
+			renamed++
+		}
+	}
+
+	// remove empty books
+	for _, id := range deletedBooks {
+		e.UI.Infof("REMOVING from db Book with ID %s\n", id)
+		err := e.Library.Collection.RemoveByID(id)
+		if err != nil {
+			return renamed, err
+		}
+	}
+	// remove all empty dirs
+	err = en.DeleteEmptyFolders(e.Config.LibraryRoot, e.UI)
+	return
 }
