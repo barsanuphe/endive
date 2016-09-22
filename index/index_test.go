@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	b "github.com/barsanuphe/endive/book"
 	"github.com/barsanuphe/endive/db"
 	e "github.com/barsanuphe/endive/endive"
 	"github.com/barsanuphe/endive/library"
@@ -18,10 +19,9 @@ func TestSearch(t *testing.T) {
 
 	c := e.Config{}
 	ui := &mock.UserInterface{}
-	k := e.KnownHashes{}
 	db := &db.JSONDB{}
 	db.SetPath("../test/endive.json")
-	l := library.Library{Index: &Index{}, UI: ui, Config: c, KnownHashes: k, DB: db}
+	l := library.Library{Collection: &b.Books{}, Index: &Index{}, UI: ui, Config: c, DB: db}
 
 	err := l.Load()
 	assert.Nil(err, "Error loading epubs from database")
@@ -32,10 +32,7 @@ func TestSearch(t *testing.T) {
 	assert.NotNil(err, "Index not built yet")
 
 	// index
-	// convert Books to Collection
-	var collection e.Collection
-	collection = &l.Books
-	err = l.Index.Rebuild(collection)
+	err = l.Index.Rebuild(l.Collection)
 	assert.Nil(err, "Error indexing epubs from database")
 
 	numIndexed := l.Index.Count()
