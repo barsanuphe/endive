@@ -10,8 +10,14 @@ package endive
 
 // GenericBook interface for Books
 type GenericBook interface {
+	ID() int
+	HasEpub() bool
 	FullPath() string
 	ShortString() string
+	CleanFilename() string
+	Refresh() ([]bool, []string, error)
+	AddEpub(string, bool, string) (bool, error)
+	Check() (bool, bool, error)
 }
 
 // Indexer provides an interface for indexing books.
@@ -26,15 +32,33 @@ type Indexer interface {
 
 // Collection interface for slices of Books
 type Collection interface {
+	// contents
 	Books() []GenericBook
 	Add(...GenericBook)
-	//	Remove(id int) error
+	Propagate(UserInterface, Config)
+	RemoveByID(int) error
 	Diff(Collection) (Collection, Collection, Collection)
-	//	FindByID(string) (*GenericBook, error)
-	//	FindByHash(string) (*GenericBook, error)
-	//	FindByMetadata(string) (*GenericBook, error)
-	//	FindByFullPath(string) (*GenericBook, error)
 	// 	Check() error
+	// search
+	FindByID(int) (GenericBook, error)
+	FindByHash(string) (GenericBook, error)
+	FindByMetadata(string, string, string) (GenericBook, error)
+	FindByFullPath(string) (GenericBook, error)
+	// extracting information
+	Retail() Collection
+	NonRetailOnly() Collection
+	Untagged() Collection
+	Progress(string) Collection
+	Incomplete() Collection
+	Authors() map[string]int
+	Publishers() map[string]int
+	Tags() map[string]int
+	Series() map[string]int
+	// output
+	Table() string
+	Sort(string)
+	First(int) Collection
+	Last(int) Collection
 }
 
 // Database is the interface for loading/saving Book information
