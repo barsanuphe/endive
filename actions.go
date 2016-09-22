@@ -88,11 +88,11 @@ func editMetadata(c *cli.Context, endive *Endive) {
 	}
 	endive.UI.Title("Editing metadata for " + book.ShortString() + "\n")
 	if err := book.EditField(args...); err != nil {
-		endive.UI.Errorf("Error editing metadata for book ID#%d", book.ID)
+		endive.UI.Errorf("Error editing metadata for book ID#%d\n", book.ID())
 	}
 	_, _, err = book.Refresh()
 	if err != nil {
-		endive.UI.Errorf("Error refreshing book ID#%d", book.ID)
+		endive.UI.Errorf("Error refreshing book ID#%d\n", book.ID())
 		return
 	}
 	showInfo(c, endive)
@@ -127,13 +127,13 @@ func refreshMetadata(c *cli.Context, endive *Endive) {
 		if endive.UI.YesOrNo("Confirm refreshing metadata for " + book.ShortString()) {
 			err := book.ForceMetadataRefresh()
 			if err != nil {
-				endive.UI.Errorf("Error reinitializing metadata for book ID#%d", book.ID)
+				endive.UI.Errorf("Error reinitializing metadata for book ID#%d\n", book.ID())
 			}
 		}
 	}
 	_, _, err = book.Refresh()
 	if err != nil {
-		endive.UI.Errorf("Error refreshing book ID#%d", book.ID)
+		endive.UI.Errorf("Error refreshing book ID#%d\n", book.ID())
 		return
 	}
 	showInfo(c, endive)
