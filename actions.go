@@ -227,12 +227,14 @@ func search(c *cli.Context, endive *Endive) {
 		}
 		query := strings.Join(queryParts, " ")
 		endive.UI.Debug("Searching for '" + query + "'...")
-		results, err := endive.Library.SearchAndPrint(query, sortBy, limitFirst, limitLast, number)
+		var results e.Collection
+		results = &b.Books{}
+		hits, err := endive.Library.SearchAndPrint(query, sortBy, limitFirst, limitLast, number, results)
 		if err != nil {
 			endive.UI.Error(err.Error())
 			panic(err)
 		}
-		endive.UI.Display(results)
+		endive.UI.Display(hits)
 	}
 }
 
@@ -280,13 +282,13 @@ func importEpubs(endive *Endive, c *cli.Context, isRetail bool) {
 func exportFilter(c *cli.Context, endive *Endive) {
 	endive.UI.Title("Exporting selection to E-Reader...")
 	query := strings.Join(c.Args(), " ")
-	books, err := endive.Library.Search(query, "default", false, false, 0)
-	if err != nil {
+	var books e.Collection
+	books = &b.Books{}
+	if err := endive.Library.Search(query, "default", false, false, 0, books); err != nil {
 		endive.UI.Error("Error filtering books for export to e-reader")
 		return
 	}
-	err = endive.Library.ExportToEReader(books)
-	if err != nil {
+	if err := endive.Library.ExportToEReader(books); err != nil {
 		endive.UI.Errorf("Error exporting books to e-reader: %s", err.Error())
 	}
 }

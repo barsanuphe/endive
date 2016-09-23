@@ -95,7 +95,7 @@ func (l *Library) ExportToEReader(books e.Collection) (err error) {
 }
 
 // Search and print the results
-func (l *Library) Search(query, sortBy string, limitFirst, limitLast bool, limitNumber int) (results e.Collection, err error) {
+func (l *Library) Search(query, sortBy string, limitFirst, limitLast bool, limitNumber int, results e.Collection) (err error) {
 	if err != nil {
 		return
 	}
@@ -107,7 +107,7 @@ func (l *Library) Search(query, sortBy string, limitFirst, limitLast bool, limit
 		if err.Error() == "Index is empty" {
 			// rebuild index
 			if err := l.RebuildIndex(); err != nil {
-				return results, err
+				return err
 			}
 			// trying again
 			booksPaths, err = l.Index.Query(query)
@@ -115,37 +115,36 @@ func (l *Library) Search(query, sortBy string, limitFirst, limitLast bool, limit
 				return
 			}
 		} else {
-			return results, err
+			return err
 		}
 	}
 	if len(booksPaths) != 0 {
 		// find the Book for each path
-		var books e.Collection
 		for _, path := range booksPaths {
 			book, err := l.Collection.FindByFullPath(path)
 			if err != nil {
 				l.UI.Warning("Could not find Book: " + path)
 			} else {
-				books.Add(book)
+				results.Add(book)
 			}
 		}
 
-		books.Sort(sortBy)
+		results.Sort(sortBy)
 		if limitFirst {
-			books = books.First(limitNumber)
+			results = results.First(limitNumber)
 		}
 		if limitLast {
-			books = books.Last(limitNumber)
+			results = results.Last(limitNumber)
 		}
-		return books, err
+		return err
 	}
-	return nil, err
+	return err
 }
 
 // SearchAndPrint results to a query
-func (l *Library) SearchAndPrint(query, sortBy string, limitFirst, limitLast bool, limitNumber int) (results string, err error) {
-	books, err := l.Search(query, sortBy, limitFirst, limitLast, limitNumber)
-	return books.Table(), err
+func (l *Library) SearchAndPrint(query, sortBy string, limitFirst, limitLast bool, limitNumber int, results e.Collection) (string, error) {
+	err := l.Search(query, sortBy, limitFirst, limitLast, limitNumber, results)
+	return results.Table(), err
 }
 
 // prepareQuery before search
