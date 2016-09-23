@@ -288,7 +288,6 @@ func main() {
 	defer en.RemoveLock()
 	defer endive.Library.Close()
 
-
 	// handle interrupt
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
@@ -298,6 +297,7 @@ func main() {
 		endive.UI.Error("Interrupt!")
 		endive.UI.Error("Stopping everything, saving what can be.")
 		endive.Library.Close()
+		en.RemoveLock()
 		endive.UI.CloseLog()
 		os.Exit(1)
 	}()
