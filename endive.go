@@ -53,7 +53,7 @@ func NewEndive() (*Endive, error) {
 		return e, err
 	}
 
-	// check lock
+	// set lock
 	err = en.SetLock()
 	return e, err
 }
@@ -64,10 +64,10 @@ func (e *Endive) openConfig() error {
 	if err != nil {
 		return err
 	}
-	config := en.Config{Filename: configPath}
+	e.Config = en.Config{Filename: configPath}
 	// config load
-	e.UI.Debugf("Loading Config %s.\n", config.Filename)
-	err = config.Load()
+	e.UI.Debugf("Loading Config %s.\n", e.Config.Filename)
+	err = e.Config.Load()
 	if err != nil {
 		if err == en.WarningGoodReadsAPIKeyMissing {
 			e.UI.Warning(err.Error())
@@ -78,7 +78,7 @@ func (e *Endive) openConfig() error {
 	}
 	// check config
 	e.UI.Debug("Checking Config...")
-	err = config.Check()
+	err = e.Config.Check()
 	if err == en.WarningNonRetailSourceDoesNotExist || err == en.WarningRetailSourceDoesNotExist {
 		e.UI.Warning(err.Error())
 	}

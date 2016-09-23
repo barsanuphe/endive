@@ -284,8 +284,10 @@ func main() {
 		}
 		os.Exit(-1)
 	}
-	defer endive.Library.Close()
 	defer endive.UI.CloseLog()
+	defer en.RemoveLock()
+	defer endive.Library.Close()
+
 
 	// handle interrupt
 	c := make(chan os.Signal, 1)
@@ -301,7 +303,6 @@ func main() {
 	}()
 
 	// generate CLI interface and run it
-	// TODO only pass endive
 	app := generateCLI(endive)
 	app.Run(os.Args)
 }

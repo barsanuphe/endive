@@ -34,6 +34,7 @@ type Library struct {
 func (l *Library) Close() error {
 	hasSaved, err := l.Save()
 	if err != nil {
+		l.UI.Error(err.Error())
 		return err
 	}
 	if hasSaved {
@@ -42,8 +43,7 @@ func (l *Library) Close() error {
 			l.UI.Error(err.Error())
 		}
 	}
-	// remove lock
-	return e.RemoveLock()
+	return nil
 }
 
 // GenerateID for a new Book
