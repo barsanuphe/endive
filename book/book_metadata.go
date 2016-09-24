@@ -116,7 +116,7 @@ func (b *Book) editSpecificField(field string, values []string) error {
 	switch field {
 	case tagsField:
 		fmt.Println("NOTE: tags can be edited as a comma-separated list of strings.")
-		newValues, err := b.UI.UpdateValues(field, b.Metadata.Tags.String(), values)
+		newValues, err := b.UI.UpdateValues(field, b.Metadata.Tags.String(), values, false)
 		if err != nil {
 			return err
 		}
@@ -135,7 +135,7 @@ func (b *Book) editSpecificField(field string, values []string) error {
 		}
 	case seriesField:
 		fmt.Println("NOTE: series can be edited as a comma-separated list of 'series name:index' strings. Index can be empty, or a range.")
-		newValues, err := b.UI.UpdateValues(field, b.Metadata.Series.rawString(), values)
+		newValues, err := b.UI.UpdateValues(field, b.Metadata.Series.rawString(), values, false)
 		if err != nil {
 			return err
 		}
@@ -151,7 +151,7 @@ func (b *Book) editSpecificField(field string, values []string) error {
 			}
 		}
 	case authorField:
-		newValues, err := b.UI.UpdateValues(field, b.Metadata.Author(), values)
+		newValues, err := b.UI.UpdateValues(field, b.Metadata.Author(), values, false)
 		if err != nil {
 			return err
 		}
@@ -161,7 +161,7 @@ func (b *Book) editSpecificField(field string, values []string) error {
 			b.Metadata.Authors[j] = strings.TrimSpace(b.Metadata.Authors[j])
 		}
 	case yearField:
-		newValues, err := b.UI.UpdateValues(field, b.Metadata.OriginalYear, values)
+		newValues, err := b.UI.UpdateValues(field, b.Metadata.OriginalYear, values, false)
 		if err != nil {
 			return err
 		}
@@ -172,7 +172,7 @@ func (b *Book) editSpecificField(field string, values []string) error {
 		}
 		b.Metadata.OriginalYear = newValues[0]
 	case editionYearField:
-		newValues, err := b.UI.UpdateValues(field, b.Metadata.EditionYear, values)
+		newValues, err := b.UI.UpdateValues(field, b.Metadata.EditionYear, values, false)
 		if err != nil {
 			return err
 		}
@@ -183,25 +183,25 @@ func (b *Book) editSpecificField(field string, values []string) error {
 		}
 		b.Metadata.EditionYear = newValues[0]
 	case languageField:
-		newValues, err := b.UI.UpdateValues(field, b.Metadata.Language, values)
+		newValues, err := b.UI.UpdateValues(field, b.Metadata.Language, values, false)
 		if err != nil {
 			return err
 		}
 		b.Metadata.Language = newValues[0]
 	case categoryField:
-		newValues, err := b.UI.UpdateValues(field, b.Metadata.Category, values)
+		newValues, err := b.UI.UpdateValues(field, b.Metadata.Category, values, false)
 		if err != nil {
 			return err
 		}
 		b.Metadata.Category = newValues[0]
 	case genreField:
-		newValues, err := b.UI.UpdateValues(field, b.Metadata.MainGenre, values)
+		newValues, err := b.UI.UpdateValues(field, b.Metadata.MainGenre, values, false)
 		if err != nil {
 			return err
 		}
 		b.Metadata.MainGenre = newValues[0]
 	case isbnField:
-		newValues, err := b.UI.UpdateValues(field, b.Metadata.ISBN, values)
+		newValues, err := b.UI.UpdateValues(field, b.Metadata.ISBN, values, false)
 		if err != nil {
 			return err
 		}
@@ -212,26 +212,26 @@ func (b *Book) editSpecificField(field string, values []string) error {
 		}
 		b.Metadata.ISBN = isbn
 	case titleField:
-		newValues, err := b.UI.UpdateValues(field, b.Metadata.MainTitle, values)
+		newValues, err := b.UI.UpdateValues(field, b.Metadata.MainTitle, values, false)
 		if err != nil {
 			return err
 		}
 		b.Metadata.MainTitle = newValues[0]
 		b.Metadata.OriginalTitle = newValues[0]
 	case descriptionField:
-		newValues, err := b.UI.UpdateValues(field, b.Metadata.Description, values)
+		newValues, err := b.UI.UpdateValues(field, b.Metadata.Description, values, true)
 		if err != nil {
 			return err
 		}
 		b.Metadata.Description = newValues[0]
 	case publisherField:
-		newValues, err := b.UI.UpdateValues(field, b.Metadata.Publisher, values)
+		newValues, err := b.UI.UpdateValues(field, b.Metadata.Publisher, values, false)
 		if err != nil {
 			return err
 		}
 		b.Metadata.Publisher = newValues[0]
 	case progressField:
-		newValues, err := b.UI.UpdateValues(field, b.Progress, values)
+		newValues, err := b.UI.UpdateValues(field, b.Progress, values, false)
 		if err != nil {
 			return err
 		}
@@ -241,7 +241,7 @@ func (b *Book) editSpecificField(field string, values []string) error {
 			return errors.New(newValues[0] + " is not a valid reading progress")
 		}
 	case readDateField:
-		newValues, err := b.UI.UpdateValues(field, b.ReadDate, values)
+		newValues, err := b.UI.UpdateValues(field, b.ReadDate, values, false)
 		if err != nil {
 			return err
 		}
@@ -252,7 +252,7 @@ func (b *Book) editSpecificField(field string, values []string) error {
 		}
 		b.ReadDate = newValues[0]
 	case ratingField:
-		newValues, err := b.UI.UpdateValues(field, b.Rating, values)
+		newValues, err := b.UI.UpdateValues(field, b.Rating, values, false)
 		if err != nil {
 			return err
 		}
@@ -264,7 +264,7 @@ func (b *Book) editSpecificField(field string, values []string) error {
 		}
 		b.Rating = newValues[0]
 	case reviewField:
-		newValues, err := b.UI.UpdateValues(field, b.Review, values)
+		newValues, err := b.UI.UpdateValues(field, b.Review, values, true)
 		if err != nil {
 			return err
 		}

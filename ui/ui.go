@@ -9,7 +9,18 @@ import (
 	"os/exec"
 	"strings"
 
+	"io/ioutil"
+
 	"github.com/op/go-logging"
+)
+
+const (
+	editOrKeep    = "(1) Keep Value (2) Edit: "
+	chooseOrEdit  = "(1) Local version (2) Remote version (3) Edit (4) Abort: "
+	enterNewValue = "Enter new value: "
+	invalidChoice = "Invalid choice."
+	emptyValue    = "Empty value detected."
+	notConfirmed  = "Manual entry not confirmed, trying again."
 )
 
 // UI implements endive.UserInterface
@@ -37,7 +48,7 @@ func (ui UI) chooseVersion(localCandidate, remoteCandidate string) (chosenOne st
 	validChoice := false
 	errs := 0
 	for !validChoice {
-		ui.Choice("Choose: (1) Local version (2) Remote version (3) Edit (4) Abort : ")
+		ui.Choice(chooseOrEdit)
 		choice, scanErr := ui.GetInput()
 		if scanErr != nil {
 			return chosenOne, scanErr
@@ -47,20 +58,20 @@ func (ui UI) chooseVersion(localCandidate, remoteCandidate string) (chosenOne st
 			err = errors.New("Abort")
 			validChoice = true
 		case "3":
-			fmt.Print("Enter new value: ")
+			ui.Choice(enterNewValue)
 			choice, scanErr := ui.GetInput()
 			if scanErr != nil {
 				return chosenOne, scanErr
 			}
 			if choice == "" {
-				fmt.Println("Warning: Empty value detected.")
+				ui.Warning(emptyValue)
 			}
 			confirmed := ui.YesOrNo("Confirm: " + choice)
 			if confirmed {
 				chosenOne = choice
 				validChoice = true
 			} else {
-				fmt.Println("Manual entry not confirmed, trying again.")
+				fmt.Println(notConfirmed)
 			}
 		case "2":
 			chosenOne = remoteCandidate
@@ -69,10 +80,10 @@ func (ui UI) chooseVersion(localCandidate, remoteCandidate string) (chosenOne st
 			chosenOne = localCandidate
 			validChoice = true
 		default:
-			fmt.Println("Invalid choice.")
+			ui.Warning(invalidChoice)
 			errs++
 			if errs > 10 {
-				return "", errors.New("Too many invalid choices.")
+				return "", errors.New(invalidChoice)
 			}
 		}
 	}
@@ -80,10 +91,10 @@ func (ui UI) chooseVersion(localCandidate, remoteCandidate string) (chosenOne st
 }
 
 // askForNewValue from user
-func (ui UI) updateValue(field, oldValue string) (newValue string, err error) {
+func (ui UI) updateValue(field, oldValue string, longField bool) (newValue string, err error) {
 	ui.SubPart("Modifying " + field)
 	fmt.Printf("Current value: %s\n", oldValue)
-	ui.Choice("Choose: (1) Keep Value (2) Edit : ")
+	ui.Choice(editOrKeep)
 	validChoice := false
 	errs := 0
 	for !validChoice {
@@ -93,30 +104,39 @@ func (ui UI) updateValue(field, oldValue string) (newValue string, err error) {
 		}
 		switch choice {
 		case "2":
-			fmt.Print("Enter new value: ")
-			choice, scanErr := ui.GetInput()
+			var choice string
+			var scanErr error
+			if longField {
+				choice, scanErr = ui.Edit(oldValue)
+			} else {
+				ui.Choice(enterNewValue)
+				choice, scanErr = ui.GetInput()
+			}
 			if scanErr != nil {
 				return newValue, scanErr
 			}
 			if choice == "" {
-				fmt.Println("Warning: Empty value detected.")
+				ui.Warning(emptyValue)
+			} else {
+				fmt.Printf("New value:\n%s\n", choice)
 			}
-			confirmed := ui.YesOrNo("Confirm: " + choice)
+			confirmed := ui.YesOrNo("Confirm")
 			if confirmed {
 				newValue = choice
 				validChoice = true
 			} else {
-				fmt.Println("Manual entry not confirmed, trying again.")
+				fmt.Println(notConfirmed)
+				ui.Choice(editOrKeep)
 			}
 		case "1":
 			newValue = oldValue
 			validChoice = true
 		default:
-			fmt.Println("Invalid choice.")
-			fmt.Print(ui.GreenBold("Choose: (1) Keep Value (2) Edit "))
+			ui.Warning(invalidChoice)
+			ui.Choice(editOrKeep)
 			errs++
 			if errs > 10 {
-				return "", errors.New("Too many invalid choices.")
+				return "", errors.New(invalidChoice)
 			}
 		}
 	}
@@ -124,9 +144,9 @@ func (ui UI) updateValue(field, oldValue string) (newValue string, err error) {
 }
 
 // UpdateValues from candidates or from user input
-func (ui UI) UpdateValues(field, oldValue string, candidates []string) (newValues []string, err error) {
+func (ui UI) UpdateValues(field, oldValue string, candidates []string, longField bool) ([]string, error) {
 	if len(candidates) == 0 {
-		value, err := ui.updateValue(field, oldValue)
+		value, err := ui.updateValue(field, oldValue, longField)
 		if err != nil {
 			return []string{}, err
 		}
@@ -136,17 +156,7 @@ func (ui UI) UpdateValues(field, oldValue string, candidates []string) (newValue
 	for i := range candidates {
 		candidates[i] = strings.TrimSpace(candidates[i])
 	}
-	newValues = candidates
-
-	// show old_value => new_value
-	newValuesString := strings.Join(newValues, "|")
-	if oldValue != newValuesString {
-
-		ui.Infof("Changing %s: \n%s\n\t=>\n%s\n", field, oldValue, newValuesString)
-	} else {
-		ui.Info("Nothing to change.")
-	}
-	return
+	return candidates, nil
 }
 
 // GetInput from user
@@ -206,4 +216,47 @@ func (ui UI) Display(output string) {
 	}
 	// wait for the pager to be finished
 	<-c
+}
+
+// Edit long value using external $EDITOR
+func (ui *UI) Edit(oldValue string) (string, error) {
+	// create temp file
+	content := []byte(oldValue)
+	tmpfile, err := ioutil.TempFile("", "edit")
+	if err != nil {
+		return oldValue, err
+	}
+	// clean up
+	defer tmpfile.Close()
+	defer os.Remove(tmpfile.Name())
+
+	// write input string inside
+	if _, err := tmpfile.Write(content); err != nil {
+		return oldValue, err
+	}
+	if err := tmpfile.Close(); err != nil {
+		return oldValue, err
+	}
+
+	// find $EDITOR
+	editor := os.Getenv("EDITOR")
+	if editor == "" {
+		ui.Warning("$EDITOR not set, falling back to nano")
+		editor = "nano"
+	}
+
+	// open it with $EDITOR
+	cmd := exec.Command(editor, tmpfile.Name())
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	if err := cmd.Run(); err != nil {
+		return oldValue, err
+	}
+
+	// read file back, set output string
+	newContent, err := ioutil.ReadFile(tmpfile.Name())
+	if err != nil {
+		return oldValue, err
+	}
+	return strings.TrimSpace(string(newContent)), nil
 }

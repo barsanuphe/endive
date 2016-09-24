@@ -62,7 +62,6 @@ func (ui *UI) Errorf(msg string, args ...interface{}) {
 	msg = fmt.Sprintf(msg, args...)
 	fmt.Println(ui.RedBold("ERROR: " + msg))
 	if ui.logger != nil {
-		fmt.Println("HHHH")
 		ui.logger.Error(msg)
 	}
 }
