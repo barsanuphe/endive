@@ -31,29 +31,24 @@ func (db *JSONDB) Path() string {
 
 // Equals to another Database
 func (db *JSONDB) Equals(o endive.Database) bool {
-	// load local books into a collection
-	var dbBooks endive.Collection
-	if err := db.Load(dbBooks); err != nil {
-		return false
+	jsonContent, err := ioutil.ReadFile(db.path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// first run, it will be created later.
+			return nil
+		}
+		return err
 	}
 
-	var dbCollection endive.Collection
-	dbCollection.Add(dbBooks.Books()...)
-
-	// load books from the other database
-	var oBooks endive.Collection
-	if err := o.Load(oBooks); err != nil {
-		return false
+	ojsonContent, err := ioutil.ReadFile(o.Path())
+	if err != nil {
+		if os.IsNotExist(err) {
+			// first run, it will be created later.
+			return nil
+		}
+		return err
 	}
-	var oCollection endive.Collection
-	oCollection.Add(oBooks.Books()...)
-	// return true if diff of collections is blank
-	newB, modB, delB := dbCollection.Diff(oCollection)
-	if newB == nil && modB == nil && delB == nil {
-		return true
-	}
-
-	return false
+	return bytes.Equal(jsonContent, ojsonContent)
 }
 
 // Load database
