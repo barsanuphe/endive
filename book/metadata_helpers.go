@@ -74,6 +74,9 @@ func cleanTagName(tagName string) (cleanTagName string, err error) {
 	if err == nil {
 		cleanTagName = tagName
 	}
+	if cleanTagName == "" {
+		err = errors.New("Tag cannot be empty string")
+	}
 	return
 }
 

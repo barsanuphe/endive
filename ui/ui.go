@@ -38,17 +38,20 @@ func (ui UI) chooseVersion(localCandidate, remoteCandidate string) (chosenOne st
 	errs := 0
 	for !validChoice {
 		ui.Choice("Choose: (1) Local version (2) Remote version (3) Edit (4) Abort : ")
-		scanner := bufio.NewReader(os.Stdin)
-		choice, _ := scanner.ReadString('\n')
-		choice = strings.TrimSpace(choice)
+		choice, scanErr := ui.GetInput()
+		if scanErr != nil {
+			return chosenOne, scanErr
+		}
 		switch choice {
 		case "4":
 			err = errors.New("Abort")
 			validChoice = true
 		case "3":
 			fmt.Print("Enter new value: ")
-			choice, _ = scanner.ReadString('\n')
-			choice = strings.TrimSpace(choice)
+			choice, scanErr := ui.GetInput()
+			if scanErr != nil {
+				return chosenOne, scanErr
+			}
 			if choice == "" {
 				fmt.Println("Warning: Empty value detected.")
 			}
@@ -84,14 +87,17 @@ func (ui UI) updateValue(field, oldValue string) (newValue string, err error) {
 	validChoice := false
 	errs := 0
 	for !validChoice {
-		scanner := bufio.NewReader(os.Stdin)
-		choice, _ := scanner.ReadString('\n')
-		choice = strings.TrimSpace(choice)
+		choice, scanErr := ui.GetInput()
+		if scanErr != nil {
+			return newValue, scanErr
+		}
 		switch choice {
 		case "2":
 			fmt.Print("Enter new value: ")
-			choice, _ = scanner.ReadString('\n')
-			choice = strings.TrimSpace(choice)
+			choice, scanErr := ui.GetInput()
+			if scanErr != nil {
+				return newValue, scanErr
+			}
 			if choice == "" {
 				fmt.Println("Warning: Empty value detected.")
 			}
@@ -143,16 +149,24 @@ func (ui UI) UpdateValues(field, oldValue string, candidates []string) (newValue
 	return
 }
 
-// YesOrNo asks a question and returns the answer
-func (ui UI) YesOrNo(question string) (yes bool) {
-	fmt.Printf(ui.BlueBold("%s y/n? "), question)
+// GetInput from user
+func (ui UI) GetInput() (string, error) {
 	scanner := bufio.NewReader(os.Stdin)
-	choice, _ := scanner.ReadString('\n')
-	switch strings.TrimSpace(choice) {
-	case "y", "Y", "yes":
-		yes = true
+	choice, scanErr := scanner.ReadString('\n')
+	return strings.TrimSpace(choice), scanErr
+}
+
+// YesOrNo asks a question and returns the answer
+func (ui UI) YesOrNo(question string) bool {
+	fmt.Printf(ui.BlueBold("%s Y/N : "), question)
+	input, err := ui.GetInput()
+	if err == nil {
+		switch input {
+		case "y", "Y", "yes":
+			return true
+		}
 	}
-	return
+	return false
 }
 
 // Display text through a pager if necessary.
@@ -171,13 +185,25 @@ func (ui UI) Display(output string) {
 	c := make(chan struct{})
 	go func() {
 		defer close(c)
-		cmd.Run()
+		err := cmd.Run()
+		if err != nil {
+			ui.Error(err.Error())
+			return
+		}
 	}()
 
 	// send through less
-	fmt.Fprintf(stdin, output)
+	_, err := fmt.Fprintf(stdin, output)
+	if err != nil {
+		ui.Error(err.Error())
+		return
+	}
 	// close stdin (result in pager to exit)
-	stdin.Close()
+	err = stdin.Close()
+	if err != nil {
+		ui.Error(err.Error())
+		return
+	}
 	// wait for the pager to be finished
 	<-c
 }

@@ -6,6 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	b "github.com/barsanuphe/endive/book"
+	"github.com/barsanuphe/endive/db"
 	e "github.com/barsanuphe/endive/endive"
 	"github.com/barsanuphe/endive/library"
 	"github.com/barsanuphe/endive/mock"
@@ -13,12 +15,14 @@ import (
 
 func TestSearch(t *testing.T) {
 	indexPath := "../test/test_index"
-	c := e.Config{}
-	ui := &mock.UserInterface{}
-	k := e.KnownHashes{}
 	assert := assert.New(t)
 
-	l := library.Library{Index: &Index{}, UI: ui, Config: c, KnownHashes: k, DatabaseFile: "../test/endive.json"}
+	c := e.Config{}
+	ui := &mock.UserInterface{}
+	db := &db.JSONDB{}
+	db.SetPath("../test/endive.json")
+	l := library.Library{Collection: &b.Books{}, Index: &Index{}, UI: ui, Config: c, DB: db}
+
 	err := l.Load()
 	assert.Nil(err, "Error loading epubs from database")
 	l.Index.SetPath(indexPath)
@@ -28,12 +32,7 @@ func TestSearch(t *testing.T) {
 	assert.NotNil(err, "Index not built yet")
 
 	// index
-	// convert Books to []GenericBook
-	allBooks := make([]e.GenericBook, len(l.Books))
-	for i := range l.Books {
-		allBooks[i] = &l.Books[i]
-	}
-	err = l.Index.Rebuild(allBooks)
+	err = l.Index.Rebuild(l.Collection)
 	assert.Nil(err, "Error indexing epubs from database")
 
 	numIndexed := l.Index.Count()

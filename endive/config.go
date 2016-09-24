@@ -20,6 +20,8 @@ const (
 	XdgLockPath = Endive + "/" + Endive + ".lock"
 	// XdgArchiveDir is the path where database archives are kept
 	XdgArchiveDir = Endive + "/archives/"
+	// index path
+	xdgIndexPath string = Endive + "/" + Endive + ".index"
 )
 
 // Constant Error values which can be compared to determine the type of error
@@ -78,6 +80,19 @@ func GetConfigPath() (configFile string, err error) {
 			return
 		}
 		err = ErrorConfigFileCreated
+	}
+	return
+}
+
+// GetIndexPath gets the default index path
+func GetIndexPath() (path string) {
+	path, err := xdg.Cache.Find(xdgIndexPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			path = filepath.Join(xdg.Cache.Dirs()[0], xdgIndexPath)
+		} else {
+			panic(err)
+		}
 	}
 	return
 }

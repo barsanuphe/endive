@@ -51,14 +51,12 @@ func (s *bookSorter) Less(i, j int) bool {
 
 // SortBooks using a specific field.
 func SortBooks(books []Book, orderBy string) {
-	// TODO : tests
-
 	if !CheckValidSortOrder(orderBy) {
 		return
 	}
 
 	id := func(p1, p2 *Book) bool {
-		return p1.ID < p2.ID
+		return p1.BookID < p2.BookID
 	}
 	originalYear := func(p1, p2 *Book) bool {
 		return p1.Metadata.OriginalYear < p2.Metadata.OriginalYear

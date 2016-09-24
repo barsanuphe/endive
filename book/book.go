@@ -34,7 +34,7 @@ var validCategories = []string{"fiction", "nonfiction"}
 type Book struct {
 	Config e.Config        `json:"-"`
 	UI     e.UserInterface `json:"-"`
-	ID     int             `json:"id"`
+	BookID int             `json:"id"`
 	// associated files
 	RetailEpub    Epub `json:"retail"`
 	NonRetailEpub Epub `json:"nonretail"`
@@ -67,9 +67,14 @@ func NewBook(ui e.UserInterface, id int, filename string, c e.Config, isRetail b
 func NewBookWithMetadata(ui e.UserInterface, id int, filename string, c e.Config, isRetail bool, i Metadata) *Book {
 	f := Epub{Filename: filename, Config: c, UI: ui, NeedsReplacement: "false"}
 	if isRetail {
-		return &Book{ID: id, RetailEpub: f, Config: c, UI: ui, EpubMetadata: i, Metadata: i, Progress: "unread"}
+		return &Book{BookID: id, RetailEpub: f, Config: c, UI: ui, EpubMetadata: i, Metadata: i, Progress: "unread"}
 	}
-	return &Book{ID: id, NonRetailEpub: f, Config: c, UI: ui, EpubMetadata: i, Metadata: i, Progress: "unread"}
+	return &Book{BookID: id, NonRetailEpub: f, Config: c, UI: ui, EpubMetadata: i, Metadata: i, Progress: "unread"}
+}
+
+// ID returns the Books ID according to the GenericBook interface
+func (b *Book) ID() int {
+	return b.BookID
 }
 
 // String returns a string representation of Epub
@@ -100,7 +105,7 @@ func (b *Book) ShowInfo(fields ...string) string {
 	for _, field := range fields {
 		switch field {
 		case idField:
-			rows = append(rows, []string{"ID", strconv.Itoa(b.ID)})
+			rows = append(rows, []string{"ID", strconv.Itoa(b.BookID)})
 		case "filename":
 			rows = append(rows, []string{"Filename", b.MainEpub().Filename})
 		case authorField:
@@ -389,7 +394,6 @@ func (b *Book) HasEpub() bool {
 
 // AddEpub to the Library
 func (b *Book) AddEpub(path string, isRetail bool, hash string) (imported bool, err error) {
-	// TODO tests
 	if isRetail {
 		if b.HasRetail() {
 			b.UI.Info("Trying to import retail epub although retail version already exists.")

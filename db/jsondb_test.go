@@ -1,4 +1,4 @@
-package library
+package db
 
 import (
 	"bytes"
@@ -6,22 +6,30 @@ import (
 	"os"
 	"testing"
 
-	_ "github.com/barsanuphe/endive/book"
-
-	"github.com/barsanuphe/endive/mock"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/barsanuphe/endive/book"
+	"github.com/barsanuphe/endive/endive"
 )
 
 var testDbName = "../test/endive.json"
-var l = Library{DatabaseFile: testDbName, Index: &mock.IndexService{}, UI: &mock.UserInterface{}}
 
 func TestLdbLoad(t *testing.T) {
 	assert := assert.New(t)
-	err := l.Load()
+
+	db := JSONDB{}
+	db.SetPath(testDbName)
+
+	var collection endive.Collection
+	collection = &book.Books{}
+	err := db.Load(collection)
 	assert.Nil(err, "Error loading epubs from database")
-	assert.Equal(len(l.Books), 2, "Error loading epubs, expected 2 epubs")
-	for _, epub := range l.Books {
-		hasMetadata := epub.Metadata.HasAny()
+	assert.Equal(2, len(collection.Books()), "Error loading epubs, expected 2 epubs")
+	for _, epub := range collection.Books() {
+		// convert to Book
+		var b book.Book
+		b = *epub.(*book.Book)
+		hasMetadata := b.Metadata.HasAny()
 		assert.True(hasMetadata, "Error loading epubs, epub %s does not have metadata in db", epub.FullPath())
 	}
 }
@@ -30,18 +38,23 @@ func TestLdbSave(t *testing.T) {
 	assert := assert.New(t)
 	tempTestDbName := "../test/db2.json"
 
-	err := l.Load()
+	db := JSONDB{}
+	db.SetPath(testDbName)
+
+	var collection endive.Collection
+	collection = &book.Books{}
+	err := db.Load(collection)
 	assert.Nil(err, "Error loading epubs from database")
 
 	// save unchanged
-	hasSaved, err := l.Save()
+	hasSaved, err := db.Save(collection)
 	assert.Nil(err, "Error saving epubs to database")
 	assert.False(hasSaved, "Error, db should not have been saved")
 
 	// changing DatabaseFile will make Save() compare current db with an
 	// empty file, forcing save + new index
-	l.DatabaseFile = tempTestDbName
-	hasSaved, err = l.Save()
+	db.SetPath(tempTestDbName)
+	hasSaved, err = db.Save(collection)
 	assert.Nil(err, "Error saving epubs to database")
 	assert.True(hasSaved, "Error saving to database")
 
@@ -55,5 +68,4 @@ func TestLdbSave(t *testing.T) {
 	// remove db2
 	err = os.Remove(tempTestDbName)
 	assert.Nil(err, "Error removing temp copy test/db2.json")
-	l.DatabaseFile = testDbName
 }

@@ -71,7 +71,6 @@ database, endive must use the database version.
 - [ ] the user can store in the database whether a physical copy of the book is
 also available.
 - [x] all metadata fields can be edited by the CLI.
--
 
 ### Organization
 

@@ -14,7 +14,7 @@ var format = logging.MustStringFormatter(
 )
 
 // InitLogger is the main logger, ensure the log file is in the correct XDG directory.
-func (ui UI) InitLogger(xdgPath string) (err error) {
+func (ui *UI) InitLogger(xdgPath string) (err error) {
 	logPath, err := xdg.Data.Find(xdgPath)
 	if err != nil {
 		logPath, err = xdg.Data.Ensure(xdgPath)
@@ -43,14 +43,14 @@ func (ui *UI) getLogger(name string) (err error) {
 }
 
 // CloseLog correctly ends logging.
-func (ui UI) CloseLog() {
+func (ui *UI) CloseLog() {
 	if ui.logFile != nil {
 		ui.logFile.Close()
 	}
 }
 
 // Error message logging.
-func (ui UI) Error(msg string) {
+func (ui *UI) Error(msg string) {
 	fmt.Println(ui.RedBold("ERROR: " + msg))
 	if ui.logger != nil {
 		ui.logger.Error(msg)
@@ -58,7 +58,7 @@ func (ui UI) Error(msg string) {
 }
 
 // Errorf message logging
-func (ui UI) Errorf(msg string, args ...interface{}) {
+func (ui *UI) Errorf(msg string, args ...interface{}) {
 	msg = fmt.Sprintf(msg, args...)
 	fmt.Println(ui.RedBold("ERROR: " + msg))
 	if ui.logger != nil {
@@ -68,7 +68,7 @@ func (ui UI) Errorf(msg string, args ...interface{}) {
 }
 
 // Warning message logging
-func (ui UI) Warning(msg string) {
+func (ui *UI) Warning(msg string) {
 	fmt.Println(ui.Red("WARNING: " + msg))
 	if ui.logger != nil {
 		ui.logger.Warning(msg)
@@ -76,7 +76,7 @@ func (ui UI) Warning(msg string) {
 }
 
 // Warningf message logging.
-func (ui UI) Warningf(msg string, args ...interface{}) {
+func (ui *UI) Warningf(msg string, args ...interface{}) {
 	msg = fmt.Sprintf(msg, args...)
 	fmt.Println(ui.Red("WARNING: " + msg))
 	if ui.logger != nil {
@@ -85,14 +85,14 @@ func (ui UI) Warningf(msg string, args ...interface{}) {
 }
 
 // Debug message logging
-func (ui UI) Debug(msg string) {
+func (ui *UI) Debug(msg string) {
 	if ui.logger != nil {
 		ui.logger.Debug(msg)
 	}
 }
 
 // Debugf message logging
-func (ui UI) Debugf(msg string, args ...interface{}) {
+func (ui *UI) Debugf(msg string, args ...interface{}) {
 	msg = fmt.Sprintf(msg, args...)
 	if ui.logger != nil {
 		ui.logger.Debug(msg)
@@ -100,7 +100,7 @@ func (ui UI) Debugf(msg string, args ...interface{}) {
 }
 
 // Info message logging
-func (ui UI) Info(msg string) {
+func (ui *UI) Info(msg string) {
 	fmt.Println(msg)
 	if ui.logger != nil {
 		ui.logger.Info(msg)
@@ -108,7 +108,7 @@ func (ui UI) Info(msg string) {
 }
 
 // Infof message logging
-func (ui UI) Infof(msg string, args ...interface{}) {
+func (ui *UI) Infof(msg string, args ...interface{}) {
 	msg = fmt.Sprintf(msg, args...)
 	fmt.Println(msg)
 	if ui.logger != nil {
@@ -117,60 +117,60 @@ func (ui UI) Infof(msg string, args ...interface{}) {
 }
 
 // BlueBold outputs a string in blue bold.
-func (ui UI) BlueBold(in string) string {
+func (ui *UI) BlueBold(in string) string {
 	return chalk.Bold.TextStyle(chalk.Blue.Color(in))
 }
 
 // GreenBold outputs a string in green bold.
-func (ui UI) GreenBold(in string) string {
+func (ui *UI) GreenBold(in string) string {
 	return chalk.Bold.TextStyle(chalk.Green.Color(in))
 }
 
 // Green outputs a string in green.
-func (ui UI) Green(in string) string {
+func (ui *UI) Green(in string) string {
 	return chalk.Green.Color(in)
 }
 
 // RedBold outputs a string in red bold.
-func (ui UI) RedBold(in string) string {
+func (ui *UI) RedBold(in string) string {
 	return chalk.Bold.TextStyle(chalk.Red.Color(in))
 }
 
 // Red outputs a string in red.
-func (ui UI) Red(in string) string {
+func (ui *UI) Red(in string) string {
 	return chalk.Red.Color(in)
 }
 
 // Yellow outputs a string in yellow.
-func (ui UI) Yellow(in string) string {
+func (ui *UI) Yellow(in string) string {
 	return chalk.Yellow.Color(in)
 }
 
 // YellowBold outputs a string in yellow.
-func (ui UI) YellowBold(in string) string {
+func (ui *UI) YellowBold(in string) string {
 	return chalk.Bold.TextStyle(chalk.Yellow.Color(in))
 }
 
 // Choice message logging
-func (ui UI) Choice(msg string, args ...interface{}) {
+func (ui *UI) Choice(msg string, args ...interface{}) {
 	msg = fmt.Sprintf(msg, args...)
 	fmt.Print(ui.BlueBold(msg))
 }
 
 // Title message logging
-func (ui UI) Title(msg string, args ...interface{}) {
+func (ui *UI) Title(msg string, args ...interface{}) {
 	msg = fmt.Sprintf(msg, args...)
 	fmt.Println(ui.GreenBold(msg))
 }
 
 // SubTitle message logging
-func (ui UI) SubTitle(msg string, args ...interface{}) {
+func (ui *UI) SubTitle(msg string, args ...interface{}) {
 	msg = fmt.Sprintf(msg, args...)
 	fmt.Println(ui.Green(" + " + msg))
 }
 
 // SubPart message logging
-func (ui UI) SubPart(msg string, args ...interface{}) {
+func (ui *UI) SubPart(msg string, args ...interface{}) {
 	msg = fmt.Sprintf(msg, args...)
 	fmt.Println(ui.Green("\n ──┤") + ui.GreenBold(msg) + ui.Green("├──"))
 }

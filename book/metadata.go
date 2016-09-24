@@ -10,7 +10,6 @@ import (
 
 // Metadata contains all of the known book metadata.
 type Metadata struct {
-	ID            string   `json:"-" xml:"id"`
 	MainTitle     string   `json:"title" xml:"title"`
 	OriginalTitle string   `json:"original_title" xml:"work>original_title"`
 	ImageURL      string   `json:"image_url" xml:"image_url"`
@@ -223,7 +222,6 @@ func (i *Metadata) MainSeries() SingleSeries {
 
 // IsSimilar checks if metadata is similar to known Metadata.
 func (i *Metadata) IsSimilar(o Metadata) bool {
-	// TODO tests
 	// check isbn
 	if i.ISBN != "" && o.ISBN != "" && i.ISBN == o.ISBN {
 		return true

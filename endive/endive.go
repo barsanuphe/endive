@@ -10,46 +10,71 @@ package endive
 
 // GenericBook interface for Books
 type GenericBook interface {
+	ID() int
+	HasEpub() bool
 	FullPath() string
 	ShortString() string
+	CleanFilename() string
+	Refresh() ([]bool, []string, error)
+	AddEpub(string, bool, string) (bool, error)
+	Check() (bool, bool, error)
 }
 
-/*
-// GenericBooks interface for slices of Books
-type GenericBooks interface {
-	FindByID(string) (*GenericBook, error)
-	FindByHash(string) (*GenericBook, error)
-	FindByMetadata(string) (*GenericBook, error)
-	FindByFullPath(string) (*GenericBook, error)
-	Books() []GenericBook
-}
-*/
-
-// Indexer provides an interface ofr indexing books.
+// Indexer provides an interface for indexing books.
 type Indexer interface {
 	SetPath(path string)
-	Rebuild(all []GenericBook) error
-	Update(new map[string]GenericBook, mod map[string]GenericBook, del map[string]GenericBook) error
-	Check(all []GenericBook) error
+	Rebuild(Collection) error
+	Update(Collection, Collection, Collection) error
+	Check(Collection) error
 	Query(query string) ([]string, error)
 	Count() uint64
 }
 
-/*
+// Collection interface for slices of Books
+type Collection interface {
+	// contents
+	Books() []GenericBook
+	Add(...GenericBook)
+	Propagate(UserInterface, Config)
+	RemoveByID(int) error
+	Diff(Collection, Collection, Collection, Collection)
+	// 	Check() error
+	// search
+	FindByID(int) (GenericBook, error)
+	FindByHash(string) (GenericBook, error)
+	FindByMetadata(string, string, string) (GenericBook, error)
+	FindByFullPath(string) (GenericBook, error)
+	// extracting information
+	Retail() Collection
+	NonRetailOnly() Collection
+	Untagged() Collection
+	Progress(string) Collection
+	Incomplete() Collection
+	Authors() map[string]int
+	Publishers() map[string]int
+	Tags() map[string]int
+	Series() map[string]int
+	// output
+	Table() string
+	Sort(string)
+	First(int) Collection
+	Last(int) Collection
+}
+
 // Database is the interface for loading/saving Book information
 type Database interface {
 	SetPath(string)
-	Add(*GenericBook) error
-	Remove(id int) error
-	Save() error
-	Load() error
-	Check() error
+	Path() string
+	Equals(Database) bool
+	Load(Collection) error
+	Save(Collection) (bool, error)
+	Backup(string) error
 }
-*/
 
 // UserInterface deals with user input, output and logging.
 type UserInterface interface {
 	// input
+	GetInput() (string, error)
 	YesOrNo(string) bool
 	Choose(string, string, string, string) (string, error)
 	UpdateValues(string, string, []string) ([]string, error)
