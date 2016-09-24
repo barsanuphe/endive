@@ -59,7 +59,9 @@ func (db *JSONDB) Load(bks endive.Collection) error {
 
 // Save database
 func (db *JSONDB) Save(bks endive.Collection) (hasSaved bool, err error) {
-	jsonToSave, err := json.Marshal(bks)
+	// Marshal into json with pretty print.
+	// Use json.Marshal(bks) for more compressed format.
+	jsonToSave, err := json.MarshalIndent(bks, "", "    ")
 	if err != nil {
 		return hasSaved, err
 	}
