@@ -222,3 +222,4 @@ For other commands, see:
 | YAML Parser     | [github.com/spf13/viper](https://github.com/spf13/viper)             |
 | ISBN validator  | [github.com/moraes/isbn](https://github.com/moraes/isbn)             |
 | Spinner         | [github.com/tj/go-spin](https://github.com/tj/go-spin)               |
+| Diff            | [github.com/kylelemons/godebug/pretty](https://github.com/kylelemons/godebug/pretty)               |

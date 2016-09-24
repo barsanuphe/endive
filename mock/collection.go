@@ -28,9 +28,8 @@ func (c *Collection) Propagate(u UserInterface, cfg endive.Config) {
 }
 
 // Diff implementation for tests
-func (c *Collection) Diff(Collection) (Collection, Collection, Collection) {
+func (c *Collection) Diff(Collection, Collection, Collection, Collection) {
 	fmt.Println("mock Collection: Diff")
-	return Collection{}, Collection{}, Collection{}
 }
 
 // FindByID implementation for tests

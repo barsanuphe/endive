@@ -37,7 +37,7 @@ type Collection interface {
 	Add(...GenericBook)
 	Propagate(UserInterface, Config)
 	RemoveByID(int) error
-	Diff(Collection) (Collection, Collection, Collection)
+	Diff(Collection, Collection, Collection, Collection)
 	// 	Check() error
 	// search
 	FindByID(int) (GenericBook, error)

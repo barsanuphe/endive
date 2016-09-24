@@ -48,7 +48,11 @@ func (l *Library) Save() (hasSaved bool, err error) {
 	if hasSaved {
 		// index what is needed.
 		// diff to check the changes
-		n, m, d := l.Collection.Diff(oldBooks)
+		var n, m, d e.Collection
+		n = &b.Books{}
+		m = &b.Books{}
+		d = &b.Books{}
+		l.Collection.Diff(oldBooks, n, m, d)
 
 		// update the index
 		err = l.Index.Update(n, m, d)

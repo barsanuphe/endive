@@ -3,8 +3,9 @@ package book
 import (
 	"errors"
 	"path/filepath"
-	"reflect"
 	"strconv"
+
+	"github.com/kylelemons/godebug/pretty"
 
 	e "github.com/barsanuphe/endive/endive"
 )
@@ -85,7 +86,7 @@ func (bks *Books) Progress(progress string) e.Collection {
 
 // Untagged among Books.
 func (bks *Books) Untagged() e.Collection {
-	untagged := bks.filter(func(b *Book) bool { return !b.Metadata.Tags.HasAny()})
+	untagged := bks.filter(func(b *Book) bool { return !b.Metadata.Tags.HasAny() })
 	var res e.Collection
 	res = &untagged
 	return res
@@ -224,7 +225,7 @@ func (bks *Books) Series() (series map[string]int) {
 }
 
 // Diff detects differences between two sets of Books.
-func (bks Books) Diff(o e.Collection) (newB e.Collection, modifiedB e.Collection, deletedB e.Collection) {
+func (bks Books) Diff(o e.Collection, newB e.Collection, modifiedB e.Collection, deletedB e.Collection) {
 	// convert o from Collection to Books
 	var oBooks Books
 	oBooks.Add(o.Books()...)
@@ -266,9 +267,17 @@ func (bks Books) Diff(o e.Collection) (newB e.Collection, modifiedB e.Collection
 	// if in both, compare them directly, if different, append to modified
 	for _, v := range commonBooks {
 		// compare
-		ov, _ := oBooks.FindByFullPath(v.FullPath())
-		if !reflect.DeepEqual(v, ov) {
-			modifiedB.Add(&v)
+		ov, err := oBooks.FindByFullPath(v.FullPath())
+		if err != nil {
+			v.UI.Error(err.Error())
+		} else {
+			var ob *Book
+			ob = ov.(*Book)
+			// textual diff in struct fields: ignores UI, Config, etc
+			// since we're only interested in string/int fields really, this is enough
+			if pretty.Compare(ob, v) != "" {
+				modifiedB.Add(&v)
+			}
 		}
 	}
 	return
