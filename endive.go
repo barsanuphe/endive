@@ -26,7 +26,7 @@ type Endive struct {
 func NewEndive() (*Endive, error) {
 	// init ui
 	var ui en.UserInterface
-	ui = u.UI{}
+	ui = &u.UI{}
 	if err := ui.InitLogger(en.XdgLogPath); err != nil {
 		return nil, err
 	}
