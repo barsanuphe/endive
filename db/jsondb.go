@@ -31,22 +31,13 @@ func (db *JSONDB) Path() string {
 
 // Equals to another Database
 func (db *JSONDB) Equals(o endive.Database) bool {
-	jsonContent, err := ioutil.ReadFile(db.path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			// first run, it will be created later.
-			return nil
+	jsonContent, err1 := ioutil.ReadFile(db.path)
+	ojsonContent, err2 := ioutil.ReadFile(o.Path())
+	if err1 != nil || err2 != nil {
+		if os.IsNotExist(err1) && os.IsNotExist(err2) {
+			return true
 		}
-		return err
-	}
-
-	ojsonContent, err := ioutil.ReadFile(o.Path())
-	if err != nil {
-		if os.IsNotExist(err) {
-			// first run, it will be created later.
-			return nil
-		}
-		return err
+		return false
 	}
 	return bytes.Equal(jsonContent, ojsonContent)
 }
