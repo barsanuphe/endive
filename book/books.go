@@ -85,7 +85,7 @@ func (bks *Books) Progress(progress string) e.Collection {
 
 // Untagged among Books.
 func (bks *Books) Untagged() e.Collection {
-	untagged := bks.filter(func(b *Book) bool { return len(b.Metadata.Tags) == 0 })
+	untagged := bks.filter(func(b *Book) bool { return !b.Metadata.Tags.HasAny()})
 	var res e.Collection
 	res = &untagged
 	return res

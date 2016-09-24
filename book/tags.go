@@ -34,7 +34,10 @@ func (t *Tags) Add(tags ...Tag) (added bool) {
 func (t *Tags) AddFromNames(tags ...string) bool {
 	newTags := Tags{}
 	for _, tag := range tags {
-		newTags = append(newTags, Tag{Name: strings.TrimSpace(tag)})
+		tag = strings.TrimSpace(tag)
+		if tag != "" {
+			newTags = append(newTags, Tag{Name: tag})
+		}
 	}
 	return t.Add(newTags...)
 }
@@ -73,4 +76,9 @@ func (t *Tags) Has(o Tag) (isIn bool, index int) {
 func (t *Tags) Clean() {
 	*t = cleanTags(*t)
 	return
+}
+
+// HasAny checks if epub is part of any series
+func (t *Tags) HasAny() bool {
+	return len(*t) != 0
 }
