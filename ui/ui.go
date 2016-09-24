@@ -14,6 +14,15 @@ import (
 	"github.com/op/go-logging"
 )
 
+const (
+	editOrKeep    = "(1) Keep Value (2) Edit: "
+	chooseOrEdit  = "(1) Local version (2) Remote version (3) Edit (4) Abort: "
+	enterNewValue = "Enter new value: "
+	invalidChoice = "Invalid choice."
+	emptyValue    = "Empty value detected."
+	notConfirmed  = "Manual entry not confirmed, trying again."
+)
+
 // UI implements endive.UserInterface
 type UI struct {
 	// Logger provides a logger to both stdout and a log file (for debug).
@@ -39,7 +48,7 @@ func (ui UI) chooseVersion(localCandidate, remoteCandidate string) (chosenOne st
 	validChoice := false
 	errs := 0
 	for !validChoice {
-		ui.Choice("Choose: (1) Local version (2) Remote version (3) Edit (4) Abort : ")
+		ui.Choice(chooseOrEdit)
 		choice, scanErr := ui.GetInput()
 		if scanErr != nil {
 			return chosenOne, scanErr
@@ -49,20 +58,20 @@ func (ui UI) chooseVersion(localCandidate, remoteCandidate string) (chosenOne st
 			err = errors.New("Abort")
 			validChoice = true
 		case "3":
-			fmt.Print("Enter new value: ")
+			ui.Choice(enterNewValue)
 			choice, scanErr := ui.GetInput()
 			if scanErr != nil {
 				return chosenOne, scanErr
 			}
 			if choice == "" {
-				fmt.Println("Warning: Empty value detected.")
+				ui.Warning(emptyValue)
 			}
 			confirmed := ui.YesOrNo("Confirm: " + choice)
 			if confirmed {
 				chosenOne = choice
 				validChoice = true
 			} else {
-				fmt.Println("Manual entry not confirmed, trying again.")
+				fmt.Println(notConfirmed)
 			}
 		case "2":
 			chosenOne = remoteCandidate
@@ -71,10 +80,10 @@ func (ui UI) chooseVersion(localCandidate, remoteCandidate string) (chosenOne st
 			chosenOne = localCandidate
 			validChoice = true
 		default:
-			fmt.Println("Invalid choice.")
+			ui.Warning(invalidChoice)
 			errs++
 			if errs > 10 {
-				return "", errors.New("Too many invalid choices.")
+				return "", errors.New(invalidChoice)
 			}
 		}
 	}
@@ -85,7 +94,7 @@ func (ui UI) chooseVersion(localCandidate, remoteCandidate string) (chosenOne st
 func (ui UI) updateValue(field, oldValue string, longField bool) (newValue string, err error) {
 	ui.SubPart("Modifying " + field)
 	fmt.Printf("Current value: %s\n", oldValue)
-	ui.Choice("Choose: (1) Keep Value (2) Edit : ")
+	ui.Choice(editOrKeep)
 	validChoice := false
 	errs := 0
 	for !validChoice {
@@ -100,33 +109,34 @@ func (ui UI) updateValue(field, oldValue string, longField bool) (newValue strin
 			if longField {
 				choice, scanErr = ui.Edit(oldValue)
 			} else {
-				ui.Choice("Enter new value: ")
+				ui.Choice(enterNewValue)
 				choice, scanErr = ui.GetInput()
 			}
 			if scanErr != nil {
 				return newValue, scanErr
 			}
 			if choice == "" {
-				fmt.Println("Warning: Empty value detected.")
+				ui.Warning(emptyValue)
+			} else {
+				fmt.Printf("New value:\n%s\n", choice)
 			}
-			fmt.Printf("New value:\n%s\n", choice)
 			confirmed := ui.YesOrNo("Confirm")
 			if confirmed {
 				newValue = choice
 				validChoice = true
 			} else {
-				fmt.Println("Manual entry not confirmed, trying again.")
-				ui.Choice("Choose: (1) Keep Value (2) Edit : ")
+				fmt.Println(notConfirmed)
+				ui.Choice(editOrKeep)
 			}
 		case "1":
 			newValue = oldValue
 			validChoice = true
 		default:
-			ui.Warning("Invalid choice.")
-			ui.Choice("Choose: (1) Keep Value (2) Edit : ")
+			ui.Warning(invalidChoice)
+			ui.Choice(editOrKeep)
 			errs++
 			if errs > 10 {
-				return "", errors.New("Too many invalid choices.")
+				return "", errors.New(invalidChoice)
 			}
 		}
 	}
