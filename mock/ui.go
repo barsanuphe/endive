@@ -29,7 +29,7 @@ func (u *UserInterface) Choose(a, b, c, d string) (string, error) {
 }
 
 // UpdateValues for mock UserInterface
-func (u *UserInterface) UpdateValues(a, b string, c []string) ([]string, error) {
+func (u *UserInterface) UpdateValues(a, b string, c []string, isLong bool) ([]string, error) {
 	fmt.Println("mock UserInterface: UpdateValues " + a + ", " + b + ", " + strings.Join(c, "|"))
 	return c, nil
 }
@@ -119,7 +119,7 @@ func (u *UserInterface) Debugf(a string, b ...interface{}) {
 }
 
 // Edit for mock UserInterface
-func (u *UserInterface) Edit(a, b string) (string, error) {
-	fmt.Println("mock UserInterface: Edit " + a + b)
+func (u *UserInterface) Edit(a string) (string, error) {
+	fmt.Println("mock UserInterface: Edit " + a)
 	return "edited", nil
 }

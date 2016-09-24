@@ -1,11 +1,12 @@
 package ui
 
 import (
-	"testing"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestUIEdit(t *testing.T) {
@@ -15,7 +16,7 @@ func TestUIEdit(t *testing.T) {
 	ui := &UI{}
 
 	// fake $EDITOR
-	fakeCommand := "#!/bin/bash\necho test > $1"
+	fakeCommand := "#!/bin/bash\necho fake > $1"
 	editor := "test_edit"
 	tmpfile, err := ioutil.TempFile("", editor)
 	assert.Nil(err)
@@ -27,12 +28,18 @@ func TestUIEdit(t *testing.T) {
 	// chmod +X
 	err = os.Chmod(tmpfile.Name(), 0777)
 	assert.Nil(err)
-
-	// os.Setenv("PATH", "/usr/bin:/sbin")
+	// setting $EDITOR
+	err = os.Setenv("EDITOR", tmpfile.Name())
+	assert.Nil(err)
 
 	// edit
-	output, err := ui.Edit(tmpfile.Name(), "input")
+	output, err := ui.Edit("input")
 	assert.Nil(err, "Error editing file")
-	assert.Equal("test\n", output, "Expecting temp file contents to be: test")
+	assert.Equal("fake", output, "Expecting temp file contents to be: test")
 
+	// unsetting editor, should fail
+	err = os.Unsetenv("EDITOR")
+	assert.Nil(err)
+	_, err = ui.Edit("input")
+	assert.NotNil(err, "Error editing file")
 }
