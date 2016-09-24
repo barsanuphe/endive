@@ -117,3 +117,9 @@ func (u *UserInterface) Debugf(a string, b ...interface{}) {
 	a = fmt.Sprintf(a, b...)
 	fmt.Println("mock UserInterface: Debugf " + a)
 }
+
+// Edit for mock UserInterface
+func (u *UserInterface) Edit(a, b string) (string, error) {
+	fmt.Println("mock UserInterface: Edit " + a + b)
+	return "edited", nil
+}

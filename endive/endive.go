@@ -78,6 +78,7 @@ type UserInterface interface {
 	YesOrNo(string) bool
 	Choose(string, string, string, string) (string, error)
 	UpdateValues(string, string, []string) ([]string, error)
+	Edit(string, string) (string, error)
 	// output
 	Title(string, ...interface{})
 	SubTitle(string, ...interface{})

@@ -9,6 +9,8 @@ import (
 	"os/exec"
 	"strings"
 
+	"io/ioutil"
+
 	"github.com/op/go-logging"
 )
 
@@ -206,4 +208,46 @@ func (ui UI) Display(output string) {
 	}
 	// wait for the pager to be finished
 	<-c
+}
+
+func (ui *UI) Edit(editor, oldValue string) (string, error) {
+	// create temp file
+	content := []byte(oldValue)
+	tmpfile, err := ioutil.TempFile("", "edit")
+	if err != nil {
+		return oldValue, err
+	}
+	// clean up
+	defer tmpfile.Close()
+	defer os.Remove(tmpfile.Name())
+
+	// write input string inside
+	if _, err := tmpfile.Write(content); err != nil {
+		return oldValue, err
+	}
+	if err := tmpfile.Close(); err != nil {
+		return oldValue, err
+	}
+
+	// open it with $EDITOR
+	cmd := exec.Command(editor, tmpfile.Name())
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	if err := cmd.Run(); err != nil {
+		return oldValue, err
+	}
+
+	// read file back, set output string
+	newContent, err := ioutil.ReadFile(tmpfile.Name())
+	if err != nil {
+		return oldValue, err
+	}
+	newValue := strings.TrimSpace(string(newContent))
+	// show old_value => new_value
+	if oldValue != newValue{
+		ui.Infof("Changing:\n%s\n\t=>\n%s\n", oldValue, newValue)
+	} else {
+		ui.Info("Nothing to change.")
+	}
+	return newValue, nil
 }
