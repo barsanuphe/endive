@@ -185,13 +185,25 @@ func (ui UI) Display(output string) {
 	c := make(chan struct{})
 	go func() {
 		defer close(c)
-		cmd.Run()
+		err := cmd.Run()
+		if err != nil {
+			ui.Error(err.Error())
+			return
+		}
 	}()
 
 	// send through less
-	fmt.Fprintf(stdin, output)
+	_, err := fmt.Fprintf(stdin, output)
+	if err != nil {
+		ui.Error(err.Error())
+		return
+	}
 	// close stdin (result in pager to exit)
-	stdin.Close()
+	err = stdin.Close()
+	if err != nil {
+		ui.Error(err.Error())
+		return
+	}
 	// wait for the pager to be finished
 	<-c
 }
