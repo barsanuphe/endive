@@ -160,11 +160,11 @@ func generateCLI(e *Endive) (app *cli.App) {
 			},
 		},
 		{
-			Name:    "read",
-			Aliases: []string{"rd"},
-			Usage:   "mark as read: read ID [rating [review]]",
+			Name:    "progress",
+			Aliases: []string{"p"},
+			Usage:   "mark as read: progress ID [unread/shortlisted/reading/read [rating [review]]]",
 			Action: func(c *cli.Context) {
-				markRead(c, e)
+				setProgress(c, e)
 			},
 		},
 		{

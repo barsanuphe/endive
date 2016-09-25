@@ -139,27 +139,40 @@ func refreshMetadata(c *cli.Context, endive *Endive) {
 	showInfo(c, endive)
 }
 
-func markRead(c *cli.Context, endive *Endive) {
+func setProgress(c *cli.Context, endive *Endive) {
 	book, args, err := checkArgsWithID(endive.Library, c.Args())
 	if err != nil {
 		endive.UI.Error("Error parsing arguments: " + err.Error())
 		return
 	}
+	if len(args) == 0 {
+		// TODO or interactive mode?
+		endive.UI.Error("Missing arguments. See help.")
+		return
+	}
 	if len(args) >= 1 {
+		// setting progress
+		if err := book.SetProgress(args[0]); err != nil {
+			endive.UI.Error("Progress must be among: unread/shortlisted/reading/read")
+			return
+		}
+		// if first time set as read, set date too.
+		if book.Progress == "read" && book.ReadDate == "" {
+			book.SetReadDateToday()
+		}
+	}
+	if len(args) >= 2 {
 		// check rating format
-		rating, e := strconv.ParseFloat(args[0], 32)
+		rating, e := strconv.ParseFloat(args[1], 32)
 		if e != nil || rating < 0 || rating > 5 {
 			endive.UI.Error("Rating must be a number between 0 and 5.")
 			return
 		}
-		book.Rating = args[0]
+		book.Rating = args[1]
 	}
-	if len(args) == 2 {
-		book.Review = args[1]
+	if len(args) == 3 {
+		book.Review = args[2]
 	}
-	book.SetReadDateToday()
-	// TODO: allow setting the other values!!!
-	book.SetProgress("read")
 	showInfo(c, endive)
 }
 

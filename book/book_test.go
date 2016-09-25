@@ -201,8 +201,7 @@ func TestBookSetReadDate(t *testing.T) {
 	for i, testEpub := range epubs {
 		currentDate := time.Now().Local().Format("2006-01-02")
 		e := NewBook(ui, i, testEpub.filename, standardTestConfig, isRetail)
-		err := e.SetReadDateToday()
-		assert.Nil(err, "Error setting read date")
+		e.SetReadDateToday()
 		assert.Equal(e.ReadDate, currentDate, "Error setting read date")
 	}
 }
