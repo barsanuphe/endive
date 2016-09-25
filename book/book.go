@@ -210,15 +210,14 @@ func (b *Book) SetProgress(progress string) (err error) {
 }
 
 // SetReadDate sets date when finished reading
-func (b *Book) SetReadDate(date string) (err error) {
+func (b *Book) SetReadDate(date string) {
 	b.ReadDate = date
-	return
 }
 
 // SetReadDateToday sets date when finished reading
-func (b *Book) SetReadDateToday() (err error) {
+func (b *Book) SetReadDateToday() {
 	currentDate := time.Now().Local()
-	return b.SetReadDate(currentDate.Format("2006-01-02"))
+	b.SetReadDate(currentDate.Format("2006-01-02"))
 }
 
 func (b *Book) generateNewName(fileTemplate string, isRetail bool) (newName string, err error) {
