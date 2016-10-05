@@ -46,9 +46,9 @@ func newCandidate(filename string, knownHashes en.KnownHashes, collection en.Col
 
 type epubCandidates []epubCandidate
 
-func (c *epubCandidates) new() epubCandidates {
+func (c epubCandidates) new() epubCandidates {
 	res := epubCandidates{}
-	for _, e := range *c {
+	for _, e := range c {
 		if !e.imported {
 			res = append(res, e)
 		}
@@ -56,9 +56,9 @@ func (c *epubCandidates) new() epubCandidates {
 	return res
 }
 
-func (c *epubCandidates) missing() epubCandidates {
+func (c epubCandidates) missing() epubCandidates {
 	res := epubCandidates{}
-	for _, e := range *c {
+	for _, e := range c {
 		if e.imported && e.importedButMissing {
 			res = append(res, e)
 		}
@@ -66,9 +66,9 @@ func (c *epubCandidates) missing() epubCandidates {
 	return res
 }
 
-func (c *epubCandidates) importable() epubCandidates {
+func (c epubCandidates) importable() epubCandidates {
 	res := epubCandidates{}
-	for _, e := range *c {
+	for _, e := range c {
 		if !e.imported || e.importedButMissing {
 			res = append(res, e)
 		}

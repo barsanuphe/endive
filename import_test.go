@@ -89,6 +89,10 @@ func TestGetCandidates(t *testing.T) {
 	assert.Nil(err, "Error generating test files")
 	defer CleanupTestFiles(testFiles)
 
+	// non existing root
+	_, err = getCandidates("does not exist", h, c)
+	assert.NotNil(err, "impossible to get candidates from inexistant directory")
+	// inspecting test directory
 	candidates, err := getCandidates(testDir, h, c)
 	assert.Nil(err, "Error listing epubs")
 	assert.Equal(102, len(candidates), "Error listing candidates: expected 102 epubs, got %d.", len(candidates))
@@ -104,7 +108,10 @@ func TestGetCandidates(t *testing.T) {
 			assert.False(candidate.imported, "hash has not been imported")
 			assert.False(candidate.importedButMissing, "is not missing")
 		}
-		//fmt.Println(candidate)
 	}
-	// TODO more.
+
+	// only one candidate is seen as already imported
+	assert.Equal(101, len(epubCandidates(candidates).new()))
+	assert.Equal(0, len(epubCandidates(candidates).missing()))
+	assert.Equal(101, len(epubCandidates(candidates).importable()))
 }
