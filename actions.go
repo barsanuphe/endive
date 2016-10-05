@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -253,22 +252,9 @@ func search(c *cli.Context, endive *Endive) {
 
 func importEpubs(endive *Endive, c *cli.Context, isRetail bool) {
 	if len(c.Args()) >= 1 {
-		// check valid path
-		validPaths, validHashes := []string{}, []string{}
-		for _, path := range c.Args() {
-			validPath, err := e.FileExists(path)
-			if err == nil && filepath.Ext(validPath) == ".epub" {
-				validPaths = append(validPaths, validPath)
-				validHash, err := e.CalculateSHA256(path)
-				if err != nil {
-					return
-				}
-				validHashes = append(validHashes, validHash)
-			}
-		}
 		// import valid paths
-		err := endive.ImportEpubs(validPaths, validHashes, isRetail)
-		if err != nil {
+		if err := endive.ImportSpecific(c.Args(), isRetail); err != nil {
+			endive.UI.Error(err.Error())
 			return
 		}
 	} else {
@@ -287,7 +273,7 @@ func importEpubs(endive *Endive, c *cli.Context, isRetail bool) {
 			err = endive.ImportNonRetail()
 		}
 		if err != nil {
-			panic(err)
+			endive.UI.Error(err.Error())
 		}
 	}
 }

@@ -24,26 +24,6 @@ var epubs = []struct {
 	},
 }
 
-func TestHelpersListEpubs(t *testing.T) {
-	fmt.Println("+ Testing Helpers/ListEpubs()...")
-	assert := assert.New(t)
-	// getting test directory
-	testDir, err := os.Getwd()
-	require.Nil(t, err, "Error getting current directory")
-	testDir = filepath.Join(filepath.Dir(testDir), "test")
-	// using epubs as defined in epub_test
-	epubsPaths, hashes, err := ListEpubsInDirectory(testDir)
-	assert.Nil(err, "Error listing epubs")
-	assert.Equal(len(epubsPaths), len(hashes), "Error listing epubs: paths and hashes should have same length.")
-	assert.Equal(len(epubsPaths), len(epubs), "Error listing epubs: expected 2 epubs, got %d.", len(epubsPaths))
-	for i, path := range epubsPaths {
-		relativePath, err := filepath.Rel(testDir, path)
-		assert.Nil(err)
-		assert.Equal(epubs[i].filename, relativePath, "Error getting path")
-		assert.Equal(epubs[i].expectedSha256, hashes[i], "Error getting hash")
-	}
-}
-
 func TestHelpersIsDirEmpty(t *testing.T) {
 	fmt.Println("+ Testing Helpers/Filesystem...")
 	assert := assert.New(t)

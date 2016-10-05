@@ -1,134 +1,158 @@
 package main
 
 import (
-	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
-	"runtime"
+	"strings"
+	"time"
 
-	"github.com/tj/go-spin"
-
+	b "github.com/barsanuphe/endive/book"
 	en "github.com/barsanuphe/endive/endive"
 )
 
 //------------------------------------
 
-type Candidate struct {
-	filename           string
-	hash               string
-	imported           bool
-	importedButMissing bool
+// importFromSource all detected epubs, tagging them as retail or non-retail as requested.
+func (e *Endive) importFromSource(sources []string, retail bool) error {
+	defer en.TimeTrack(e.UI, time.Now(), "Imported")
+	sourceType := "retail"
+	if !retail {
+		sourceType = "non-retail"
+	}
+	e.UI.Title("Importing " + sourceType + " epubs...")
+
+	// checking all defined sources
+	var candidates epubCandidates
+	for _, source := range sources {
+		e.UI.SubTitle("Searching for " + sourceType + " epubs in " + source)
+		c, err := getCandidates(source, e.hashes, e.Library.Collection)
+		if err != nil {
+			return err
+		}
+		candidates = append(candidates, c...)
+	}
+	newEpubs := candidates.new()
+	missingEpubs := candidates.missing()
+	e.UI.SubTitle("Found %s new epubs and %d epubs previously imported and now missing.", len(newEpubs), len(missingEpubs))
+	return e.ImportEpubs(candidates.importable(), retail)
 }
 
-func (c Candidate) String() string {
-	return fmt.Sprintf("Candidate: %s | %s | %t | %t", c.filename, c.hash, c.imported, c.importedButMissing)
+// ImportRetail imports epubs from the Retail source.
+func (e *Endive) ImportRetail() error {
+	return e.importFromSource(e.Config.RetailSource, true)
 }
 
-func NewCandidate(filename string, knownHashes en.KnownHashes, collection en.Collection) *Candidate {
+// ImportNonRetail imports epubs from the Non-Retail source.
+func (e *Endive) ImportNonRetail() error {
+	return e.importFromSource(e.Config.NonRetailSource, false)
+}
 
-	fmt.Println("New Candidate: " + filename)
-	// calculate hash
-	hash, err := en.CalculateSHA256(filename)
+// ImportSpecific imports specific epubs
+func (e *Endive) ImportSpecific(paths []string, isRetail bool) error {
+	// TODO modify actions.go to use this
+	candidates := []epubCandidate{}
+	// for each path:
+	for _, path := range paths {
+		// verify it exists
+		validPath, err := en.FileExists(path)
+		if err == nil && filepath.Ext(strings.ToLower(validPath)) == en.EpubExtension {
+			candidates = append(candidates, *newCandidate(validPath, e.hashes, e.Library.Collection))
+		}
+	}
+	return e.ImportEpubs(candidates, isRetail)
+}
+
+// ImportEpubs files that are retail, or not.
+func (e *Endive) ImportEpubs(candidates []epubCandidate, isRetail bool) (err error) {
+	// force reload if it has changed
+	err = e.hashes.Load()
 	if err != nil {
-		return nil
-	}
-	var imported, importedButMissing bool
-	// find if in known_hashes
-	if knownHashes.IsIn(hash) {
-		imported = true
-	}
-
-	// TODO if it is, try to find in collection.
-
-	// build and return *Candidate with all fields
-	return &Candidate{filename: filename, hash: hash, imported: imported, importedButMissing: importedButMissing}
-}
-
-//------------------------------------
-
-type Candidates []Candidate
-
-func (c *Candidates) New() Candidates {
-	res := Candidates{}
-	for _, e := range *c {
-		if !e.imported {
-			res = append(res, e)
-		}
-	}
-	return res
-}
-
-func (c *Candidates) Missing() Candidates {
-	res := Candidates{}
-	for _, e := range *c {
-		if e.imported && e.importedButMissing {
-			res = append(res, e)
-		}
-	}
-	return res
-}
-
-//------------------------------------
-
-// listepubs ne fait plus que lister les epubs
-// ListEpubs recursively.
-func ListEpubs(root string) (epubPaths []string, err error) {
-	if !en.DirectoryExists(root) {
-		err = errors.New("Directory " + root + " does not exist")
 		return
 	}
-	// spinner, defaults to s.Set(spin.Box1)
-	s := spin.New()
-	cpt := 0
-	filepath.Walk(root, func(path string, f os.FileInfo, err error) (outErr error) {
-		// only consider epub files
-		if f.Mode().IsRegular() && filepath.Ext(path) == ".epub" {
-			epubPaths = append(epubPaths, path)
-			// show progress
-			if cpt%10 == 0 {
-				fmt.Printf("\rSearching %s ", s.Next())
+	defer e.hashes.Save()
+
+	newEpubs := 0
+	// importing what is necessary
+	for i, candidate := range candidates {
+		intro := fmt.Sprintf("Considering importable epub %s", filepath.Base(candidate.filename))
+		if len(candidates) >= 1 {
+			intro += fmt.Sprintf(" (%d / %d)", i, len(candidates))
+		}
+		e.UI.SubTitle(intro)
+		// new Epub
+		ep := b.Epub{Filename: candidate.filename, UI: e.UI}
+		var unknownISBN bool
+		// get Metadata from new epub
+		info, err := ep.ReadMetadata()
+		if err != nil {
+			if err.Error() == "ISBN not found in epub" {
+				unknownISBN = true
+			} else {
+				e.UI.Error("Could not analyze and import " + candidate.filename)
+				continue
 			}
-			cpt++
 		}
-		return
-	})
-	fmt.Print("\r")
+
+		confirmText := fmt.Sprintf("Found: %s.\n", info.String())
+		if !candidate.imported {
+			confirmText += "Import"
+		} else {
+			confirmText += "This epub has already been imported but, is not in the current library. Confirm importing again?"
+		}
+		if e.UI.YesOrNo(confirmText) {
+			// get isbn if not found automatically
+			if unknownISBN {
+				isbn, err := en.AskForISBN(e.UI)
+				if err != nil {
+					e.UI.Warning("Warning: ISBN still unknown.")
+				} else {
+					info.ISBN = isbn
+				}
+			}
+			// loop over Books to find similar Metadata
+			var imported bool
+			knownBook, err := e.Library.Collection.FindByMetadata(info.ISBN, info.Author(), info.Title())
+			if err != nil {
+				e.UI.Debug("Creating new book.")
+				bk := b.NewBookWithMetadata(e.UI, e.Library.GenerateID(), candidate.filename, e.Config, isRetail, info)
+				imported, err = bk.Import(candidate.filename, isRetail, candidate.hash)
+				if err != nil {
+					return err
+				}
+				e.Library.Collection.Add(bk)
+				e.UI.SubTitle("Added new epub %s with ID %d", bk.String(), bk.ID())
+			} else {
+				e.UI.Debug("Adding epub to " + knownBook.ShortString())
+				imported, err = knownBook.AddEpub(candidate.filename, isRetail, candidate.hash)
+				if err != nil {
+					return err
+				}
+				e.UI.SubTitle("Added new epub %s with ID %d", knownBook.ShortString(), knownBook.ID())
+			}
+
+			if imported {
+				// add hash to known hashes
+				// NOTE: otherwise it'll pop up every other time
+				added, err := e.hashes.Add(candidate.hash)
+				if !added || err != nil {
+					return err
+				}
+				// saving now == saving import progress, in case of interruption
+				_, err = e.hashes.Save()
+				if err != nil {
+					return err
+				}
+				// saving database also
+				_, err = e.Library.Save()
+				if err != nil {
+					return err
+				}
+				newEpubs++
+			}
+		} else {
+			e.UI.Debug("Ignoring already imported epub " + filepath.Base(candidate.filename))
+		}
+	}
+	e.UI.Debugf("Imported %d epubs (retail: %t).\n", newEpubs, isRetail)
 	return
-}
-
-func GetCandidates(root string, known_hashes en.KnownHashes, collection en.Collection) ([]Candidate, error) {
-	// list epubs
-	paths, err := ListEpubs(root)
-	if err != nil {
-		return []Candidate{}, err
-	}
-
-	// for all epubs, build candidate
-	jobs := make(chan string, len(paths))
-	results := make(chan *Candidate, len(paths))
-
-	// This starts up as many workers as there are detected cpus
-	for w := 1; w <= runtime.NumCPU(); w++ {
-		go func(id int, jobs <-chan string, results chan<- *Candidate) {
-			for j := range jobs {
-				fmt.Println("worker", id, "processing job", j)
-				results <- NewCandidate(j, known_hashes, collection)
-			}
-		}(w, jobs, results)
-	}
-
-	// sending paths
-	for _, p := range paths {
-		jobs <- p
-	}
-	close(jobs)
-
-	// Finally we collect all the results of the work.
-	candidates := []Candidate{}
-	for range paths {
-		c := <- results
-		candidates = append(candidates, *c)
-	}
-	return candidates, nil
 }

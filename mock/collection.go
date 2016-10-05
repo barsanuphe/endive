@@ -27,7 +27,6 @@ func (c *Collection) Propagate(u endive.UserInterface, cfg endive.Config) {
 	fmt.Println("mock Collection: Propagate")
 }
 
-
 // RemoveByID implementation for tests
 func (c *Collection) RemoveByID(u int) error {
 	fmt.Println("mock Collection: RemoveByID")
@@ -139,4 +138,3 @@ func (c *Collection) Last(nb int) endive.Collection {
 	fmt.Printf("mock Collection: Last %d\n", nb)
 	return nil
 }
-
