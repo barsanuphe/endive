@@ -116,7 +116,7 @@ func DeleteEmptyFolders(root string, ui UserInterface) (err error) {
 		}
 	}
 
-	ui.Debugf("\n### Removed %d albums.\n", deletedDirectories)
+	ui.Debugf("Removed %d directories.", deletedDirectories)
 	return
 }
 

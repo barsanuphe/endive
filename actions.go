@@ -253,7 +253,7 @@ func search(c *cli.Context, endive *Endive) {
 func importEpubs(endive *Endive, c *cli.Context, isRetail bool) {
 	if len(c.Args()) >= 1 {
 		// import valid paths
-		if err := endive.ImportSpecific(c.Args(), isRetail); err != nil {
+		if err := endive.ImportSpecific(isRetail, c.Args()...); err != nil {
 			endive.UI.Error(err.Error())
 			return
 		}

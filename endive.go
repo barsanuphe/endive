@@ -104,7 +104,7 @@ func (e *Endive) Refresh() (renamed int, err error) {
 		return
 	}
 	// compare allEpubs with l.Epubs
-	newEpubs := []epubCandidate{}
+	var newEpubs epubCandidates
 	for _, epub := range foundCandidates {
 		_, err = e.Library.Collection.FindByFullPath(epub.filename)
 		// no error == found Epub
@@ -139,11 +139,15 @@ func (e *Endive) Refresh() (renamed int, err error) {
 			}
 		}
 	}
-	// import new books as non-retail
-	err = e.ImportEpubs(newEpubs, false)
-	if err != nil {
-		return
+
+	if len(newEpubs.importable()) != 0 {
+		// import new books as non-retail
+		err = e.ImportEpubs(newEpubs.importable(), false)
+		if err != nil {
+			return
+		}
 	}
+
 	// refresh all books
 	deletedBooks := []int{}
 	for i := range e.Library.Collection.Books() {
@@ -165,7 +169,7 @@ func (e *Endive) Refresh() (renamed int, err error) {
 
 	// remove empty books
 	for _, id := range deletedBooks {
-		e.UI.Infof("REMOVING from db Book with ID %s\n", id)
+		e.UI.Infof("REMOVING from db Book with ID %d\n", id)
 		err := e.Library.Collection.RemoveByID(id)
 		if err != nil {
 			return renamed, err

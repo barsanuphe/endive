@@ -2,116 +2,120 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
-	"math/rand"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
+	b "github.com/barsanuphe/endive/book"
+	"github.com/barsanuphe/endive/db"
 	en "github.com/barsanuphe/endive/endive"
+	l "github.com/barsanuphe/endive/library"
 	"github.com/barsanuphe/endive/mock"
 )
 
-// create a lot of epub files with random contents
-const letterBytes = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
-func RandBytes(n int) []byte {
-	b := make([]byte, n)
-	for i := range b {
-		b[i] = letterBytes[rand.Intn(len(letterBytes))]
-	}
-	return b
-}
-
-func RandFile(root string) (filename string, err error) {
-	filename = filepath.Join(root, string(RandBytes(64))+".epub")
-	// create file, write random things inside.
-	err = ioutil.WriteFile(filename, RandBytes(2048), 0777)
-	return
-}
-
-func PrepareTestFiles(n int, root string) (testFiles []string, err error) {
-	testFiles = make([]string, n)
-	for i := 0; i < n; i++ {
-		// NOTE: assuming here there are no filename collisions
-		testFiles[i], err = RandFile(root)
-		if err != nil {
-			return
-		}
-	}
-	return
-}
-
-func CleanupTestFiles(epubs []string) error {
-	// remove files
-	for _, f := range epubs {
-		if err := os.Remove(f); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-//----------------
-
-func TestListEpubs(t *testing.T) {
-	fmt.Println("+ Testing Import/ListEpubs()...")
+func TestImport(t *testing.T) {
+	var book en.GenericBook
 	assert := assert.New(t)
-	// getting test directory
-	testDir, err := os.Getwd()
-	require.Nil(t, err, "Error getting current directory")
-	testDir = filepath.Join(testDir, "test")
-	// using epubs as defined in epub_test
-	epubsPaths, err := listEpubs(testDir)
-	assert.Nil(err, "Error listing epubs")
-	assert.Equal(2, len(epubsPaths), "Error listing epubs: expected 2 epubs, got %d.", len(epubsPaths))
-}
 
-func TestGetCandidates(t *testing.T) {
-	fmt.Println("+ Testing Import/GetCandidates()...")
-	assert := assert.New(t)
-	// getting test directory
-	testDir, err := os.Getwd()
-	require.Nil(t, err, "Error getting current directory")
-	testDir = filepath.Join(testDir, "test")
-	// using epubs as defined in epub_test
-
-	h := en.KnownHashes{Filename: "test/hashes.json"}
-	// adding hash for pg16328.epub
-	h.Add("dc325b3aceb77d9f943425728c037fdcaf4af58e3abd771a8094f2424455cc03")
-	c := &mock.Collection{}
-
-	// prepare dummy test files
-	testFiles, err := PrepareTestFiles(100, testDir)
-	assert.Nil(err, "Error generating test files")
-	defer CleanupTestFiles(testFiles)
-
-	// non existing root
-	_, err = getCandidates("does not exist", h, c)
-	assert.NotNil(err, "impossible to get candidates from inexistant directory")
-	// inspecting test directory
-	candidates, err := getCandidates(testDir, h, c)
-	assert.Nil(err, "Error listing epubs")
-	assert.Equal(102, len(candidates), "Error listing candidates: expected 102 epubs, got %d.", len(candidates))
-
-	for _, candidate := range candidates {
-		if filepath.Base(candidate.filename) == "pg16328.epub" {
-			assert.Equal("dc325b3aceb77d9f943425728c037fdcaf4af58e3abd771a8094f2424455cc03", candidate.hash)
-			assert.True(candidate.imported, "hash has been imported")
-			assert.False(candidate.importedButMissing, "is not missing")
-		}
-		if filepath.Base(candidate.filename) == "pg17989.epub" {
-			assert.Equal("acd2b8eba1b11456bacf11e690edf56bc57774053668644ef34f669138ebdd9a", candidate.hash)
-			assert.False(candidate.imported, "hash has not been imported")
-			assert.False(candidate.importedButMissing, "is not missing")
-		}
+	// config
+	c := en.Config{}
+	c.LibraryRoot = "test/library"
+	c.DatabaseFile = "test/library/endive_test.json"
+	c.EpubFilenameFormat = "$a - $t"
+	// makedirs c.LibraryRoot + defer removing all test files
+	if err := os.MkdirAll(c.LibraryRoot, 0777); err != nil {
+		panic(err)
 	}
+	defer os.RemoveAll(c.LibraryRoot)
 
-	// only one candidate is seen as already imported
-	assert.Equal(101, len(epubCandidates(candidates).new()))
-	assert.Equal(0, len(epubCandidates(candidates).missing()))
-	assert.Equal(101, len(epubCandidates(candidates).importable()))
+	// building endive struct
+	db := &db.JSONDB{}
+	db.SetPath(c.DatabaseFile)
+	ui := &mock.UserInterface{}
+	lib := l.Library{Collection: &b.Books{}, Config: c, Index: &mock.IndexService{}, UI: ui, DB: db}
+	err := lib.Load()
+	assert.Nil(err, "Error loading epubs from database")
+	k := en.KnownHashes{Filename: "test/library/test_hashes.json"}
+	endive := Endive{hashes: k, Config: c, UI: ui, Library: lib}
+
+	// the actual testing begins.
+
+	fmt.Println("\n\t+ 1. import first nonretail")
+	// modifying mock UI output
+	ui.UpdateValuesResult = []string{"firstnonretail"}
+	importedFilename := filepath.Join(c.LibraryRoot, "firstnonretail - firstnonretail.epub")
+	// importing
+	err = endive.ImportSpecific(false, "test/pg16328.epub")
+	assert.Nil(err, "import should be successful")
+	// testing file has been imported and renamed
+	_, err = en.FileExists(importedFilename)
+	assert.Nil(err, "Imported file should exist")
+	// testing Library contains imported epub
+	book, err = endive.Library.Collection.FindByFullPath(importedFilename)
+	assert.Nil(err, "Imported epub should be in collection")
+	assert.Equal(1, book.ID(), "First book should have ID 1.")
+
+	fmt.Println("\n\t+ 2. import retail when nonretail exists")
+	importedFilename = filepath.Join(c.LibraryRoot, "firstnonretail - firstnonretail [retail].epub")
+	// importing
+	err = endive.ImportSpecific(true, "test/pg16328_empty.epub")
+	assert.Nil(err, "import should be successful")
+	// testing file has been imported and renamed
+	_, err = en.FileExists(importedFilename)
+	assert.Nil(err, "Imported file should exist")
+	// testing Library contains imported epub
+	book, err = endive.Library.Collection.FindByFullPath(importedFilename)
+	assert.Nil(err, "Imported epub should be in collection")
+	assert.Equal(1, book.ID(), "Trumped nonretail epub for book with ID 1.")
+
+	fmt.Println("\n\t+ 3. import first retail again")
+	err = endive.ImportSpecific(true, "test/pg16328_empty.epub")
+	assert.NotNil(err, "import should not be successful")
+
+	fmt.Println("\n\t+ 4. import first retail with imported file missing")
+	// removing file
+	err = os.Remove(importedFilename)
+	assert.Nil(err, "Error removing retail epub")
+	_, err = endive.Refresh()
+	assert.Nil(err, "Error refreshing after removing retail epub")
+	// importing (mock UI will agree to force import if missing)
+	err = endive.ImportSpecific(true, "test/pg16328_empty.epub")
+	assert.Nil(err, "import should be successful")
+	// testing file has been imported and renamed
+	_, err = en.FileExists(importedFilename)
+	assert.Nil(err, "Imported file should exist")
+	// testing Library contains imported epub
+	book, err = endive.Library.Collection.FindByFullPath(importedFilename)
+	assert.Nil(err, "Imported epub should be in collection")
+	assert.Equal(1, book.ID(), "Second book should still have ID 1.")
+
+	fmt.Println("\n\t+ 5. different epubs with different hashes but Config.EpubFileFormat returns the same filename")
+	// change ebook format & propagate
+	endive.Config.EpubFilenameFormat = "$y"
+	endive.Library.Collection.Propagate(endive.UI, endive.Config)
+	_, err = endive.Refresh()
+	assert.Nil(err, "Error refreshing after removing retail epub")
+	// modifying mock UI output
+	ui.UpdateValuesResult = []string{"irrelevant"}
+	importedFilename = filepath.Join(c.LibraryRoot, "2005 [retail].epub")
+	// testing file has been imported and renamed
+	_, err = en.FileExists(importedFilename)
+	assert.Nil(err, "File "+importedFilename+" should exist")
+	// importing
+	err = endive.ImportSpecific(true, "test/pg16328_empty2.epub")
+	assert.Nil(err, "import should be successful")
+	// there should be 2 books now
+	book, err = endive.Library.Collection.FindByID(2)
+	assert.Nil(err, "Book ID2 exists")
+	// testing the new imported epub exists (with random name)
+	_, err = en.FileExists(book.FullPath())
+	assert.Nil(err, "File "+book.FullPath()+" should exist")
+	// testing the original lives on
+	_, err = en.FileExists(importedFilename)
+	assert.Nil(err, "File "+importedFilename+" should exist")
+
+	// TODO test import a non retail and a second non retail for same book...
+	// TODO test import a retail and a second retail for same book...
 }

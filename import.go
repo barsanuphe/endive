@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -48,9 +49,8 @@ func (e *Endive) ImportNonRetail() error {
 }
 
 // ImportSpecific imports specific epubs
-func (e *Endive) ImportSpecific(paths []string, isRetail bool) error {
-	// TODO modify actions.go to use this
-	candidates := []epubCandidate{}
+func (e *Endive) ImportSpecific(isRetail bool, paths ...string) error {
+	var candidates epubCandidates
 	// for each path:
 	for _, path := range paths {
 		// verify it exists
@@ -59,7 +59,7 @@ func (e *Endive) ImportSpecific(paths []string, isRetail bool) error {
 			candidates = append(candidates, *newCandidate(validPath, e.hashes, e.Library.Collection))
 		}
 	}
-	return e.ImportEpubs(candidates, isRetail)
+	return e.ImportEpubs(candidates.importable(), isRetail)
 }
 
 // ImportEpubs files that are retail, or not.
@@ -69,14 +69,13 @@ func (e *Endive) ImportEpubs(candidates []epubCandidate, isRetail bool) (err err
 	if err != nil {
 		return
 	}
-	defer e.hashes.Save()
 
 	newEpubs := 0
 	// importing what is necessary
 	for i, candidate := range candidates {
 		intro := fmt.Sprintf("Considering importable epub %s", filepath.Base(candidate.filename))
-		if len(candidates) >= 1 {
-			intro += fmt.Sprintf(" (%d / %d)", i, len(candidates))
+		if len(candidates) > 1 {
+			intro += fmt.Sprintf(" (%d / %d)", i+1, len(candidates))
 		}
 		e.UI.SubTitle(intro)
 		// new Epub
@@ -132,7 +131,6 @@ func (e *Endive) ImportEpubs(candidates []epubCandidate, isRetail bool) (err err
 
 			if imported {
 				// add hash to known hashes
-				// NOTE: otherwise it'll pop up every other time
 				added, err := e.hashes.Add(candidate.hash)
 				if !added || err != nil {
 					return err
@@ -150,9 +148,12 @@ func (e *Endive) ImportEpubs(candidates []epubCandidate, isRetail bool) (err err
 				newEpubs++
 			}
 		} else {
-			e.UI.Debug("Ignoring already imported epub " + filepath.Base(candidate.filename))
+			e.UI.Debug("Ignoring epub " + filepath.Base(candidate.filename))
 		}
 	}
 	e.UI.Debugf("Imported %d epubs (retail: %t).\n", newEpubs, isRetail)
+	if newEpubs == 0 {
+		err = errors.New("Nothing to import, epubs already in library")
+	}
 	return
 }
