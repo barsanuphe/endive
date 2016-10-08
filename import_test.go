@@ -119,3 +119,38 @@ func TestImport(t *testing.T) {
 	// TODO test import a non retail and a second non retail for same book...
 	// TODO test import a retail and a second retail for same book...
 }
+
+func TestImportSource(t *testing.T) {
+	assert := assert.New(t)
+
+	// config
+	c := en.Config{}
+	c.LibraryRoot = "test/library"
+	c.DatabaseFile = "test/library/endive_test.json"
+	c.RetailSource = []string{"test"}
+	c.NonRetailSource = []string{"test"}
+	c.EpubFilenameFormat = "$a - $t"
+	// makedirs c.LibraryRoot + defer removing all test files
+	if err := os.MkdirAll(c.LibraryRoot, 0777); err != nil {
+		panic(err)
+	}
+	defer os.RemoveAll(c.LibraryRoot)
+
+	// building endive struct
+	db := &db.JSONDB{}
+	db.SetPath(c.DatabaseFile)
+	ui := &mock.UserInterface{}
+	lib := l.Library{Collection: &b.Books{}, Config: c, Index: &mock.IndexService{}, UI: ui, DB: db}
+	err := lib.Load()
+	assert.Nil(err, "Error loading epubs from database")
+	k := en.KnownHashes{Filename: "test/library/test_hashes.json"}
+	endive := Endive{hashes: k, Config: c, UI: ui, Library: lib}
+
+	// the actual testing begins.
+
+	// analyzing
+	candidates, err := endive.analyzeSources(endive.Config.RetailSource, true)
+	assert.Nil(err, "import should be successful")
+	assert.Equal(4, len(candidates), "Expected to find 4 epubs.")
+	assert.Equal(4, len(candidates.importable()), "Expected to find 4 epubs.")
+}

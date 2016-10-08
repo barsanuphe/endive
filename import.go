@@ -16,6 +16,14 @@ import (
 // importFromSource all detected epubs, tagging them as retail or non-retail as requested.
 func (e *Endive) importFromSource(sources []string, retail bool) error {
 	defer en.TimeTrack(e.UI, time.Now(), "Imported")
+	candidates, err := e.analyzeSources(sources, retail)
+	if err != nil {
+		return err
+	}
+	return e.ImportEpubs(candidates.importable(), retail)
+}
+
+func (e *Endive) analyzeSources(sources []string, retail bool) (epubCandidates, error) {
 	sourceType := "retail"
 	if !retail {
 		sourceType = "non-retail"
@@ -28,14 +36,14 @@ func (e *Endive) importFromSource(sources []string, retail bool) error {
 		e.UI.SubTitle("Searching for " + sourceType + " epubs in " + source)
 		c, err := getCandidates(source, e.hashes, e.Library.Collection)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		candidates = append(candidates, c...)
 	}
 	newEpubs := candidates.new()
 	missingEpubs := candidates.missing()
 	e.UI.SubTitle("Found %s new epubs and %d epubs previously imported and now missing.", len(newEpubs), len(missingEpubs))
-	return e.ImportEpubs(candidates.importable(), retail)
+	return candidates.importable(), nil
 }
 
 // ImportRetail imports epubs from the Retail source.
