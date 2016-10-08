@@ -24,6 +24,7 @@ func (e *Endive) importFromSource(sources []string, retail bool) error {
 }
 
 func (e *Endive) analyzeSources(sources []string, retail bool) (epubCandidates, error) {
+	defer en.TimeTrack(e.UI, time.Now(), "Analyzed")
 	sourceType := "retail"
 	if !retail {
 		sourceType = "non-retail"
@@ -42,7 +43,7 @@ func (e *Endive) analyzeSources(sources []string, retail bool) (epubCandidates, 
 	}
 	newEpubs := candidates.new()
 	missingEpubs := candidates.missing()
-	e.UI.SubTitle("Found %s new epubs and %d epubs previously imported and now missing.", len(newEpubs), len(missingEpubs))
+	e.UI.SubTitle("Found %d new epubs and %d epubs previously imported and now missing.", len(newEpubs), len(missingEpubs))
 	return candidates.importable(), nil
 }
 

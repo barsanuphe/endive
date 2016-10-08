@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 
 	"github.com/tj/go-spin"
 
@@ -105,20 +104,20 @@ func listEpubs(root string) (epubPaths []string, err error) {
 
 // getCandidates recursively in folder.
 func getCandidates(root string, knownHashes en.KnownHashes, collection en.Collection) ([]epubCandidate, error) {
-	// TODO add spinner?
-
 	// list epubs
 	paths, err := listEpubs(root)
 	if err != nil {
 		return []epubCandidate{}, err
 	}
 
+	s := spin.New()
+	cpt := 0
 	// for all epubs, build candidate
 	jobs := make(chan string, len(paths))
 	results := make(chan *epubCandidate, len(paths))
 
 	// This starts up as many workers as there are detected cpus
-	for w := 1; w <= runtime.NumCPU(); w++ {
+	for w := 1; w <= 25; w++ {
 		go func(id int, jobs <-chan string, results chan<- *epubCandidate) {
 			for j := range jobs {
 				results <- newCandidate(j, knownHashes, collection)
@@ -137,6 +136,12 @@ func getCandidates(root string, knownHashes en.KnownHashes, collection en.Collec
 	for range paths {
 		c := <-results
 		candidates = append(candidates, *c)
+		// show progress
+		if cpt%10 == 0 {
+			fmt.Printf("\rAnalyzing %.2f%% %s ", float32(cpt)*100.0/float32(len(paths)), s.Next())
+		}
+		cpt++
 	}
+	fmt.Print("\r")
 	return candidates, nil
 }

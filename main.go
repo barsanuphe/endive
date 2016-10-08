@@ -52,11 +52,27 @@ func generateCLI(e *Endive) (app *cli.App) {
 					},
 				},
 				{
+					Name:    "list-retail",
+					Aliases: []string{"lsr"},
+					Usage:   "list importable retail epubs",
+					Action: func(c *cli.Context) {
+						listImportableEpubs(e, c, true)
+					},
+				},
+				{
 					Name:    "nonretail",
 					Aliases: []string{"nr"},
 					Usage:   "import non-retail epubs",
 					Action: func(c *cli.Context) {
 						importEpubs(e, c, false)
+					},
+				},
+				{
+					Name:    "list-nonretail",
+					Aliases: []string{"lsnr"},
+					Usage:   "list importable nonretail epubs",
+					Action: func(c *cli.Context) {
+						listImportableEpubs(e, c, false)
 					},
 				},
 			},
