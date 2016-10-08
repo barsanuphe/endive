@@ -8,6 +8,9 @@ It also contains functions that are used by other endive subpackages.
 */
 package endive
 
+// EpubExtension is the lowercase extension for all epubs.
+const EpubExtension = ".epub"
+
 // GenericBook interface for Books
 type GenericBook interface {
 	ID() int

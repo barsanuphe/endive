@@ -10,8 +10,6 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
-	"github.com/tj/go-spin"
 )
 
 // DirectoryExists checks if a directory exists.
@@ -118,41 +116,7 @@ func DeleteEmptyFolders(root string, ui UserInterface) (err error) {
 		}
 	}
 
-	ui.Debugf("\n### Removed %d albums.\n", deletedDirectories)
-	return
-}
-
-// ListEpubsInDirectory recursively.
-func ListEpubsInDirectory(root string) (epubPaths []string, hashes []string, err error) {
-	if !DirectoryExists(root) {
-		err = errors.New("Directory " + root + " does not exist")
-		return
-	}
-
-	// spinner, defaults to s.Set(spin.Box1)
-	s := spin.New()
-	cpt := 0
-
-	filepath.Walk(root, func(path string, f os.FileInfo, err error) (outErr error) {
-		// only consider epub files
-		if f.Mode().IsRegular() && filepath.Ext(path) == ".epub" {
-			// check if already imported
-			// calculate hash
-			hash, err := CalculateSHA256(path)
-			if err != nil {
-				return
-			}
-			epubPaths = append(epubPaths, path)
-			hashes = append(hashes, hash)
-			// show progress
-			if cpt%10 == 0 {
-				fmt.Printf("\rSearching %s ", s.Next())
-			}
-			cpt++
-		}
-		return
-	})
-	fmt.Print("\r")
+	ui.Debugf("Removed %d directories.", deletedDirectories)
 	return
 }
 

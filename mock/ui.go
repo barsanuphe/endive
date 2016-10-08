@@ -7,7 +7,7 @@ import (
 
 // UserInterface represents a mock implementation of endive.UserInterface.
 type UserInterface struct {
-	// additional function implementations...
+	UpdateValuesResult []string
 }
 
 // GetInput for mock UserInterface
@@ -19,7 +19,7 @@ func (u *UserInterface) GetInput() (string, error) {
 // YesOrNo for mock UserInterface
 func (u *UserInterface) YesOrNo(a string) bool {
 	fmt.Println("mock UserInterface: YesOrNo " + a)
-	return false
+	return true
 }
 
 // Choose for mock UserInterface
@@ -31,7 +31,7 @@ func (u *UserInterface) Choose(a, b, c, d string) (string, error) {
 // UpdateValues for mock UserInterface
 func (u *UserInterface) UpdateValues(a, b string, c []string, isLong bool) ([]string, error) {
 	fmt.Println("mock UserInterface: UpdateValues " + a + ", " + b + ", " + strings.Join(c, "|"))
-	return c, nil
+	return u.UpdateValuesResult, nil
 }
 
 // Title for mock UserInterface

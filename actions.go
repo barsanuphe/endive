@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -251,24 +250,37 @@ func search(c *cli.Context, endive *Endive) {
 	}
 }
 
+func listImportableEpubs(endive *Endive, c *cli.Context, isRetail bool) {
+	var candidates epubCandidates
+	var err error
+	var txt string
+
+	if isRetail {
+		candidates, err = endive.analyzeSources(endive.Config.RetailSource, isRetail)
+		txt = fmt.Sprintf("Found %d retail epubs to import: ", len(candidates))
+	} else {
+		candidates, err = endive.analyzeSources(endive.Config.NonRetailSource, isRetail)
+		txt = fmt.Sprintf("Found %d non-retail epubs to import: ", len(candidates))
+	}
+	if err != nil {
+		endive.UI.Error(err.Error())
+		return
+	}
+	if len(candidates) != 0 {
+		endive.UI.SubPart(txt)
+		for _, cd := range candidates {
+			fmt.Println(" - " + cd.filename)
+		}
+	} else {
+		endive.UI.SubPart("Nothing to import.")
+	}
+}
+
 func importEpubs(endive *Endive, c *cli.Context, isRetail bool) {
 	if len(c.Args()) >= 1 {
-		// check valid path
-		validPaths, validHashes := []string{}, []string{}
-		for _, path := range c.Args() {
-			validPath, err := e.FileExists(path)
-			if err == nil && filepath.Ext(validPath) == ".epub" {
-				validPaths = append(validPaths, validPath)
-				validHash, err := e.CalculateSHA256(path)
-				if err != nil {
-					return
-				}
-				validHashes = append(validHashes, validHash)
-			}
-		}
 		// import valid paths
-		err := endive.ImportEpubs(validPaths, validHashes, isRetail)
-		if err != nil {
+		if err := endive.ImportSpecific(isRetail, c.Args()...); err != nil {
+			endive.UI.Error(err.Error())
 			return
 		}
 	} else {
@@ -287,7 +299,7 @@ func importEpubs(endive *Endive, c *cli.Context, isRetail bool) {
 			err = endive.ImportNonRetail()
 		}
 		if err != nil {
-			panic(err)
+			endive.UI.Error(err.Error())
 		}
 	}
 }

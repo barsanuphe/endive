@@ -16,6 +16,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -262,10 +263,6 @@ func (b *Book) generateNewName(fileTemplate string, isRetail bool) (newName stri
 	if !strings.Contains(fileTemplate, "$r") && isRetail {
 		newName += " [retail]"
 	}
-	// adding extension
-	if filepath.Ext(newName) != epubExtension {
-		newName += epubExtension
-	}
 	// making sure the path is relative
 	if strings.HasPrefix(newName, "/") {
 		newName = newName[1:]
@@ -279,34 +276,59 @@ func (b *Book) generateNewName(fileTemplate string, isRetail bool) (newName stri
 }
 
 // RefreshEpub one specific epub associated with this Book
-func (b *Book) RefreshEpub(epub Epub, isRetail bool) (wasRenamed bool, newName string, err error) {
+func (b *Book) RefreshEpub(epub Epub, isRetail bool) (bool, string, error) {
 	// do nothing if file does not exist
 	if epub.Filename == "" {
-		err = errors.New("Does not exist")
-		return
+		return false, "", errors.New("Does not exist")
 	}
-	newName, err = b.generateNewName(b.Config.EpubFilenameFormat, isRetail)
+	newName, err := b.generateNewName(b.Config.EpubFilenameFormat, isRetail)
 	if err != nil {
-		return
+		return false, epub.Filename, err
 	}
 
 	if epub.Filename != newName {
 		origin := epub.FullPath()
 		b.UI.Info("Renaming: \n\t" + origin + "\n   =>\n\t" + newName)
 		// move to c.LibraryRoot + new name
-		destination := filepath.Join(b.Config.LibraryRoot, newName)
+		suffix := epubExtension
+		destination := ""
+
+		uniqueNameFound := false
+		isbnAdded := false
+		// seed random number generator
+		rand.Seed(time.Now().UTC().UnixNano())
+		for !uniqueNameFound {
+			destination = filepath.Join(b.Config.LibraryRoot, newName+suffix)
+			_, errFileExists := e.FileExists(destination)
+			if errFileExists != nil {
+				uniqueNameFound = true
+			} else {
+				// file already exists and it's not epub.Filename
+				// it belongs to another book.
+				// trying to generate a unique name.
+
+				// trying to add ISBN once to suffix, if it's not already in the filename.
+				if !isbnAdded && !strings.Contains(b.Config.EpubFilenameFormat, "$i") && b.Metadata.ISBN != "" {
+					suffix = "_" + b.Metadata.ISBN + epubExtension
+					isbnAdded = true
+				} else {
+					// add randint to suffix
+					suffix = fmt.Sprintf("_%d%s", rand.Intn(100000), suffix)
+				}
+			}
+		}
 		// if parent directory does not exist, create
 		err = os.MkdirAll(filepath.Dir(destination), os.ModePerm)
 		if err != nil {
-			return
+			return false, epub.Filename, err
 		}
 		err = os.Rename(origin, destination)
 		if err != nil {
-			return
+			return false, epub.Filename, err
 		}
-		wasRenamed = true
+		return true, newName + suffix, nil
 	}
-	return
+	return false, epub.Filename, nil
 }
 
 // Refresh the filenames of the Epubs associated with this Book.
@@ -343,7 +365,7 @@ func (b *Book) Refresh() (wasRenamed []bool, newName []string, err error) {
 				b.RetailEpub.Filename = newNameR
 			}
 		} else {
-			b.UI.Warning("MISSING EPUB " + b.RetailEpub.FullPath())
+			b.UI.Warning("Missing retail epub " + b.RetailEpub.FullPath())
 			b.RetailEpub = Epub{}
 		}
 	}
@@ -355,7 +377,7 @@ func (b *Book) Refresh() (wasRenamed []bool, newName []string, err error) {
 				b.NonRetailEpub.Filename = newNameNR
 			}
 		} else {
-			b.UI.Warning("MISSING EPUB " + b.NonRetailEpub.FullPath())
+			b.UI.Warning("Missing nonretail epub " + b.NonRetailEpub.FullPath())
 			b.NonRetailEpub = Epub{}
 		}
 	}
@@ -464,15 +486,15 @@ func (b *Book) removeEpub(isRetail bool) (err error) {
 
 // Import an Epub to the Library
 func (b *Book) Import(path string, isRetail bool, hash string) (imported bool, err error) {
-	b.UI.Debug("Importing " + path)
 	// copy
 	dest := filepath.Join(b.Config.LibraryRoot, filepath.Base(path))
+	b.UI.Debug("Importing " + path + " to " + dest)
 	err = e.CopyFile(path, dest)
 	if err != nil {
 		return
 	}
 	// make epub
-	ep := Epub{Filename: dest, Hash: hash, Config: b.Config, UI: b.UI}
+	ep := Epub{Filename: filepath.Base(path), Hash: hash, Config: b.Config, UI: b.UI}
 	if isRetail {
 		b.RetailEpub = ep
 	} else {

@@ -23,12 +23,18 @@ func (c *Collection) Add(books ...endive.GenericBook) {
 }
 
 // Propagate implementation for tests
-func (c *Collection) Propagate(u UserInterface, cfg endive.Config) {
+func (c *Collection) Propagate(u endive.UserInterface, cfg endive.Config) {
 	fmt.Println("mock Collection: Propagate")
 }
 
+// RemoveByID implementation for tests
+func (c *Collection) RemoveByID(u int) error {
+	fmt.Println("mock Collection: RemoveByID")
+	return nil
+}
+
 // Diff implementation for tests
-func (c *Collection) Diff(Collection, Collection, Collection, Collection) {
+func (c *Collection) Diff(endive.Collection, endive.Collection, endive.Collection, endive.Collection) {
 	fmt.Println("mock Collection: Diff")
 }
 
@@ -57,27 +63,27 @@ func (c *Collection) FindByFullPath(string) (endive.GenericBook, error) {
 }
 
 // Retail implementation for tests
-func (c *Collection) Retail() Collection {
+func (c *Collection) Retail() endive.Collection {
 	fmt.Println("mock Collection: Retail")
-	return Collection{}
+	return nil
 }
 
 // NonRetailOnly implementation for tests
-func (c *Collection) NonRetailOnly() Collection {
+func (c *Collection) NonRetailOnly() endive.Collection {
 	fmt.Println("mock Collection: NonRetailOnly")
-	return Collection{}
+	return nil
 }
 
 // Progress implementation for tests
-func (c *Collection) Progress(p string) Collection {
+func (c *Collection) Progress(p string) endive.Collection {
 	fmt.Println("mock Collection: Progress " + p)
-	return Collection{}
+	return nil
 }
 
 // Incomplete implementation for tests
-func (c *Collection) Incomplete() Collection {
+func (c *Collection) Incomplete() endive.Collection {
 	fmt.Println("mock Collection: Incomplete")
-	return Collection{}
+	return nil
 }
 
 // Authors implementation for tests
@@ -105,9 +111,9 @@ func (c *Collection) Series() map[string]int {
 }
 
 // Untagged implementation for tests
-func (c *Collection) Untagged() Collection {
+func (c *Collection) Untagged() endive.Collection {
 	fmt.Println("mock Collection: Untagged")
-	return Collection{}
+	return nil
 }
 
 // Table implementation for tests
@@ -122,13 +128,13 @@ func (c *Collection) Sort(sortBy string) {
 }
 
 // First implementation for tests
-func (c *Collection) First(nb int) Collection {
+func (c *Collection) First(nb int) endive.Collection {
 	fmt.Printf("mock Collection: First %d\n", nb)
-	return Collection{}
+	return nil
 }
 
 // Last implementation for tests
-func (c *Collection) Last(nb int) Collection {
+func (c *Collection) Last(nb int) endive.Collection {
 	fmt.Printf("mock Collection: Last %d\n", nb)
-	return Collection{}
+	return nil
 }

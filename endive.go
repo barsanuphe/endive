@@ -1,10 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"os"
-	"path/filepath"
-	"time"
 
 	b "github.com/barsanuphe/endive/book"
 	"github.com/barsanuphe/endive/db"
@@ -97,191 +94,44 @@ func (e *Endive) openLibrary() error {
 	return e.Library.Load()
 }
 
-// importFromSource all detected epubs, tagging them as retail or non-retail as requested.
-func (e *Endive) importFromSource(sources []string, retail bool) error {
-	defer en.TimeTrack(e.UI, time.Now(), "Imported")
-	sourceType := "retail"
-	if !retail {
-		sourceType = "non-retail"
-	}
-	e.UI.Title("Importing " + sourceType + " epubs...")
-
-	// checking all defined sources
-	var allEpubs, allHashes []string
-	for _, source := range sources {
-		e.UI.SubTitle("Searching for " + sourceType + " epubs in " + source)
-		epubs, hashes, err := en.ListEpubsInDirectory(source)
-		if err != nil {
-			return err
-		}
-		allEpubs = append(allEpubs, epubs...)
-		allHashes = append(allHashes, hashes...)
-	}
-	return e.ImportEpubs(allEpubs, allHashes, retail)
-}
-
-// ImportRetail imports epubs from the Retail source.
-func (e *Endive) ImportRetail() error {
-	return e.importFromSource(e.Config.RetailSource, true)
-}
-
-// ImportNonRetail imports epubs from the Non-Retail source.
-func (e *Endive) ImportNonRetail() error {
-	return e.importFromSource(e.Config.NonRetailSource, false)
-}
-
-// ImportEpubs files that are retail, or not.
-func (e *Endive) ImportEpubs(allEpubs []string, allHashes []string, isRetail bool) (err error) {
-	// force reload if it has changed
-	err = e.hashes.Load()
-	if err != nil {
-		return
-	}
-	defer e.hashes.Save()
-
-	newEpubs := 0
-	// importing what is necessary
-	for i, path := range allEpubs {
-		hash := allHashes[i]
-		importConfirmed := false
-		ep := b.Epub{Filename: path, UI: e.UI}
-
-		// compare with known hashes
-		info := b.Metadata{}
-		if !e.hashes.IsIn(hash) {
-			// get Metadata from new epub
-			info, err = ep.ReadMetadata()
-			if err != nil {
-				if err.Error() == "ISBN not found in epub" {
-					isbn, err := en.AskForISBN(e.UI)
-					if err != nil {
-						e.UI.Warning("Warning: ISBN still unknown.")
-					} else {
-						info.ISBN = isbn
-					}
-				} else {
-					e.UI.Error("Could not analyze and import " + path)
-					continue
-				}
-			}
-			// ask if user really wants to import it
-			importConfirmed = e.UI.YesOrNo(fmt.Sprintf("Found %s (%s).\nImport", filepath.Base(path), info.String()))
-		} else {
-			_, err := e.Library.Collection.FindByHash(hash)
-			if err != nil {
-				// get Metadata from new epub
-				info, err = ep.ReadMetadata()
-				if err != nil {
-					if err.Error() == "ISBN not found in epub" {
-						isbn, err := en.AskForISBN(e.UI)
-						if err != nil {
-							e.UI.Warning("Warning: ISBN still unknown.")
-						} else {
-							info.ISBN = isbn
-						}
-					} else {
-						e.UI.Error("Could not analyze and import " + path)
-						continue
-					}
-				}
-				//confirm force import
-				importConfirmed = e.UI.YesOrNo(fmt.Sprintf("File %s has already been imported but is not in the current library. Confirm importing again?", filepath.Base(path)))
-			}
-		}
-
-		if importConfirmed {
-			// loop over Books to find similar Metadata
-			var imported bool
-			knownBook, err := e.Library.Collection.FindByMetadata(info.ISBN, info.Author(), info.Title())
-			if err != nil {
-				// new Book
-				e.UI.Debug("Creating new book.")
-				bk := b.NewBookWithMetadata(e.UI, e.Library.GenerateID(), path, e.Config, isRetail, info)
-				imported, err = bk.Import(path, isRetail, hash)
-				if err != nil {
-					return err
-				}
-				e.Library.Collection.Add(bk)
-			} else {
-				// add to existing book
-				e.UI.Debug("Adding epub to " + knownBook.ShortString())
-				imported, err = knownBook.AddEpub(path, isRetail, hash)
-				if err != nil {
-					return err
-				}
-			}
-
-			if imported {
-				// add hash to known hashes
-				// NOTE: otherwise it'll pop up every other time
-				added, err := e.hashes.Add(hash)
-				if !added || err != nil {
-					return err
-				}
-				// saving now == saving import progress, in case of interruption
-				_, err = e.hashes.Save()
-				if err != nil {
-					return err
-				}
-				// saving database also
-				_, err = e.Library.Save()
-				if err != nil {
-					return err
-				}
-				newEpubs++
-			}
-		} else {
-			e.UI.Debug("Ignoring already imported epub " + filepath.Base(path))
-		}
-	}
-	if isRetail {
-		e.UI.Debugf("Imported %d retail epubs.\n", newEpubs)
-	} else {
-		e.UI.Debugf("Imported %d non-retail epubs.\n", newEpubs)
-	}
-	return
-}
-
 // Refresh current DB
 func (e *Endive) Refresh() (renamed int, err error) {
 	e.UI.Info("Refreshing database...")
 
 	// scan for new epubs
-	allEpubs, allHashes, err := en.ListEpubsInDirectory(e.Config.LibraryRoot)
+	foundCandidates, err := getCandidates(e.Config.LibraryRoot, e.hashes, e.Library.Collection)
 	if err != nil {
 		return
 	}
 	// compare allEpubs with l.Epubs
-	newEpubs := []string{}
-	newHashes := []string{}
-	for i, epub := range allEpubs {
-		_, err = e.Library.Collection.FindByFullPath(epub)
+	var newEpubs epubCandidates
+	for _, epub := range foundCandidates {
+		_, err = e.Library.Collection.FindByFullPath(epub.filename)
 		// no error == found Epub
 		if err != nil {
 			// check if hash is known
-			gBook, err := e.Library.Collection.FindByHash(allHashes[i])
+			gBook, err := e.Library.Collection.FindByHash(epub.hash)
 			if err != nil {
 				// else, it's a new epub, import
-				e.UI.Info("NEW EPUB " + epub + " , will be imported as non-retail.")
+				e.UI.Info("NEW EPUB " + epub.filename + " , will be imported as non-retail.")
 				newEpubs = append(newEpubs, epub)
-				newHashes = append(newHashes, allHashes[i])
 			} else {
 				var book *b.Book
 				book = gBook.(*b.Book)
 				// if it is, rename found file to filename in DB
 				destination := book.RetailEpub.FullPath()
-				if book.NonRetailEpub.Hash == allHashes[i] {
+				if book.NonRetailEpub.Hash == epub.hash {
 					destination = book.NonRetailEpub.FullPath()
 				}
 				// check if retail epub already exists
 				_, err := en.FileExists(destination)
 				if err == nil {
 					// file already exists
-					e.UI.Errorf("Found epub %s with the same hash as %s, ignoring.", epub, destination)
+					e.UI.Errorf("Found epub %s with the same hash as %s, ignoring.", epub.filename, destination)
 				} else {
-					e.UI.Warningf("Found epub %s which is called %s in the database, renaming.", epub, destination)
+					e.UI.Warningf("Found epub %s which is called %s in the database, renaming.", epub.filename, destination)
 					// rename found file to retail name in db
-					err = os.Rename(epub, destination)
+					err = os.Rename(epub.filename, destination)
 					if err != nil {
 						return 0, err
 					}
@@ -289,11 +139,15 @@ func (e *Endive) Refresh() (renamed int, err error) {
 			}
 		}
 	}
-	// import new books as non-retail
-	err = e.ImportEpubs(newEpubs, newHashes, false)
-	if err != nil {
-		return
+
+	if len(newEpubs.importable()) != 0 {
+		// import new books as non-retail
+		err = e.ImportEpubs(newEpubs.importable(), false)
+		if err != nil {
+			return
+		}
 	}
+
 	// refresh all books
 	deletedBooks := []int{}
 	for i := range e.Library.Collection.Books() {
@@ -315,7 +169,7 @@ func (e *Endive) Refresh() (renamed int, err error) {
 
 	// remove empty books
 	for _, id := range deletedBooks {
-		e.UI.Infof("REMOVING from db Book with ID %s\n", id)
+		e.UI.Infof("REMOVING from db Book with ID %d\n", id)
 		err := e.Library.Collection.RemoveByID(id)
 		if err != nil {
 			return renamed, err

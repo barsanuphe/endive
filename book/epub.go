@@ -72,7 +72,7 @@ func (e *Epub) ReadMetadata() (info Metadata, err error) {
 	// year
 	dateEvents, nonFatalErr := book.MetadataElement("date")
 	if nonFatalErr != nil || len(dateEvents) == 0 {
-		e.UI.Warning("Error parsing EPUB: no date found")
+		e.UI.Debug("Parsing EPUB: no date found")
 	} else {
 		found := false
 		// try to find date associated with "publication" event
