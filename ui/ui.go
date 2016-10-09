@@ -32,16 +32,16 @@ type UI struct {
 }
 
 // Choose among two choices
-func (ui UI) Choose(title, help, local, remote string) (string, error) {
+func (ui UI) Choose(title, help, local, remote string, longField bool) (string, error) {
 	ui.SubPart(title)
 	if help != "" {
 		fmt.Println(ui.Green(help))
 	}
-	return ui.chooseVersion(local, remote)
+	return ui.chooseVersion(local, remote, longField)
 }
 
 // chooseVersion displays a list of candidates and returns the user's pick
-func (ui UI) chooseVersion(localCandidate, remoteCandidate string) (chosenOne string, err error) {
+func (ui UI) chooseVersion(localCandidate, remoteCandidate string, longField bool) (chosenOne string, err error) {
 	fmt.Printf("1. %s\n", localCandidate)
 	fmt.Printf("2. %s\n", remoteCandidate)
 
@@ -58,8 +58,15 @@ func (ui UI) chooseVersion(localCandidate, remoteCandidate string) (chosenOne st
 			err = errors.New("Abort")
 			validChoice = true
 		case "3":
-			ui.Choice(enterNewValue)
-			choice, scanErr := ui.GetInput()
+			var choice string
+			var scanErr error
+			if longField {
+				bothVersions := fmt.Sprintf("Local:\n%s\n\nRemote:\n%s\n", localCandidate, remoteCandidate)
+				choice, scanErr = ui.Edit(bothVersions)
+			} else {
+				ui.Choice(enterNewValue)
+				choice, scanErr = ui.GetInput()
+			}
 			if scanErr != nil {
 				return chosenOne, scanErr
 			}

@@ -128,7 +128,7 @@ func (e *Endive) ImportEpubs(candidates []epubCandidate, isRetail bool) (err err
 					return err
 				}
 				e.Library.Collection.Add(bk)
-				e.UI.SubTitle("Added new epub %s with ID %d", bk.String(), bk.ID())
+				e.UI.SubTitle("Added new epub %s with ID %d", bk.ShortString(), bk.ID())
 			} else {
 				e.UI.Debug("Adding epub to " + knownBook.ShortString())
 				imported, err = knownBook.AddEpub(candidate.filename, isRetail, candidate.hash)

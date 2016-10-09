@@ -79,7 +79,7 @@ type UserInterface interface {
 	// input
 	GetInput() (string, error)
 	Accept(string) bool
-	Choose(string, string, string, string) (string, error)
+	Choose(string, string, string, string, bool) (string, error)
 	UpdateValues(string, string, []string, bool) ([]string, error)
 	Edit(string) (string, error)
 	// output

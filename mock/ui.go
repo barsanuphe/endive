@@ -23,7 +23,7 @@ func (u *UserInterface) Accept(a string) bool {
 }
 
 // Choose for mock UserInterface
-func (u *UserInterface) Choose(a, b, c, d string) (string, error) {
+func (u *UserInterface) Choose(a, b, c, d string, e bool) (string, error) {
 	fmt.Println("mock UserInterface: Choose " + a + ", " + b + ", " + c + ", " + d)
 	return c, nil
 }
