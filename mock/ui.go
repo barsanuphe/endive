@@ -16,8 +16,8 @@ func (u *UserInterface) GetInput() (string, error) {
 	return "INPUT", nil
 }
 
-// YesOrNo for mock UserInterface
-func (u *UserInterface) YesOrNo(a string) bool {
+// Accept for mock UserInterface
+func (u *UserInterface) Accept(a string) bool {
 	fmt.Println("mock UserInterface: YesOrNo " + a)
 	return true
 }

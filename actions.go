@@ -114,7 +114,7 @@ func refreshMetadata(c *cli.Context, endive *Endive) {
 			return
 		}
 		// ask for confirmation
-		if endive.UI.YesOrNo("Confirm refreshing metadata field " + field + " for " + book.ShortString()) {
+		if endive.UI.Accept("Confirm refreshing metadata field " + field + " for " + book.ShortString()) {
 			err := book.ForceMetadataFieldRefresh(field)
 			if err != nil {
 				endive.UI.Errorf("Error reinitializing metadata field "+field+" for book ID#%d", book.ID)
@@ -123,7 +123,7 @@ func refreshMetadata(c *cli.Context, endive *Endive) {
 		}
 	} else if len(c.Args()) == 1 {
 		// ask for confirmation
-		if endive.UI.YesOrNo("Confirm refreshing metadata for " + book.ShortString()) {
+		if endive.UI.Accept("Confirm refreshing metadata for " + book.ShortString()) {
 			err := book.ForceMetadataRefresh()
 			if err != nil {
 				endive.UI.Errorf("Error reinitializing metadata for book ID#%d\n", book.ID())

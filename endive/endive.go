@@ -78,7 +78,7 @@ type Database interface {
 type UserInterface interface {
 	// input
 	GetInput() (string, error)
-	YesOrNo(string) bool
+	Accept(string) bool
 	Choose(string, string, string, string) (string, error)
 	UpdateValues(string, string, []string, bool) ([]string, error)
 	Edit(string) (string, error)

@@ -107,7 +107,7 @@ func (e *Endive) ImportEpubs(candidates []epubCandidate, isRetail bool) (err err
 		} else {
 			confirmText += "This epub has already been imported but, is not in the current library. Confirm importing again?"
 		}
-		if e.UI.YesOrNo(confirmText) {
+		if e.UI.Accept(confirmText) {
 			// get isbn if not found automatically
 			if unknownISBN {
 				isbn, err := en.AskForISBN(e.UI)

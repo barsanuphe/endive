@@ -108,7 +108,7 @@ func CleanISBN(full string) (isbn13 string, err error) {
 
 // AskForISBN when not found in epub
 func AskForISBN(ui UserInterface) (string, error) {
-	if ui.YesOrNo("Do you want to enter an ISBN manually") {
+	if ui.Accept("Do you want to enter an ISBN manually") {
 		validChoice := false
 		errs := 0
 		for !validChoice {
@@ -123,7 +123,7 @@ func AskForISBN(ui UserInterface) (string, error) {
 				errs++
 				ui.Warning("Warning: Invalid value.")
 			} else {
-				confirmed := ui.YesOrNo("Confirm: " + choice)
+				confirmed := ui.Accept("Confirm: " + choice)
 				if confirmed {
 					validChoice = true
 					return isbnCandidate, nil

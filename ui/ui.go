@@ -66,7 +66,7 @@ func (ui UI) chooseVersion(localCandidate, remoteCandidate string) (chosenOne st
 			if choice == "" {
 				ui.Warning(emptyValue)
 			}
-			confirmed := ui.YesOrNo("Confirm: " + choice)
+			confirmed := ui.Accept("Confirm: " + choice)
 			if confirmed {
 				chosenOne = choice
 				validChoice = true
@@ -120,7 +120,7 @@ func (ui UI) updateValue(field, oldValue string, longField bool) (newValue strin
 			} else {
 				fmt.Printf("New value:\n%s\n", choice)
 			}
-			confirmed := ui.YesOrNo("Confirm")
+			confirmed := ui.Accept("Confirm")
 			if confirmed {
 				newValue = choice
 				validChoice = true
@@ -166,8 +166,8 @@ func (ui UI) GetInput() (string, error) {
 	return strings.TrimSpace(choice), scanErr
 }
 
-// YesOrNo asks a question and returns the answer
-func (ui UI) YesOrNo(question string) bool {
+// Accept asks a question and returns the answer
+func (ui UI) Accept(question string) bool {
 	fmt.Printf(ui.BlueBold("%s Y/N : "), question)
 	input, err := ui.GetInput()
 	if err == nil {
