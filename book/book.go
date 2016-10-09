@@ -286,11 +286,10 @@ func (b *Book) RefreshEpub(epub Epub, isRetail bool) (bool, string, error) {
 		return false, epub.Filename, err
 	}
 
-	if epub.Filename != newName {
+	if epub.Filename != newName+e.EpubExtension {
 		origin := epub.FullPath()
-		b.UI.Info("Renaming: \n\t" + origin + "\n   =>\n\t" + newName)
 		// move to c.LibraryRoot + new name
-		suffix := epubExtension
+		suffix := e.EpubExtension
 		destination := ""
 
 		uniqueNameFound := false
@@ -309,7 +308,7 @@ func (b *Book) RefreshEpub(epub Epub, isRetail bool) (bool, string, error) {
 
 				// trying to add ISBN once to suffix, if it's not already in the filename.
 				if !isbnAdded && !strings.Contains(b.Config.EpubFilenameFormat, "$i") && b.Metadata.ISBN != "" {
-					suffix = "_" + b.Metadata.ISBN + epubExtension
+					suffix = "_" + b.Metadata.ISBN + e.EpubExtension
 					isbnAdded = true
 				} else {
 					// add randint to suffix
@@ -322,6 +321,7 @@ func (b *Book) RefreshEpub(epub Epub, isRetail bool) (bool, string, error) {
 		if err != nil {
 			return false, epub.Filename, err
 		}
+		b.UI.Info("Renaming: \n\t" + origin + "\n   =>\n\t" + newName + suffix)
 		err = os.Rename(origin, destination)
 		if err != nil {
 			return false, epub.Filename, err

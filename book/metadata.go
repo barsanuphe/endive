@@ -48,8 +48,6 @@ const (
 
 	unknownYear = "XXXX"
 	unknown     = "Unknown"
-
-	epubExtension = ".epub"
 )
 
 // MetadataFieldNames is a list of valid field names
@@ -161,6 +159,8 @@ func (i *Metadata) Clean(cfg e.Config) {
 	}
 	// clean publisher
 	i.Publisher = strings.TrimSpace(i.Publisher)
+	// use config aliases, again, to clean up new values for maingenre, category, etc
+	i.useAliases(cfg)
 }
 
 // useAliases updates Metadata fields, using the configuration file.
@@ -193,7 +193,13 @@ func (i *Metadata) useAliases(cfg e.Config) {
 		}
 	}
 	i.Tags = cleanTags
-
+	// genre aliases (same as tags)
+	for mainAlias, aliases := range cfg.TagAliases {
+		_, isIn := e.StringInSlice(i.MainGenre, aliases)
+		if isIn {
+			i.MainGenre = mainAlias
+		}
+	}
 	// publisher aliases
 	for mainAlias, aliases := range cfg.PublisherAliases {
 		_, isIn := e.StringInSlice(i.Publisher, aliases)

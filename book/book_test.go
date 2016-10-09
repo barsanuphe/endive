@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	e "github.com/barsanuphe/endive/endive"
+	en "github.com/barsanuphe/endive/endive"
 	"github.com/barsanuphe/endive/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -52,7 +52,7 @@ var epubs = []struct {
 }
 
 var parentDir string
-var standardTestConfig e.Config
+var standardTestConfig en.Config
 var ui *mock.UserInterface
 var isRetail = true
 
@@ -65,7 +65,7 @@ func TestMain(m *testing.M) {
 	parentDir = filepath.Dir(wd)
 	tags := make(map[string][]string)
 	tags["science-fiction"] = []string{"sci-fi"}
-	standardTestConfig = e.Config{LibraryRoot: parentDir, TagAliases: tags}
+	standardTestConfig = en.Config{LibraryRoot: parentDir, TagAliases: tags}
 	// init logger
 	err = ui.InitLogger("log_testing")
 	if err != nil {
@@ -150,7 +150,7 @@ func TestBookNewName(t *testing.T) {
 
 func TestBookRefresh(t *testing.T) {
 	fmt.Println("+ Testing Book.Refresh()...")
-	cfg := e.Config{EpubFilenameFormat: "$a $y $t", LibraryRoot: parentDir}
+	cfg := en.Config{EpubFilenameFormat: "$a $y $t", LibraryRoot: parentDir}
 	assert := assert.New(t)
 	for i, testEpub := range epubs {
 		// copy testEpub.filename
@@ -158,7 +158,7 @@ func TestBookRefresh(t *testing.T) {
 		epubDir := filepath.Dir(testEpub.filename)
 		tempCopy := filepath.Join(parentDir, epubDir, "temp_"+epubFilename)
 
-		err := e.CopyFile(filepath.Join(parentDir, testEpub.filename), tempCopy)
+		err := en.CopyFile(filepath.Join(parentDir, testEpub.filename), tempCopy)
 		assert.Nil(err, "Error copying")
 
 		// creating Epub object
@@ -176,7 +176,7 @@ func TestBookRefresh(t *testing.T) {
 		assert.Nil(err, "Error generating new name")
 		assert.True(wasRenamed[0], "Error renaming "+tempCopy)
 		assert.False(wasRenamed[1], "Error: should not have rename non-existent non-retail epub.")
-		assert.Equal(newName[0], testEpub.expectedFormat1Retail+epubExtension, "Error renaming %s "+tempCopy)
+		assert.Equal(newName[0], testEpub.expectedFormat1Retail+en.EpubExtension, "Error renaming %s "+tempCopy)
 
 		// getting epub path relative to parent dir (ie simulated library root) for comparison
 		filename, err := filepath.Rel(parentDir, e.FullPath())
