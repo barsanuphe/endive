@@ -23,7 +23,6 @@ func TestInfo(t *testing.T) {
 		if err != nil {
 			assert.Equal("ISBN not found in epub", err.Error(), "Error should only mention missing ISBN")
 		}
-		e.EpubMetadata = info
 		e.Metadata = info
 
 		// testing Get, GetFirstValue

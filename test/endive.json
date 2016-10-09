@@ -11,33 +11,6 @@
             "hash": "",
             "replace": ""
         },
-        "epub_metadata": {
-            "title": "Beowulf / An Anglo-Saxon Epic Poem",
-            "image_url": "",
-            "num_pages": "",
-            "authors": null,
-            "isbn": "",
-            "year": "2005",
-            "edition_year": "",
-            "description": "",
-            "series": null,
-            "average_rating": "",
-            "tags": [
-                {
-                    "name": "Epic poetry, English (Old)"
-                },
-                {
-                    "name": "Monsters -- Poetry"
-                },
-                {
-                    "name": "Dragons -- Poetry"
-                }
-            ],
-            "category": "",
-            "genre": "",
-            "language": "en",
-            "publisher": ""
-        },
         "metadata": {
             "title": "Beowulf / An Anglo-Saxon Epic Poem",
             "image_url": "",
@@ -81,47 +54,6 @@
             "filename": "",
             "hash": "",
             "replace": ""
-        },
-        "epub_metadata": {
-            "title": "Le comte de Monte-Cristo, Tome I",
-            "image_url": "",
-            "num_pages": "",
-            "authors": [
-                "Alexandre Dumas"
-            ],
-            "isbn": "",
-            "year": "2006",
-            "edition_year": "",
-            "description": "",
-            "series": null,
-            "average_rating": "",
-            "tags": [
-                {
-                    "name": "Historical fiction"
-                },
-                {
-                    "name": "Revenge -- Fiction"
-                },
-                {
-                    "name": "Adventure stories"
-                },
-                {
-                    "name": "Prisoners -- Fiction"
-                },
-                {
-                    "name": "France -- History -- 19th century -- Fiction"
-                },
-                {
-                    "name": "Pirates -- Fiction"
-                },
-                {
-                    "name": "Dantès, Edmond (Fictitious character) -- Fiction"
-                }
-            ],
-            "category": "",
-            "genre": "",
-            "language": "fr",
-            "publisher": ""
         },
         "metadata": {
             "title": "Le comte de Monte-Cristo, Tome I",

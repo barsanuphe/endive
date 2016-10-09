@@ -40,8 +40,7 @@ type Book struct {
 	RetailEpub    Epub `json:"retail"`
 	NonRetailEpub Epub `json:"nonretail"`
 	// metadata
-	EpubMetadata Metadata `json:"epub_metadata"`
-	Metadata     Metadata `json:"metadata"`
+	Metadata Metadata `json:"metadata"`
 	// user info
 	Progress string `json:"progress"`
 	ReadDate string `json:"readdate"`
@@ -68,9 +67,9 @@ func NewBook(ui e.UserInterface, id int, filename string, c e.Config, isRetail b
 func NewBookWithMetadata(ui e.UserInterface, id int, filename string, c e.Config, isRetail bool, i Metadata) *Book {
 	f := Epub{Filename: filename, Config: c, UI: ui, NeedsReplacement: "false"}
 	if isRetail {
-		return &Book{BookID: id, RetailEpub: f, Config: c, UI: ui, EpubMetadata: i, Metadata: i, Progress: "unread"}
+		return &Book{BookID: id, RetailEpub: f, Config: c, UI: ui, Metadata: i, Progress: "unread"}
 	}
-	return &Book{BookID: id, NonRetailEpub: f, Config: c, UI: ui, EpubMetadata: i, Metadata: i, Progress: "unread"}
+	return &Book{BookID: id, NonRetailEpub: f, Config: c, UI: ui, Metadata: i, Progress: "unread"}
 }
 
 // ID returns the Books ID according to the GenericBook interface
@@ -500,18 +499,6 @@ func (b *Book) Import(path string, isRetail bool, hash string) (imported bool, e
 	} else {
 		b.NonRetailEpub = ep
 	}
-
-	// get online data
-	err = b.SearchOnline()
-	if err != nil {
-		b.UI.Debug(err.Error())
-		b.UI.Warning("Could not retrieve information from GoodReads. Manual review.")
-		err = b.EditField()
-		if err != nil {
-			b.UI.Error(err.Error())
-		}
-	}
-
 	// rename
 	_, _, err = b.Refresh()
 	if err != nil {

@@ -117,6 +117,12 @@ func (e *Endive) ImportEpubs(candidates []epubCandidate, isRetail bool) (err err
 					info.ISBN = isbn
 				}
 			}
+
+			// get online data to prepare import
+			if err = info.SearchOnline(e.UI, e.Config); err != nil {
+				e.UI.Error("Could not merge metadata with online sources. Continuing importing nonetheless.")
+			}
+
 			// loop over Books to find similar Metadata
 			var imported bool
 			knownBook, err := e.Library.Collection.FindByMetadata(info.ISBN, info.Author(), info.Title())
@@ -127,15 +133,16 @@ func (e *Endive) ImportEpubs(candidates []epubCandidate, isRetail bool) (err err
 				if err != nil {
 					return err
 				}
+				// adding new book
 				e.Library.Collection.Add(bk)
-				e.UI.SubTitle("Added new epub %s with ID %d", bk.ShortString(), bk.ID())
+				e.UI.SubTitle("Added epub %s to new book with ID %d", bk.ShortString(), bk.ID())
 			} else {
 				e.UI.Debug("Adding epub to " + knownBook.ShortString())
 				imported, err = knownBook.AddEpub(candidate.filename, isRetail, candidate.hash)
 				if err != nil {
 					return err
 				}
-				e.UI.SubTitle("Added new epub %s with ID %d", knownBook.ShortString(), knownBook.ID())
+				e.UI.SubTitle("Added new epub %s to book with ID %d", knownBook.ShortString(), knownBook.ID())
 			}
 
 			if imported {

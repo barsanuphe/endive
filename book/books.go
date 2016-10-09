@@ -155,7 +155,7 @@ func (bks *Books) FindByFullPath(filename string) (e.GenericBook, error) {
 func (bks *Books) FindByMetadata(isbn, authors, title string) (e.GenericBook, error) {
 	o := Metadata{ISBN: isbn, Authors: []string{authors}, BookTitle: title}
 	b := bks.findUnique(func(b *Book) bool {
-		return b.Metadata.IsSimilar(o) || b.EpubMetadata.IsSimilar(o)
+		return b.Metadata.IsSimilar(o)
 	})
 	if b.ID() == 0 {
 		return nil, errors.New("Could not find book with info " + o.String())

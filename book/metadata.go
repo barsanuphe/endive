@@ -236,7 +236,7 @@ func (i *Metadata) IsSimilar(o Metadata) bool {
 }
 
 // Diff returns differences between Metadatas.
-func (i *Metadata) Diff(o Metadata, firstHeader, secondHeader string) string {
+func (i *Metadata) Diff(o *Metadata, firstHeader, secondHeader string) string {
 	var rows [][]string
 	rows = append(rows, []string{i.String(), o.String()})
 	rows = append(rows, []string{i.Author(), o.Author()})
@@ -255,7 +255,7 @@ func (i *Metadata) Diff(o Metadata, firstHeader, secondHeader string) string {
 }
 
 // Merge with another Metadata.
-func (i *Metadata) Merge(o Metadata, cfg e.Config, ui e.UserInterface) (err error) {
+func (i *Metadata) Merge(o *Metadata, cfg e.Config, ui e.UserInterface) (err error) {
 	for _, field := range MetadataFieldNames {
 		err = i.MergeField(o, field, cfg, ui)
 		if err != nil {
@@ -271,7 +271,7 @@ func (i *Metadata) Merge(o Metadata, cfg e.Config, ui e.UserInterface) (err erro
 }
 
 // MergeField with another Metadata.
-func (i *Metadata) MergeField(o Metadata, field string, cfg e.Config, ui e.UserInterface) (err error) {
+func (i *Metadata) MergeField(o *Metadata, field string, cfg e.Config, ui e.UserInterface) (err error) {
 	switch field {
 	case tagsField:
 		help := "Tags can be edited as a comma-separated list of strings."
@@ -359,5 +359,101 @@ func (i *Metadata) MergeField(o Metadata, field string, cfg e.Config, ui e.UserI
 		return errors.New("Unknown field: " + field)
 	}
 	i.Clean(cfg)
+	return
+}
+
+// getOnlineMetadata retrieves the online info for this book.
+func (i *Metadata) getOnlineMetadata(ui e.UserInterface, cfg e.Config) (*Metadata, error) {
+	if cfg.GoodReadsAPIKey == "" {
+		return nil, e.WarningGoodReadsAPIKeyMissing
+	}
+	var err error
+	var g RemoteLibraryAPI
+	g = GoodReads{}
+	id := ""
+
+	// If not ISBN is found, ask for input
+	if i.ISBN == "" {
+		ui.Warning("Could not find ISBN.")
+		isbn, err := e.AskForISBN(ui)
+		if err == nil {
+			i.ISBN = isbn
+		}
+	}
+	// search by ISBN preferably
+	if i.ISBN != "" {
+		id, err = g.GetBookIDByISBN(i.ISBN, cfg.GoodReadsAPIKey)
+		if err != nil {
+			return nil, err
+		}
+	}
+	// if no ISBN or nothing was found
+	if id == "" {
+		// TODO: if unsure, show hits
+		id, err = g.GetBookIDByQuery(i.Author(), i.Title(), cfg.GoodReadsAPIKey)
+		if err != nil {
+			return nil, err
+		}
+	}
+	// if still nothing was found...
+	if id == "" {
+		return nil, errors.New("Could not find online data for " + i.String())
+	}
+	// get book info
+	onlineInfo, err := g.GetBook(id, cfg.GoodReadsAPIKey)
+	if err == nil {
+		onlineInfo.Clean(cfg)
+	}
+	return &onlineInfo, nil
+}
+
+// SearchOnline tries to find metadata from online sources.
+func (i *Metadata) SearchOnline(ui e.UserInterface, cfg e.Config) (err error) {
+	onlineInfo, err := i.getOnlineMetadata(ui, cfg)
+	if err != nil {
+		ui.Debug(err.Error())
+		ui.Warning("Could not retrieve information from GoodReads. Manual review.")
+		err = i.Merge(&Metadata{}, cfg, ui)
+		if err != nil {
+			ui.Error(err.Error())
+		}
+		return err
+	}
+
+	// show diff between epub and GR versions, then ask what to do.
+	fmt.Println(i.Diff(onlineInfo, "Epub Metadata", "GoodReads"))
+	ui.Choice("Choose: (1) Local version (2) Remote version (3) Edit (4) Abort : ")
+	validChoice := false
+	errs := 0
+	for !validChoice {
+		choice, scanErr := ui.GetInput()
+		if scanErr != nil {
+			return scanErr
+		}
+		switch choice {
+		case "4":
+			err = errors.New("Abort")
+			validChoice = true
+		case "3":
+			err = i.Merge(onlineInfo, cfg, ui)
+			if err != nil {
+				return err
+			}
+			validChoice = true
+		case "2":
+			ui.Info("Accepting online version.")
+			i = onlineInfo
+			validChoice = true
+		case "1":
+			ui.Info("Keeping epub version.")
+			validChoice = true
+		default:
+			fmt.Println("Invalid choice.")
+			errs++
+			if errs > 10 {
+				return errors.New("Too many invalid choices.")
+			}
+		}
+	}
 	return
 }
