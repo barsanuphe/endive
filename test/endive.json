@@ -13,7 +13,6 @@
         },
         "epub_metadata": {
             "title": "Beowulf / An Anglo-Saxon Epic Poem",
-            "original_title": "",
             "image_url": "",
             "num_pages": "",
             "authors": null,
@@ -35,13 +34,12 @@
                 }
             ],
             "category": "",
-            "main_genre": "",
+            "genre": "",
             "language": "en",
             "publisher": ""
         },
         "metadata": {
             "title": "Beowulf / An Anglo-Saxon Epic Poem",
-            "original_title": "",
             "image_url": "",
             "num_pages": "",
             "authors": null,
@@ -63,7 +61,7 @@
                 }
             ],
             "category": "",
-            "main_genre": "",
+            "genre": "",
             "language": "en",
             "publisher": ""
         },
@@ -86,7 +84,6 @@
         },
         "epub_metadata": {
             "title": "Le comte de Monte-Cristo, Tome I",
-            "original_title": "",
             "image_url": "",
             "num_pages": "",
             "authors": [
@@ -122,13 +119,12 @@
                 }
             ],
             "category": "",
-            "main_genre": "",
+            "genre": "",
             "language": "fr",
             "publisher": ""
         },
         "metadata": {
             "title": "Le comte de Monte-Cristo, Tome I",
-            "original_title": "",
             "image_url": "",
             "num_pages": "",
             "authors": [
@@ -164,7 +160,7 @@
                 }
             ],
             "category": "",
-            "main_genre": "",
+            "genre": "",
             "language": "fr",
             "publisher": ""
         },

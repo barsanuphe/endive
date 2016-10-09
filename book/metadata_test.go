@@ -43,7 +43,7 @@ func TestInfo(t *testing.T) {
 		// copying manually
 		o.Authors = []string{}
 		o.Authors = append(o.Authors, e.Metadata.Authors...)
-		o.MainTitle = e.Metadata.MainTitle
+		o.BookTitle = e.Metadata.BookTitle
 		// checking again
 		assert.True(e.Metadata.IsSimilar(o), "Error: metadata should be similar.")
 	}

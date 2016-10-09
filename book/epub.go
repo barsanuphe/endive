@@ -98,7 +98,7 @@ func (e *Epub) ReadMetadata() (info Metadata, err error) {
 	info.OriginalYear = info.EditionYear
 	// title
 	if results, err := getFirstFieldValue(book, "title"); err == nil {
-		info.MainTitle = results
+		info.BookTitle = results
 	}
 	// authors
 	if results, err := getFieldValues(book, "creator"); err == nil {

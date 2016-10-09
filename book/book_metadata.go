@@ -75,12 +75,11 @@ func (b *Book) ForceMetadataFieldRefresh(field string) (err error) {
 	case categoryField:
 		b.Metadata.Category = info.Category
 	case genreField:
-		b.Metadata.MainGenre = info.MainGenre
+		b.Metadata.Genre = info.Genre
 	case isbnField:
 		b.Metadata.ISBN = info.ISBN
 	case titleField:
-		b.Metadata.MainTitle = info.MainTitle
-		b.Metadata.OriginalTitle = info.OriginalTitle
+		b.Metadata.BookTitle = info.BookTitle
 	case descriptionField:
 		b.Metadata.Description = info.Description
 	default:
@@ -195,11 +194,11 @@ func (b *Book) editSpecificField(field string, values []string) error {
 		}
 		b.Metadata.Category = newValues[0]
 	case genreField:
-		newValues, err := b.UI.UpdateValues(field, b.Metadata.MainGenre, values, false)
+		newValues, err := b.UI.UpdateValues(field, b.Metadata.Genre, values, false)
 		if err != nil {
 			return err
 		}
-		b.Metadata.MainGenre = newValues[0]
+		b.Metadata.Genre = newValues[0]
 	case isbnField:
 		newValues, err := b.UI.UpdateValues(field, b.Metadata.ISBN, values, false)
 		if err != nil {
@@ -212,12 +211,11 @@ func (b *Book) editSpecificField(field string, values []string) error {
 		}
 		b.Metadata.ISBN = isbn
 	case titleField:
-		newValues, err := b.UI.UpdateValues(field, b.Metadata.MainTitle, values, false)
+		newValues, err := b.UI.UpdateValues(field, b.Metadata.BookTitle, values, false)
 		if err != nil {
 			return err
 		}
-		b.Metadata.MainTitle = newValues[0]
-		b.Metadata.OriginalTitle = newValues[0]
+		b.Metadata.BookTitle = newValues[0]
 	case descriptionField:
 		newValues, err := b.UI.UpdateValues(field, b.Metadata.Description, values, true)
 		if err != nil {

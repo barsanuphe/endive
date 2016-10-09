@@ -10,8 +10,7 @@ import (
 
 // Metadata contains all of the known book metadata.
 type Metadata struct {
-	MainTitle     string   `json:"title" xml:"title"`
-	OriginalTitle string   `json:"original_title" xml:"work>original_title"`
+	BookTitle     string   `json:"title" xml:"title"`
 	ImageURL      string   `json:"image_url" xml:"image_url"`
 	NumPages      string   `json:"num_pages" xml:"num_pages"`
 	Authors       []string `json:"authors" xml:"authors>author>name"`
@@ -23,7 +22,7 @@ type Metadata struct {
 	AverageRating string   `json:"average_rating" xml:"average_rating"`
 	Tags          Tags     `json:"tags" xml:"popular_shelves>shelf"`
 	Category      string   `json:"category"`
-	MainGenre     string   `json:"genre"`
+	Genre         string   `json:"genre"`
 	Language      string   `json:"language" xml:"language_code"`
 	Publisher     string   `json:"publisher" xml:"publisher"`
 }
@@ -78,7 +77,7 @@ func (i *Metadata) IsComplete() bool {
 	hasLanguage := i.Language != ""
 	hasDescription := i.Description != ""
 	hasCategory := i.Category != "" && i.Category != unknown
-	hasGenre := i.MainGenre != "" && i.MainGenre != unknown
+	hasGenre := i.Genre != "" && i.Genre != unknown
 	hasISBN := i.ISBN != ""
 	hasPublisher := i.Publisher != ""
 	hasTags := i.Tags.String() != ""
@@ -87,10 +86,7 @@ func (i *Metadata) IsComplete() bool {
 
 // Title returns Metadata's main title.
 func (i *Metadata) Title() string {
-	if i.OriginalTitle != "" {
-		return i.OriginalTitle
-	}
-	return i.MainTitle
+	return i.BookTitle
 }
 
 // Clean cleans up the Metadata
@@ -138,19 +134,19 @@ func (i *Metadata) Clean(cfg e.Config) {
 	}
 
 	// MainGenre
-	if i.MainGenre == "" && len(i.Tags) != 0 {
+	if i.Genre == "" && len(i.Tags) != 0 {
 		cleanName, err := cleanTagName(i.Tags[0].Name)
 		if err == nil {
-			i.MainGenre = cleanName
-			i.Tags.RemoveFromNames(i.MainGenre)
+			i.Genre = cleanName
+			i.Tags.RemoveFromNames(i.Genre)
 		}
 	}
 	// if nothing valid found...
-	if i.MainGenre == "" {
-		i.MainGenre = unknown
+	if i.Genre == "" {
+		i.Genre = unknown
 	}
-	if main, err := cleanTagName(i.MainGenre); err == nil {
-		i.MainGenre = main
+	if main, err := cleanTagName(i.Genre); err == nil {
+		i.Genre = main
 	}
 
 	// clean series
@@ -195,9 +191,9 @@ func (i *Metadata) useAliases(cfg e.Config) {
 	i.Tags = cleanTags
 	// genre aliases (same as tags)
 	for mainAlias, aliases := range cfg.TagAliases {
-		_, isIn := e.StringInSlice(i.MainGenre, aliases)
+		_, isIn := e.StringInSlice(i.Genre, aliases)
 		if isIn {
-			i.MainGenre = mainAlias
+			i.Genre = mainAlias
 		}
 	}
 	// publisher aliases
@@ -250,7 +246,7 @@ func (i *Metadata) Diff(o Metadata, firstHeader, secondHeader string) string {
 	rows = append(rows, []string{i.Publisher, o.Publisher})
 	rows = append(rows, []string{i.Description, o.Description})
 	rows = append(rows, []string{i.Category, o.Category})
-	rows = append(rows, []string{i.MainGenre, o.MainGenre})
+	rows = append(rows, []string{i.Genre, o.Genre})
 	rows = append(rows, []string{i.Tags.String(), o.Tags.String()})
 	rows = append(rows, []string{i.Series.String(), o.Series.String()})
 	rows = append(rows, []string{i.Language, o.Language})
@@ -338,7 +334,7 @@ func (i *Metadata) MergeField(o Metadata, field string, cfg e.Config, ui e.UserI
 			return
 		}
 	case genreField:
-		i.MainGenre, err = ui.Choose(strings.Title(genreField), "", i.MainGenre, o.MainGenre, false)
+		i.Genre, err = ui.Choose(strings.Title(genreField), "", i.Genre, o.Genre, false)
 		if err != nil {
 			return
 		}
@@ -352,8 +348,7 @@ func (i *Metadata) MergeField(o Metadata, field string, cfg e.Config, ui e.UserI
 		if e != nil {
 			return e
 		}
-		i.MainTitle = chosenTitle
-		i.OriginalTitle = chosenTitle
+		i.BookTitle = chosenTitle
 	case descriptionField:
 		i.Description, err = ui.Choose(strings.Title(descriptionField), "", cleanHTML(i.Description), cleanHTML(o.Description), true)
 		if err != nil {

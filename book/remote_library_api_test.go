@@ -18,18 +18,18 @@ var grBooks = []struct {
 }{
 	{
 		"Scott Lynch",
-		"The Republic of Thieves",
+		"The Republic of Thieves (Gentleman Bastard, #3)",
 		"2890090",
 		"2013",
-		"Scott Lynch (2013) The Republic of Thieves [Gentleman Bastard #3]",
+		"Scott Lynch (2013) The Republic of Thieves (Gentleman Bastard, #3) [Gentleman Bastard #3]",
 		"9780553804690",
 	},
 	{
 		"George Orwell",
-		"Animal Farm: A Fairy Story",
+		"Animal Farm",
 		"7613",
 		"1945",
-		"George Orwell (1945) Animal Farm: A Fairy Story",
+		"George Orwell (1945) Animal Farm",
 		"9780452284241",
 	},
 }
@@ -52,8 +52,8 @@ func TestGoodReads(t *testing.T) {
 		assert.Nil(err, "Unexpected error")
 		b.Clean(standardTestConfig)
 		assert.Equal(book.author, b.Author(), "Bad author")
-		if b.MainTitle != book.title && b.OriginalTitle != book.title {
-			t.Errorf("Bad title, got %s / %s, expected %s.", b.MainTitle, b.OriginalTitle, book.title)
+		if b.Title() != book.title {
+			t.Errorf("Bad title, got %s, expected %s.", b.Title(), book.title)
 		}
 		assert.Equal(book.expectedYear, b.OriginalYear, "Bad year")
 		assert.Equal(book.expectedFullTitle, b.String(), "Bad title")

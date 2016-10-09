@@ -132,7 +132,7 @@ func (b *Book) ShowInfo(fields ...string) string {
 		case categoryField:
 			rows = append(rows, []string{strings.Title(categoryField), b.Metadata.Category})
 		case genreField:
-			rows = append(rows, []string{strings.Title(genreField), b.Metadata.MainGenre})
+			rows = append(rows, []string{strings.Title(genreField), b.Metadata.Genre})
 		case tagsField:
 			if len(b.Metadata.Tags) != 0 {
 				rows = append(rows, []string{strings.Title(tagsField), b.Metadata.Tags.String()})
@@ -251,7 +251,7 @@ func (b *Book) generateNewName(fileTemplate string, isRetail bool) (newName stri
 		cleanPath(b.Metadata.Author()), b.Metadata.OriginalYear,
 		cleanPath(b.Metadata.Title()), b.Metadata.Language,
 		b.Metadata.ISBN, seriesString, b.Progress, b.Metadata.Category,
-		b.Metadata.MainGenre, retail, r.Replace(fileTemplate))
+		b.Metadata.Genre, retail, r.Replace(fileTemplate))
 
 	var doc bytes.Buffer
 	te := template.Must(template.New("hop").Parse(tmpl))
