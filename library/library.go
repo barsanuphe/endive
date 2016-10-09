@@ -155,12 +155,12 @@ func (l *Library) prepareQuery(queryString string) string {
 		"title:", "metadata.title:",
 		"year:", "metadata.year:",
 		"language:", "metadata.language:",
-		"series:", "metadata.series.seriesname:",
+		"series:", "metadata.series.name:",
 		"tags:", "metadata.tags.name:",
 		"tag:", "metadata.tags.name:",
 		"publisher:", "metadata.publisher:",
 		"category:", "metadata.category:",
-		"genre:", "metadata.main_genre:",
+		"genre:", "metadata.genre:",
 		"description:", "metadata.description:",
 	)
 	return r.Replace(queryString)

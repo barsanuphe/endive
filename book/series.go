@@ -10,8 +10,8 @@ import (
 
 // SingleSeries holds the name and index of a series a Book is part of.
 type SingleSeries struct {
-	Name     string `json:"seriesname" xml:"series>title"`
-	Position string `json:"seriesindex" xml:"user_position"`
+	Name     string `json:"name" xml:"series>title"`
+	Position string `json:"index" xml:"user_position"`
 }
 
 // String outputs a single series info.

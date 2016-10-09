@@ -23,7 +23,7 @@ type Metadata struct {
 	AverageRating string   `json:"average_rating" xml:"average_rating"`
 	Tags          Tags     `json:"tags" xml:"popular_shelves>shelf"`
 	Category      string   `json:"category"`
-	MainGenre     string   `json:"main_genre"`
+	MainGenre     string   `json:"genre"`
 	Language      string   `json:"language" xml:"language_code"`
 	Publisher     string   `json:"publisher" xml:"publisher"`
 }
