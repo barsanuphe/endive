@@ -54,3 +54,8 @@ func (b *Book) Check() (bool, bool, error) {
 	fmt.Println("mock Book: Check")
 	return false, false, nil
 }
+
+// SetExported implementation for tests
+func (b *Book) SetExported(bool) {
+	fmt.Println("mock Book: SetExported")
+}

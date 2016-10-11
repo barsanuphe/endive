@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/barsanuphe/endive/endive"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,11 +24,11 @@ func TestEpubFlagReplacement(t *testing.T) {
 	assert := assert.New(t)
 	for i, testEpub := range epubs {
 		e := NewBook(ui, i, testEpub.filename, standardTestConfig, true)
-		assert.Equal(e.RetailEpub.NeedsReplacement, "false")
+		assert.Equal(e.RetailEpub.NeedsReplacement, endive.False)
 
 		err := e.RetailEpub.FlagForReplacement()
 		assert.Nil(err, "Error flagging for replacement")
-		assert.Equal(e.RetailEpub.NeedsReplacement, "true")
+		assert.Equal(e.RetailEpub.NeedsReplacement, endive.True)
 	}
 }
 

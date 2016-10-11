@@ -11,6 +11,12 @@ package endive
 // EpubExtension is the lowercase extension for all epubs.
 const EpubExtension = ".epub"
 
+// True as string
+const True = "true"
+
+// False as string
+const False = "false"
+
 // GenericBook interface for Books
 type GenericBook interface {
 	ID() int
@@ -21,6 +27,7 @@ type GenericBook interface {
 	Refresh() ([]bool, []string, error)
 	AddEpub(string, bool, string) (bool, error)
 	Check() (bool, bool, error)
+	SetExported(bool)
 }
 
 // Indexer provides an interface for indexing books.

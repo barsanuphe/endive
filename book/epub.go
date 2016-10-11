@@ -41,7 +41,7 @@ func (e *Epub) GetHash() (err error) {
 
 // FlagForReplacement an epub of insufficient quality
 func (e *Epub) FlagForReplacement() (err error) {
-	e.NeedsReplacement = "true"
+	e.NeedsReplacement = en.True
 	return
 }
 

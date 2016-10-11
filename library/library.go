@@ -87,6 +87,7 @@ func (l *Library) ExportToEReader(books e.Collection) (err error) {
 			} else {
 				l.UI.Info(" - Previously exported: " + book.ShortString())
 			}
+			book.SetExported(true)
 		}
 	} else {
 		l.UI.Title("Nothing to export.")

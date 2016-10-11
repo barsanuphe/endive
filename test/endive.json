@@ -41,7 +41,8 @@
         "progress": "unread",
         "readdate": "",
         "rating": "",
-        "review": ""
+        "review": "",
+        "exported": ""
     },
     {
         "id": 2,
@@ -99,6 +100,7 @@
         "progress": "unread",
         "readdate": "",
         "rating": "",
-        "review": ""
+        "review": "",
+        "exported": ""
     }
 ]
