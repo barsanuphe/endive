@@ -108,6 +108,14 @@ func (bks *Books) NonRetailOnly() e.Collection {
 	return res
 }
 
+// Exported among Books.
+func (bks *Books) Exported() e.Collection {
+	exported := bks.filter(func(b *Book) bool { return b.IsExported == e.True })
+	var res e.Collection
+	res = &exported
+	return res
+}
+
 // FindByID among known Books
 func (bks *Books) FindByID(id int) (e.GenericBook, error) {
 	b := bks.findUnique(func(b *Book) bool { return b.ID() == id })

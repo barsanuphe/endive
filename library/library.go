@@ -161,6 +161,7 @@ func (l *Library) prepareQuery(queryString string) string {
 		"tag:", "metadata.tags.name:",
 		"publisher:", "metadata.publisher:",
 		"category:", "metadata.category:",
+		"type:", "metadata.type:",
 		"genre:", "metadata.genre:",
 		"description:", "metadata.description:",
 	)
@@ -189,5 +190,7 @@ func (l *Library) ShowInfo() string {
 	rows = append(rows, []string{"Number of books shortlisted for imminent reading", fmt.Sprintf("%d", len(bks))})
 	bks = l.Collection.Progress("unread").Books()
 	rows = append(rows, []string{"Number of unread books", fmt.Sprintf("%d", len(bks))})
+	bks = l.Collection.Exported().Books()
+	rows = append(rows, []string{"Number of exported books", fmt.Sprintf("%d", len(bks))})
 	return e.TabulateRows(rows, "Library", l.Config.LibraryRoot)
 }

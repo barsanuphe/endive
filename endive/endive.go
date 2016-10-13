@@ -57,6 +57,7 @@ type Collection interface {
 	// extracting information
 	Retail() Collection
 	NonRetailOnly() Collection
+	Exported() Collection
 	Untagged() Collection
 	Progress(string) Collection
 	Incomplete() Collection

@@ -74,6 +74,12 @@ func (c *Collection) NonRetailOnly() endive.Collection {
 	return nil
 }
 
+// Exported implementation for tests
+func (c *Collection) Exported() endive.Collection {
+	fmt.Println("mock Collection: Exported")
+	return nil
+}
+
 // Progress implementation for tests
 func (c *Collection) Progress(p string) endive.Collection {
 	fmt.Println("mock Collection: Progress " + p)
