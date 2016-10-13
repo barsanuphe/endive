@@ -93,6 +93,19 @@ func cleanCategory(category string) (clean string, err error) {
 	return
 }
 
+func cleanType(bookType string) (clean string, err error) {
+	cleanName, err := cleanTagName(bookType)
+	if err != nil {
+		return "", err
+	}
+	if _, isIn := e.StringInSlice(cleanName, validTypes); !isIn {
+		err = errors.New("Invalid type " + bookType)
+	} else {
+		clean = cleanName
+	}
+	return
+}
+
 func cleanHTML(desc string) string {
 	return sanitize.HTML(desc)
 }

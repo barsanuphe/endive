@@ -27,8 +27,37 @@ import (
 	e "github.com/barsanuphe/endive/endive"
 )
 
-var validProgress = []string{"unread", "read", "reading", "shortlisted"}
-var validCategories = []string{"fiction", "nonfiction"}
+const (
+	idField       = "id"
+	filenameField = "filename"
+	progressField = "progress"
+	readDateField = "readdate"
+	ratingField   = "rating"
+	reviewField   = "review"
+	versions      = "versions"
+	exported      = "exported"
+	// progress values
+	unread      = "unread"
+	read        = "read"
+	reading     = "reading"
+	shortlisted = "shortlisted"
+	// category values
+	fiction    = "fiction"
+	nonfiction = "nonfiction"
+	// type values
+	essay         = "essay"
+	biography     = "biography"
+	autobiography = "autobiography"
+	novel         = "novel"
+	shortstory    = "shortstory"
+	anthology     = "anthology"
+	poetry        = "poetry"
+)
+
+var validProgress = []string{unread, read, reading, shortlisted}
+var validCategories = []string{fiction, nonfiction}
+var validTypes = []string{essay, biography, autobiography, novel, shortstory, anthology, poetry}
+var allFields = []string{idField, filenameField, authorField, titleField, yearField, editionYearField, publisherField, isbnField, descriptionField, numPagesField, languageField, categoryField, typeField, genreField, tagsField, seriesField, versions, progressField, readDateField, averageRatingField, ratingField, reviewField, exported}
 
 // Book can manipulate a book.
 // A Book can have multiple epub files.
@@ -48,14 +77,6 @@ type Book struct {
 	Review     string `json:"review"`
 	IsExported string `json:"exported"`
 }
-
-const (
-	idField       = "id"
-	progressField = "progress"
-	readDateField = "readdate"
-	ratingField   = "rating"
-	reviewField   = "review"
-)
 
 // NewBook constructs a valid new Epub
 func NewBook(ui e.UserInterface, id int, filename string, c e.Config, isRetail bool) *Book {
@@ -98,15 +119,15 @@ func (b *Book) ShortString() string {
 func (b *Book) ShowInfo(fields ...string) string {
 	if len(fields) == 0 {
 		// select all fields
-		fields = []string{idField, "filename", authorField, titleField, yearField, editionYearField, publisherField, isbnField, descriptionField, numPagesField, languageField, categoryField, genreField, tagsField, seriesField, "versions", progressField, readDateField, averageRatingField, ratingField, reviewField, "exported"}
+		fields = allFields
 	}
 	var rows [][]string
 	for _, field := range fields {
 		switch field {
 		case idField:
 			rows = append(rows, []string{"ID", strconv.Itoa(b.BookID)})
-		case "filename":
-			rows = append(rows, []string{"Filename", b.MainEpub().Filename})
+		case filenameField:
+			rows = append(rows, []string{strings.Title(filenameField), b.MainEpub().Filename})
 		case authorField:
 			rows = append(rows, []string{strings.Title(authorField), b.Metadata.Author()})
 		case titleField:
@@ -129,6 +150,8 @@ func (b *Book) ShowInfo(fields ...string) string {
 			rows = append(rows, []string{strings.Title(languageField), b.Metadata.Language})
 		case categoryField:
 			rows = append(rows, []string{strings.Title(categoryField), b.Metadata.Category})
+		case typeField:
+			rows = append(rows, []string{strings.Title(typeField), b.Metadata.Type})
 		case genreField:
 			rows = append(rows, []string{strings.Title(genreField), b.Metadata.Genre})
 		case tagsField:
@@ -139,7 +162,7 @@ func (b *Book) ShowInfo(fields ...string) string {
 			if len(b.Metadata.Series) != 0 {
 				rows = append(rows, []string{strings.Title(seriesField), b.Metadata.Series.String()})
 			}
-		case "versions":
+		case versions:
 			available := ""
 			if b.HasRetail() {
 				available += "retail "
@@ -174,9 +197,9 @@ func (b *Book) ShowInfo(fields ...string) string {
 			if b.Review != "" {
 				rows = append(rows, []string{strings.Title(reviewField), b.Review})
 			}
-		case "exported":
+		case exported:
 			if b.IsExported == e.True {
-				rows = append(rows, []string{strings.Title("exported"), e.True})
+				rows = append(rows, []string{strings.Title(exported), e.True})
 			}
 		}
 	}
@@ -369,8 +392,7 @@ func (b *Book) Refresh() (wasRenamed []bool, newName []string, err error) {
 	var newNameR, newNameNR string
 	var errR, errNR error
 	if b.HasRetail() {
-		_, exists := e.FileExists(b.RetailEpub.FullPath())
-		if exists == nil {
+		if _, exists := e.FileExists(b.RetailEpub.FullPath()); exists == nil {
 			wasRenamedR, newNameR, errR = b.RefreshEpub(b.RetailEpub, true)
 			if wasRenamedR {
 				b.RetailEpub.Filename = newNameR
@@ -381,8 +403,7 @@ func (b *Book) Refresh() (wasRenamed []bool, newName []string, err error) {
 		}
 	}
 	if b.HasNonRetail() {
-		_, exists := e.FileExists(b.NonRetailEpub.FullPath())
-		if exists == nil {
+		if _, exists := e.FileExists(b.NonRetailEpub.FullPath()); exists == nil {
 			wasRenamedNR, newNameNR, errNR = b.RefreshEpub(b.NonRetailEpub, false)
 			if wasRenamedNR {
 				b.NonRetailEpub.Filename = newNameNR

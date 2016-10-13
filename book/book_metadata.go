@@ -73,6 +73,8 @@ func (b *Book) ForceMetadataFieldRefresh(field string) (err error) {
 		b.Metadata.Language = info.Language
 	case categoryField:
 		b.Metadata.Category = info.Category
+	case typeField:
+		b.Metadata.Type = info.Type
 	case genreField:
 		b.Metadata.Genre = info.Genre
 	case isbnField:
@@ -92,8 +94,8 @@ func (b *Book) ForceMetadataFieldRefresh(field string) (err error) {
 // EditField in current Metadata associated with the Book.
 func (b *Book) EditField(args ...string) (err error) {
 	if len(args) == 0 {
-		// completely interactive edit
-		for _, field := range []string{"author", "title", "year", "edition_year", "category", "genre", "tags", "series", "language", "isbn", "description", "progress"} {
+		// completely interactive edit over all fields
+		for _, field := range allFields {
 			err = b.editSpecificField(field, []string{})
 			if err != nil {
 				fmt.Println("Could not assign new value to field " + field + ", continuing.")
@@ -192,6 +194,12 @@ func (b *Book) editSpecificField(field string, values []string) error {
 			return err
 		}
 		b.Metadata.Category = newValues[0]
+	case typeField:
+		newValues, err := b.UI.UpdateValues(field, b.Metadata.Type, values, false)
+		if err != nil {
+			return err
+		}
+		b.Metadata.Type = newValues[0]
 	case genreField:
 		newValues, err := b.UI.UpdateValues(field, b.Metadata.Genre, values, false)
 		if err != nil {
