@@ -87,12 +87,45 @@ func (l *Library) ExportToEReader(books e.Collection) (err error) {
 			} else {
 				l.UI.Info(" - Previously exported: " + book.ShortString())
 			}
-			book.SetExported(true)
 		}
 	} else {
 		l.UI.Title("Nothing to export.")
 	}
-	return
+	return l.markExported()
+}
+
+// markExported in Library after looking at contents of ereader.
+func (l *Library) markExported() error {
+	// scan for exported epubs
+	exported, err := e.ScanForEpubs(l.Config.EReaderMountPoint, e.KnownHashes{}, l.Collection)
+	if err != nil {
+		return err
+	}
+
+	// if in library and IsExported but not found on reader, update Book.
+	for _, marked := range l.Collection.Exported().Books() {
+		stillExported := false
+		for _, exportedEpub := range exported {
+			if marked.HasHash(exportedEpub.Hash) {
+				stillExported = true
+				break
+			}
+		}
+		if !stillExported {
+			marked.SetExported(false)
+		}
+	}
+
+	// for each exported epub, try to find hash in library
+	for _, exportedEpub := range exported {
+		b, err := l.Collection.FindByHash(exportedEpub.Hash)
+		// if found in library, mark as exported
+		if err == nil {
+			b.SetExported(true)
+		}
+	}
+
+	return nil
 }
 
 // Search and print the results

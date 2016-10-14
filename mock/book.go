@@ -13,6 +13,12 @@ func (b *Book) ID() int {
 	return 1
 }
 
+// HasHash implementation for tests
+func (b *Book) HasHash(a string) bool {
+	fmt.Println("mock Book: HasHash " + a)
+	return true
+}
+
 // HasEpub implementation for tests
 func (b *Book) HasEpub() bool {
 	fmt.Println("mock Book: HasEpub")

@@ -1,4 +1,4 @@
-package main
+package endive
 
 import (
 	"fmt"
@@ -9,10 +9,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
-	en "github.com/barsanuphe/endive/endive"
-	"github.com/barsanuphe/endive/mock"
 )
 
 // create a lot of epub files with random contents
@@ -60,29 +56,23 @@ func CleanupTestFiles(epubs []string) error {
 func TestListEpubs(t *testing.T) {
 	fmt.Println("+ Testing Import/ListEpubs()...")
 	assert := assert.New(t)
-	// getting test directory
-	testDir, err := os.Getwd()
-	require.Nil(t, err, "Error getting current directory")
-	testDir = filepath.Join(testDir, "test")
 	// using epubs as defined in epub_test
-	epubsPaths, err := listEpubs(testDir)
+	epubsPaths, err := listEpubs("../test")
 	assert.Nil(err, "Error listing epubs")
 	assert.Equal(4, len(epubsPaths), "Error listing epubs: expected 4 epubs, got %d.", len(epubsPaths))
 }
 
-func TestGetCandidates(t *testing.T) {
-	fmt.Println("+ Testing Import/GetCandidates()...")
+func TestScanForEpubs(t *testing.T) {
+	fmt.Println("+ Testing Import/ScanForEpubs()...")
 	assert := assert.New(t)
 	// getting test directory
-	testDir, err := os.Getwd()
-	require.Nil(t, err, "Error getting current directory")
-	testDir = filepath.Join(testDir, "test")
+	testDir := "../test"
 	// using epubs as defined in epub_test
 
-	h := en.KnownHashes{Filename: "test/hashes.json"}
+	h := KnownHashes{Filename: "test/hashes.json"}
 	// adding hash for pg16328.epub
 	h.Add("dc325b3aceb77d9f943425728c037fdcaf4af58e3abd771a8094f2424455cc03")
-	c := &mock.Collection{}
+	var c Collection
 
 	// prepare dummy test files
 	testFiles, err := PrepareTestFiles(100, testDir)
@@ -90,28 +80,28 @@ func TestGetCandidates(t *testing.T) {
 	defer CleanupTestFiles(testFiles)
 
 	// non existing root
-	_, err = getCandidates("does not exist", h, c)
+	_, err = ScanForEpubs("does not exist", h, c)
 	assert.NotNil(err, "impossible to get candidates from inexistant directory")
 	// inspecting test directory
-	candidates, err := getCandidates(testDir, h, c)
+	candidates, err := ScanForEpubs(testDir, h, c)
 	assert.Nil(err, "Error listing epubs")
 	assert.Equal(104, len(candidates), "Error listing candidates: expected 102 epubs, got %d.", len(candidates))
 
 	for _, candidate := range candidates {
-		if filepath.Base(candidate.filename) == "pg16328.epub" {
-			assert.Equal("dc325b3aceb77d9f943425728c037fdcaf4af58e3abd771a8094f2424455cc03", candidate.hash)
-			assert.True(candidate.imported, "hash has been imported")
-			assert.False(candidate.importedButMissing, "is not missing")
+		if filepath.Base(candidate.Filename) == "pg16328.epub" {
+			assert.Equal("dc325b3aceb77d9f943425728c037fdcaf4af58e3abd771a8094f2424455cc03", candidate.Hash)
+			assert.True(candidate.Imported, "hash has been imported")
+			assert.False(candidate.ImportedButMissing, "is not missing")
 		}
-		if filepath.Base(candidate.filename) == "pg17989.epub" {
-			assert.Equal("acd2b8eba1b11456bacf11e690edf56bc57774053668644ef34f669138ebdd9a", candidate.hash)
-			assert.False(candidate.imported, "hash has not been imported")
-			assert.False(candidate.importedButMissing, "is not missing")
+		if filepath.Base(candidate.Filename) == "pg17989.epub" {
+			assert.Equal("acd2b8eba1b11456bacf11e690edf56bc57774053668644ef34f669138ebdd9a", candidate.Hash)
+			assert.False(candidate.Imported, "hash has not been imported")
+			assert.False(candidate.ImportedButMissing, "is not missing")
 		}
 	}
 
 	// only one candidate is seen as already imported
-	assert.Equal(103, len(epubCandidates(candidates).new()))
-	assert.Equal(0, len(epubCandidates(candidates).missing()))
-	assert.Equal(103, len(epubCandidates(candidates).importable()))
+	assert.Equal(103, len(EpubCandidates(candidates).New()))
+	assert.Equal(0, len(EpubCandidates(candidates).Missing()))
+	assert.Equal(103, len(EpubCandidates(candidates).Importable()))
 }

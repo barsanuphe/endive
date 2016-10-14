@@ -146,5 +146,5 @@ func TestImportSource(t *testing.T) {
 	candidates, err := endive.analyzeSources(endive.Config.RetailSource, true)
 	assert.Nil(err, "import should be successful")
 	assert.Equal(4, len(candidates), "Expected to find 4 epubs.")
-	assert.Equal(4, len(candidates.importable()), "Expected to find 4 epubs.")
+	assert.Equal(4, len(candidates.Importable()), "Expected to find 4 epubs.")
 }

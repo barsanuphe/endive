@@ -97,6 +97,14 @@ func (b *Book) ID() int {
 	return b.BookID
 }
 
+// HasHash returns true if it is associated with an Epub with the given hash, according to the GenericBook interface
+func (b *Book) HasHash(hash string) bool {
+	if (b.HasRetail() && b.RetailEpub.Hash == hash) || (b.HasNonRetail() && b.NonRetailEpub.Hash == hash) {
+		return true
+	}
+	return false
+}
+
 // String returns a string representation of Epub
 func (b *Book) String() string {
 	tags := ""

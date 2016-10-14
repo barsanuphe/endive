@@ -20,6 +20,7 @@ const False = "false"
 // GenericBook interface for Books
 type GenericBook interface {
 	ID() int
+	HasHash(string) bool
 	HasEpub() bool
 	FullPath() string
 	ShortString() string
