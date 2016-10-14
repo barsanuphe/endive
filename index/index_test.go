@@ -17,7 +17,7 @@ func TestSearch(t *testing.T) {
 	indexPath := "../test/test_index"
 	assert := assert.New(t)
 
-	c := e.Config{}
+	c := e.Config{LibraryRoot: ".."}
 	ui := &mock.UserInterface{}
 	db := &db.JSONDB{}
 	db.SetPath("../test/endive.json")
@@ -42,7 +42,7 @@ func TestSearch(t *testing.T) {
 	assert.Nil(err, "Error opening index")
 	assert.EqualValues(1, len(results), "Error searching fr, unexpected results")
 	if len(results) >= 1 {
-		assert.Equal("test/pg17989.epub", results[0], "Error searching fr, unexpected results")
+		assert.Equal("../test/pg17989.epub", results[0], "Error searching fr, unexpected results")
 	}
 
 	// metadata.language:fr
@@ -50,14 +50,14 @@ func TestSearch(t *testing.T) {
 	assert.Nil(err, "Error searching language:fr")
 	assert.Equal(1, len(results), "Error searching language:fr, unexpected results")
 	if len(results) >= 1 {
-		assert.Equal("test/pg17989.epub", results[0], "Error searching language:fr, unexpected results")
+		assert.Equal("../test/pg17989.epub", results[0], "Error searching language:fr, unexpected results")
 	}
 	// metadata.authors:dumas
 	results, err = l.Index.Query("metadata.authors:dumas")
 	assert.Nil(err, "Error searching author:dumas")
 	assert.EqualValues(1, len(results), "Error searching author:dumas, unexpected results")
 	if len(results) >= 1 {
-		assert.Equal("test/pg17989.epub", results[0], "Error searching author:dumas, unexpected results")
+		assert.Equal("../test/pg17989.epub", results[0], "Error searching author:dumas, unexpected results")
 	}
 	// metadata.year:2005
 	results, err = l.Index.Query("metadata.year:2005")
@@ -67,6 +67,22 @@ func TestSearch(t *testing.T) {
 	results, err = l.Index.Query("metadata.year:2205")
 	assert.Nil(err, "Error searching year:2205")
 	assert.EqualValues(0, len(results), "Error searching year:2205, did not expect results")
+
+	// check index
+	err = l.Index.Check(l.Collection)
+	assert.Nil(err, "Error checking collection")
+
+	// update: mod first book, remove last book
+	tempCollection := l.Collection.Last(1)
+	err = l.Index.Update(&b.Books{}, l.Collection.First(1), l.Collection.Last(1))
+	assert.Nil(err, "Error updating collection")
+	numIndexed = l.Index.Count()
+	assert.EqualValues(1, numIndexed, "1 book should remain in index")
+
+	err = l.Index.Update(tempCollection, &b.Books{}, &b.Books{})
+	assert.Nil(err, "Error updating collection")
+	numIndexed = l.Index.Count()
+	assert.EqualValues(2, numIndexed, "Back to 2 books")
 
 	// remove index
 	err = os.RemoveAll(indexPath)
