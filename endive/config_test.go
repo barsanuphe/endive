@@ -17,12 +17,12 @@ func TestConfigLoad(t *testing.T) {
 
 	err := c.Load()
 	assert.Nil(err, "Error loading configuration file")
-	assert.Equal(c.LibraryRoot, "test_library", "Error loading library root")
-	assert.Equal(c.DatabaseFile, "test_library/endive.json", "Error loading database filename")
-	assert.Equal(len(c.RetailSource), 2, "Error: loading retail sources, expected 2")
-	assert.Equal(len(c.NonRetailSource), 1, "Error: loading retail sources, expected 1")
-	assert.Equal(len(c.AuthorAliases), 2, "Error: loading author aliases, expected 2")
-	assert.Equal(len(c.AuthorAliases["China Miéville"]), 2, "Error: loading author aliases for china miéville, should have gotten 2")
+	assert.Equal("test_library", c.LibraryRoot,  "Error loading library root")
+	assert.Equal("test_library/endive.json", c.DatabaseFile, "Error loading database filename")
+	assert.Equal(2, len(c.RetailSource), "Error: loading retail sources, expected 2")
+	assert.Equal(1, len(c.NonRetailSource), "Error: loading retail sources, expected 1")
+	assert.Equal(2, len(c.AuthorAliases), "Error: loading author aliases, expected 2")
+	assert.Equal(2, len(c.AuthorAliases["China Miéville"]), "Error: loading author aliases for china miéville, should have gotten 2")
 	// checking library root, expecting error
 	err = c.Check()
 	assert.NotNil(err, "Error checking configuration file, library root should not exist.")
