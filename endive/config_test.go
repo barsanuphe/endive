@@ -22,7 +22,7 @@ func TestConfigLoad(t *testing.T) {
 	assert.Equal(2, len(c.RetailSource), "Error: loading retail sources, expected 2")
 	assert.Equal(1, len(c.NonRetailSource), "Error: loading retail sources, expected 1")
 	assert.Equal(2, len(c.AuthorAliases), "Error: loading author aliases, expected 2")
-	assert.Equal(2, len(c.AuthorAliases["China Miéville"]), "Error: loading author aliases for china miéville, should have gotten 2")
+	assert.Equal(1, len(c.AuthorAliases["Richard K. Morgan"]), "Error: loading author aliases for richard morgan, should have gotten 1")
 	// checking library root, expecting error
 	err = c.Check()
 	assert.NotNil(err, "Error checking configuration file, library root should not exist.")
