@@ -5,10 +5,24 @@ retail_source:
 nonretail_source:
     - test
 epub_filename_format: $a [$y] $t
+ereader_target: /tmp
 author_aliases:
+    Alexandre Dumas:
+        - Alexandre Dumas Père
     China Miéville:
         - China Mieville
-        - China Mievile
+        - China Miévile
     Richard K. Morgan:
         - Richard Morgan
-ereader_target: /tmp
+    Robert Silverberg:
+        - Robert K. Silverberg
+    Jared Diamond:
+        - Diamond, Jared
+tag_aliases:
+    science-fiction:
+        - sci-fi
+        - sf
+        - sciencefiction
+publisher_aliases:
+    Tor:
+        - Tom Doherty Associates

@@ -5,7 +5,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/spf13/viper"
+	"io/ioutil"
+
+	"gopkg.in/yaml.v2"
 	"launchpad.net/go-xdg"
 )
 
@@ -29,6 +31,8 @@ const (
 	ErrorConfigFileCreated Error = iota
 	ErrorCannotLockDB
 	ErrorLibraryRootDoesNotExist
+	ErrorLibraryRootUnknown
+	ErrorBadFormat
 	WarningGoodReadsAPIKeyMissing
 	WarningRetailSourceDoesNotExist
 	WarningNonRetailSourceDoesNotExist
@@ -38,6 +42,8 @@ var errorMessages = map[Error]string{
 	ErrorConfigFileCreated:             "Configuration file " + xdgConfigPath + " created. Populate it.",
 	ErrorCannotLockDB:                  "Cannot lock library, is it running somewhere already?",
 	ErrorLibraryRootDoesNotExist:       "Library root does not exist",
+	ErrorLibraryRootUnknown:            "Missing library_root from config file",
+	ErrorBadFormat:                     "Error parsing configuration file: bad format",
 	WarningGoodReadsAPIKeyMissing:      "GoodReads API key not found! go to https://www.goodreads.com/api/keys to get one.",
 	WarningRetailSourceDoesNotExist:    "At least one retail source does not exist.",
 	WarningNonRetailSourceDoesNotExist: "At least one non-retail source does not exist.",
@@ -120,38 +126,102 @@ func RemoveLock() (err error) {
 	return os.Remove(lockFile)
 }
 
+func interfaceToStringSlice(in interface{}) ([]string, error) {
+	out := []string{}
+	switch in.(type) {
+	case []interface{}:
+		for _, e := range in.([]interface{}) {
+			out = append(out, e.(string))
+		}
+	default:
+		return out, ErrorBadFormat
+	}
+	return out, nil
+}
+
+func interfaceToMap(in interface{}) (map[string][]string, error) {
+	out := make(map[string][]string)
+	switch in.(type) {
+	case map[interface{}]interface{}:
+		for k, v := range in.(map[interface{}]interface{}) {
+			slice, err := interfaceToStringSlice(v)
+			if err != nil {
+				return out, err
+			}
+			out[k.(string)] = slice
+		}
+	default:
+		return out, ErrorBadFormat
+	}
+	return out, nil
+}
+
 // Load configuration file using viper.
 func (c *Config) Load() (err error) {
-	conf := viper.New()
-	conf.SetConfigType("yaml")
-	conf.SetConfigFile(c.Filename)
-
-	err = conf.ReadInConfig()
+	conf := make(map[interface{}]interface{})
+	contents, err := ioutil.ReadFile(c.Filename)
 	if err != nil {
-		return
+		return err
 	}
-	c.LibraryRoot = conf.GetString("library_root")
-	db := conf.GetString("database_filename")
-	if db == "" {
-		c.DatabaseFile = filepath.Join(c.LibraryRoot, databaseFilename)
+	err = yaml.Unmarshal(contents, &conf)
+	if err != nil {
+		return err
+	}
+
+	if val, ok := conf["library_root"]; ok {
+		c.LibraryRoot = val.(string)
 	} else {
-		c.DatabaseFile = filepath.Join(c.LibraryRoot, db)
+		return ErrorLibraryRootUnknown
 	}
-	c.RetailSource = conf.GetStringSlice("retail_source")
-	c.NonRetailSource = conf.GetStringSlice("nonretail_source")
-	c.AuthorAliases = conf.GetStringMapStringSlice("author_aliases")
-	c.TagAliases = conf.GetStringMapStringSlice("tag_aliases")
-	c.PublisherAliases = conf.GetStringMapStringSlice("publisher_aliases")
-	c.EpubFilenameFormat = conf.GetString("epub_filename_format")
-	if c.EpubFilenameFormat == "" {
+	if val, ok := conf["database_filename"]; ok {
+		c.DatabaseFile = filepath.Join(c.LibraryRoot, val.(string))
+	} else {
+		c.DatabaseFile = filepath.Join(c.LibraryRoot, databaseFilename)
+	}
+	if val, ok := conf["epub_filename_format"]; ok {
+		c.EpubFilenameFormat = val.(string)
+	} else {
 		c.EpubFilenameFormat = "$a [$y] $t"
 	}
-	c.EReaderMountPoint = conf.GetString("ereader_root")
-	c.GoodReadsAPIKey = conf.GetString("goodreads_api_key")
-	if c.GoodReadsAPIKey == "" {
+	if val, ok := conf["ereader_root"]; ok {
+		c.EReaderMountPoint = val.(string)
+	}
+	if val, ok := conf["goodreads_api_key"]; ok {
+		c.GoodReadsAPIKey = val.(string)
+	} else {
 		c.GoodReadsAPIKey = os.Getenv("GR_API_KEY")
 		if c.GoodReadsAPIKey == "" {
 			return WarningGoodReadsAPIKeyMissing
+		}
+	}
+	if val, ok := conf["retail_source"]; ok {
+		c.RetailSource, err = interfaceToStringSlice(val)
+		if err != nil {
+			return err
+		}
+	}
+	if val, ok := conf["nonretail_source"]; ok {
+		c.NonRetailSource, err = interfaceToStringSlice(val)
+		if err != nil {
+			return err
+		}
+	}
+	if val, ok := conf["author_aliases"]; ok {
+		c.AuthorAliases, err = interfaceToMap(val)
+		if err != nil {
+			return err
+		}
+	}
+	if val, ok := conf["tag_aliases"]; ok {
+		c.TagAliases, err = interfaceToMap(val)
+		if err != nil {
+			return err
+		}
+	}
+	if val, ok := conf["publisher_aliases"]; ok {
+		c.PublisherAliases, err = interfaceToMap(val)
+		if err != nil {
+			return err
 		}
 	}
 	return
