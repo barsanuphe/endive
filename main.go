@@ -24,13 +24,14 @@ import (
 
 func generateCLI(e *Endive) (app *cli.App) {
 	app = cli.NewApp()
-	app.Name = "E N D I V E"
+	app.Name = "endive"
 	app.Usage = "Organize your epub collection."
 	app.Version = "0.1.0"
 
 	app.Commands = []cli.Command{
 		{
 			Name:    "config",
+			Category: "configuration",
 			Aliases: []string{"c"},
 			Usage:   "options for configuration",
 			Action: func(c *cli.Context) {
@@ -39,7 +40,7 @@ func generateCLI(e *Endive) (app *cli.App) {
 		},
 		{
 			Name:     "import",
-			Category: "importing",
+			Category: "library",
 			Aliases:  []string{"i"},
 			Usage:    "options for importing epubs",
 			Subcommands: []cli.Command{
@@ -79,6 +80,7 @@ func generateCLI(e *Endive) (app *cli.App) {
 		},
 		{
 			Name:    "export",
+			Category: "library",
 			Aliases: []string{"x"},
 			Usage:   "export to E-Reader",
 			Action: func(c *cli.Context) {
@@ -97,6 +99,7 @@ func generateCLI(e *Endive) (app *cli.App) {
 		},
 		{
 			Name:    "check",
+			Category: "library",
 			Aliases: []string{"fsck"},
 			Usage:   "check library",
 			Action: func(c *cli.Context) {
@@ -110,30 +113,26 @@ func generateCLI(e *Endive) (app *cli.App) {
 			},
 		},
 		{
-			Name:    "metadata",
-			Aliases: []string{"md"},
-			Usage:   "edit book metadata",
-			Subcommands: []cli.Command{
-				{
-					Name:    "refresh",
-					Aliases: []string{"r"},
-					Usage:   "reload metadata from epub and online sources (overwrites previous changes).",
-					Action: func(c *cli.Context) {
-						refreshMetadata(c, e)
-					},
-				},
-				{
-					Name:    "edit",
-					Aliases: []string{"modify", "e"},
-					Usage:   "edit metadata field using book ID: metadata edit ID field values",
-					Action: func(c *cli.Context) {
-						editMetadata(c, e)
-					},
-				},
+			Name:    "refresh",
+			Category: "library",
+			Aliases: []string{"r"},
+			Usage:   "refresh library",
+			Action: func(c *cli.Context) {
+				if c.NArg() != 0 {
+					e.UI.Display("refresh subcommand does not require arguments.")
+					return
+				}
+				e.UI.Display("Refreshing library...")
+				renamed, err := e.Refresh()
+				if err != nil {
+					panic(err)
+				}
+				e.UI.Display("Refresh done, renamed " + strconv.Itoa(renamed) + " epubs.")
 			},
 		},
 		{
 			Name:  "index",
+			Category: "library",
 			Usage: "manipulate index",
 			Subcommands: []cli.Command{
 				{
@@ -159,33 +158,8 @@ func generateCLI(e *Endive) (app *cli.App) {
 			},
 		},
 		{
-			Name:    "refresh",
-			Aliases: []string{"r"},
-			Usage:   "refresh library",
-			Action: func(c *cli.Context) {
-				if c.NArg() != 0 {
-					e.UI.Display("refresh subcommand does not require arguments.")
-					return
-				}
-				e.UI.Display("Refreshing library...")
-				renamed, err := e.Refresh()
-				if err != nil {
-					panic(err)
-				}
-				e.UI.Display("Refresh done, renamed " + strconv.Itoa(renamed) + " epubs.")
-			},
-		},
-		{
-			Name:    "progress",
-			Aliases: []string{"p"},
-			Usage:   "mark as read: progress ID [unread/shortlisted/reading/read [rating [review]]]",
-			Action: func(c *cli.Context) {
-				setProgress(c, e)
-			},
-		},
-		{
 			Name:     "info",
-			Category: "information",
+			Category: "book",
 			Aliases:  []string{"information"},
 			Usage:    "get info about a specific book",
 			Action: func(c *cli.Context) {
@@ -193,19 +167,45 @@ func generateCLI(e *Endive) (app *cli.App) {
 			},
 		},
 		{
-			Name:     "search",
-			Category: "searching",
-			Aliases:  []string{"s", "find"},
-			Usage:    "search the epub collection",
+			Name:    "metadata",
+			Category: "book",
+			Aliases: []string{"md"},
+			Usage:   "edit book metadata",
+			Subcommands: []cli.Command{
+				{
+					Name:    "refresh",
+					Aliases: []string{"r"},
+					Usage:   "reload metadata from epub and online sources (overwrites previous changes).",
+					Action: func(c *cli.Context) {
+						refreshMetadata(c, e)
+					},
+				},
+				{
+					Name:    "edit",
+					Aliases: []string{"modify", "e"},
+					Usage:   "edit metadata field using book ID: metadata edit ID field values",
+					ArgsUsage:   "ID [field [value]]",
+					Action: func(c *cli.Context) {
+						editMetadata(c, e)
+					},
+				},
+			},
+		},
+		{
+			Name:    "progress",
+			Category: "book",
+			Aliases: []string{"p"},
+			Usage:   "modify reading progress for a given book",
+			ArgsUsage: "ID [unread/shortlisted/reading/read [rating [review]]]",
 			Action: func(c *cli.Context) {
-				search(c, e)
+				setProgress(c, e)
 			},
 		},
 		{
 			Name:     "list",
-			Category: "searching",
+			Category: "search",
 			Aliases:  []string{"ls"},
-			Usage:    "list epubs in the collection",
+			Usage:    "list epubs in the collection with specific filters",
 			Subcommands: []cli.Command{
 				{
 					Name:    "books",
@@ -281,6 +281,17 @@ func generateCLI(e *Endive) (app *cli.App) {
 						displayBooks(c, e.UI, e.Library.Collection.Retail())
 					},
 				},
+			},
+		},
+		{
+			Name:     "search",
+			Category: "search",
+			Aliases:  []string{"s", "find"},
+			Usage:    "search the library for specific books",
+			Description: "A list of strings can be given as input to search for books. \n   It is also possible to restrict a value to a specific field: `field:value`.",
+			ArgsUsage: "arg1 [args2] [field:value] [+field2:value]",
+			Action: func(c *cli.Context) {
+				search(c, e)
 			},
 		},
 	}
