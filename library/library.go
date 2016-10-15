@@ -129,7 +129,7 @@ func (l *Library) markExported() error {
 }
 
 // Search and print the results
-func (l *Library) Search(query, sortBy string, limitFirst, limitLast bool, limitNumber int, results e.Collection) (err error) {
+func (l *Library) Search(query, sortBy string, limitFirst, limitLast int, in e.Collection) (results e.Collection, err error) {
 	if err != nil {
 		return
 	}
@@ -141,17 +141,18 @@ func (l *Library) Search(query, sortBy string, limitFirst, limitLast bool, limit
 		if err.Error() == "Index is empty" {
 			// rebuild index
 			if err := l.RebuildIndex(); err != nil {
-				return err
+				return in, err
 			}
 			// trying again
 			booksPaths, err = l.Index.Query(query)
 			if err != nil {
-				return
+				return in, err
 			}
 		} else {
-			return err
+			return in, err
 		}
 	}
+
 	if len(booksPaths) != 0 {
 		// find the Book for each path
 		for _, path := range booksPaths {
@@ -159,25 +160,24 @@ func (l *Library) Search(query, sortBy string, limitFirst, limitLast bool, limit
 			if err != nil {
 				l.UI.Warning("Could not find Book: " + path)
 			} else {
-				results.Add(book)
+				in.Add(book)
 			}
 		}
-
-		results.Sort(sortBy)
-		if limitFirst {
-			results = results.First(limitNumber)
+		in.Sort(sortBy)
+		if limitFirst != -1 {
+			results = in.First(limitFirst)
+		} else if limitLast != -1 {
+			results = in.Last(limitLast)
+		} else {
+			results = in
 		}
-		if limitLast {
-			results = results.Last(limitNumber)
-		}
-		return err
 	}
-	return err
+	return results, err
 }
 
 // SearchAndPrint results to a query
-func (l *Library) SearchAndPrint(query, sortBy string, limitFirst, limitLast bool, limitNumber int, results e.Collection) (string, error) {
-	err := l.Search(query, sortBy, limitFirst, limitLast, limitNumber, results)
+func (l *Library) SearchAndPrint(query, sortBy string, limitFirst, limitLast int, results e.Collection) (string, error) {
+	results, err := l.Search(query, sortBy, limitFirst, limitLast, results)
 	return results.Table(), err
 }
 
