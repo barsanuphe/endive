@@ -2,6 +2,7 @@ package book
 
 import (
 	"errors"
+	"fmt"
 	"path/filepath"
 	"strconv"
 
@@ -302,7 +303,11 @@ func (bks Books) Table() string {
 		if err != nil {
 			panic(errors.New("File " + res.FullPath() + " not in library?"))
 		}
-		rows = append(rows, []string{strconv.Itoa(res.ID()), res.Metadata.Author(), res.Metadata.Title(), res.Metadata.OriginalYear, relativePath})
+		id := fmt.Sprintf("%d", res.ID())
+		if res.IsExported == e.True {
+			id += " ⇲"
+		}
+		rows = append(rows, []string{id, res.Metadata.Author(), res.Metadata.Title(), res.Metadata.OriginalYear, relativePath})
 	}
 	return e.TabulateRows(rows, "ID", "Author", "Title", "Year", "Filename")
 }
