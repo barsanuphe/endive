@@ -2,6 +2,7 @@ package book
 
 import (
 	"errors"
+	"fmt"
 	"path/filepath"
 	"strconv"
 
@@ -108,6 +109,14 @@ func (bks *Books) NonRetailOnly() e.Collection {
 	return res
 }
 
+// Exported among Books.
+func (bks *Books) Exported() e.Collection {
+	exported := bks.filter(func(b *Book) bool { return b.IsExported == e.True })
+	var res e.Collection
+	res = &exported
+	return res
+}
+
 // FindByID among known Books
 func (bks *Books) FindByID(id int) (e.GenericBook, error) {
 	b := bks.findUnique(func(b *Book) bool { return b.ID() == id })
@@ -153,9 +162,9 @@ func (bks *Books) FindByFullPath(filename string) (e.GenericBook, error) {
 
 // FindByMetadata among known Books
 func (bks *Books) FindByMetadata(isbn, authors, title string) (e.GenericBook, error) {
-	o := Metadata{ISBN: isbn, Authors: []string{authors}, MainTitle: title}
+	o := Metadata{ISBN: isbn, Authors: []string{authors}, BookTitle: title}
 	b := bks.findUnique(func(b *Book) bool {
-		return b.Metadata.IsSimilar(o) || b.EpubMetadata.IsSimilar(o)
+		return b.Metadata.IsSimilar(o)
 	})
 	if b.ID() == 0 {
 		return nil, errors.New("Could not find book with info " + o.String())
@@ -294,7 +303,11 @@ func (bks Books) Table() string {
 		if err != nil {
 			panic(errors.New("File " + res.FullPath() + " not in library?"))
 		}
-		rows = append(rows, []string{strconv.Itoa(res.ID()), res.Metadata.Author(), res.Metadata.Title(), res.Metadata.OriginalYear, relativePath})
+		id := fmt.Sprintf("%d", res.ID())
+		if res.IsExported == e.True {
+			id += " ⇲"
+		}
+		rows = append(rows, []string{id, res.Metadata.Author(), res.Metadata.Title(), res.Metadata.OriginalYear, relativePath})
 	}
 	return e.TabulateRows(rows, "ID", "Author", "Title", "Year", "Filename")
 }

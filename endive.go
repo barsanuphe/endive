@@ -99,39 +99,39 @@ func (e *Endive) Refresh() (renamed int, err error) {
 	e.UI.Info("Refreshing database...")
 
 	// scan for new epubs
-	foundCandidates, err := getCandidates(e.Config.LibraryRoot, e.hashes, e.Library.Collection)
+	foundCandidates, err := en.ScanForEpubs(e.Config.LibraryRoot, e.hashes, e.Library.Collection)
 	if err != nil {
 		return
 	}
 	// compare allEpubs with l.Epubs
-	var newEpubs epubCandidates
+	var newEpubs en.EpubCandidates
 	for _, epub := range foundCandidates {
-		_, err = e.Library.Collection.FindByFullPath(epub.filename)
+		_, err = e.Library.Collection.FindByFullPath(epub.Filename)
 		// no error == found Epub
 		if err != nil {
 			// check if hash is known
-			gBook, err := e.Library.Collection.FindByHash(epub.hash)
+			gBook, err := e.Library.Collection.FindByHash(epub.Hash)
 			if err != nil {
 				// else, it's a new epub, import
-				e.UI.Info("NEW EPUB " + epub.filename + " , will be imported as non-retail.")
+				e.UI.Info("NEW EPUB " + epub.Filename + " , will be imported as non-retail.")
 				newEpubs = append(newEpubs, epub)
 			} else {
 				var book *b.Book
 				book = gBook.(*b.Book)
 				// if it is, rename found file to filename in DB
 				destination := book.RetailEpub.FullPath()
-				if book.NonRetailEpub.Hash == epub.hash {
+				if book.NonRetailEpub.Hash == epub.Hash {
 					destination = book.NonRetailEpub.FullPath()
 				}
 				// check if retail epub already exists
 				_, err := en.FileExists(destination)
 				if err == nil {
 					// file already exists
-					e.UI.Errorf("Found epub %s with the same hash as %s, ignoring.", epub.filename, destination)
+					e.UI.Errorf("Found epub %s with the same hash as %s, ignoring.", epub.Filename, destination)
 				} else {
-					e.UI.Warningf("Found epub %s which is called %s in the database, renaming.", epub.filename, destination)
+					e.UI.Warningf("Found epub %s which is called %s in the database, renaming.", epub.Filename, destination)
 					// rename found file to retail name in db
-					err = os.Rename(epub.filename, destination)
+					err = os.Rename(epub.Filename, destination)
 					if err != nil {
 						return 0, err
 					}
@@ -140,9 +140,9 @@ func (e *Endive) Refresh() (renamed int, err error) {
 		}
 	}
 
-	if len(newEpubs.importable()) != 0 {
+	if len(newEpubs.Importable()) != 0 {
 		// import new books as non-retail
-		err = e.ImportEpubs(newEpubs.importable(), false)
+		err = e.ImportEpubs(newEpubs.Importable(), false)
 		if err != nil {
 			return
 		}

@@ -10,8 +10,7 @@ import (
 
 // Metadata contains all of the known book metadata.
 type Metadata struct {
-	MainTitle     string   `json:"title" xml:"title"`
-	OriginalTitle string   `json:"original_title" xml:"work>original_title"`
+	BookTitle     string   `json:"title" xml:"title"`
 	ImageURL      string   `json:"image_url" xml:"image_url"`
 	NumPages      string   `json:"num_pages" xml:"num_pages"`
 	Authors       []string `json:"authors" xml:"authors>author>name"`
@@ -23,7 +22,8 @@ type Metadata struct {
 	AverageRating string   `json:"average_rating" xml:"average_rating"`
 	Tags          Tags     `json:"tags" xml:"popular_shelves>shelf"`
 	Category      string   `json:"category"`
-	MainGenre     string   `json:"main_genre"`
+	Type          string   `json:"type"`
+	Genre         string   `json:"genre"`
 	Language      string   `json:"language" xml:"language_code"`
 	Publisher     string   `json:"publisher" xml:"publisher"`
 }
@@ -40,18 +40,17 @@ const (
 	seriesField        = "series"
 	languageField      = "language"
 	categoryField      = "category"
+	typeField          = "type"
 	genreField         = "genre"
 	numPagesField      = "numpages"
 	averageRatingField = "averagerating"
-	fictionCategory    = "fiction"
-	nonfictionCategory = "nonfiction"
 
 	unknownYear = "XXXX"
 	unknown     = "Unknown"
 )
 
 // MetadataFieldNames is a list of valid field names
-var MetadataFieldNames = []string{authorField, titleField, yearField, editionYearField, publisherField, descriptionField, languageField, categoryField, genreField, tagsField, seriesField, isbnField}
+var MetadataFieldNames = []string{authorField, titleField, yearField, editionYearField, publisherField, descriptionField, languageField, categoryField, typeField, genreField, tagsField, seriesField, isbnField}
 
 // String returns a representation of Metadata
 func (i *Metadata) String() string {
@@ -78,19 +77,17 @@ func (i *Metadata) IsComplete() bool {
 	hasLanguage := i.Language != ""
 	hasDescription := i.Description != ""
 	hasCategory := i.Category != "" && i.Category != unknown
-	hasGenre := i.MainGenre != "" && i.MainGenre != unknown
+	hasType := i.Type != "" && i.Type != unknown
+	hasGenre := i.Genre != "" && i.Genre != unknown
 	hasISBN := i.ISBN != ""
 	hasPublisher := i.Publisher != ""
 	hasTags := i.Tags.String() != ""
-	return hasAuthor && hasTitle && hasYear && hasLanguage && hasDescription && hasCategory && hasGenre && hasISBN && hasPublisher && hasTags
+	return hasAuthor && hasTitle && hasYear && hasLanguage && hasDescription && hasCategory && hasType && hasGenre && hasISBN && hasPublisher && hasTags
 }
 
 // Title returns Metadata's main title.
 func (i *Metadata) Title() string {
-	if i.OriginalTitle != "" {
-		return i.OriginalTitle
-	}
-	return i.MainTitle
+	return i.BookTitle
 }
 
 // Clean cleans up the Metadata
@@ -120,13 +117,12 @@ func (i *Metadata) Clean(cfg e.Config) {
 	i.Tags.Clean()
 	// autofill category
 	if i.Category == "" {
-		if isIn, _ := i.Tags.Has(Tag{Name: fictionCategory}); isIn {
-			i.Category = fictionCategory
-			i.Tags.RemoveFromNames(fictionCategory)
-		}
-		if isIn, _ := i.Tags.Has(Tag{Name: nonfictionCategory}); isIn {
-			i.Category = nonfictionCategory
-			i.Tags.RemoveFromNames(nonfictionCategory)
+		for _, possibleCategory := range validCategories {
+			if isIn, _ := i.Tags.Has(Tag{Name: possibleCategory}); isIn {
+				i.Category = possibleCategory
+				i.Tags.RemoveFromNames(possibleCategory)
+				break
+			}
 		}
 	}
 	// if nothing valid found...
@@ -137,20 +133,38 @@ func (i *Metadata) Clean(cfg e.Config) {
 		i.Category = cat
 	}
 
+	// autofill type
+	if i.Type == "" {
+		for _, possibleType := range validTypes {
+			if isIn, _ := i.Tags.Has(Tag{Name: possibleType}); isIn {
+				i.Type = possibleType
+				i.Tags.RemoveFromNames(possibleType)
+				break
+			}
+		}
+	}
+	// if nothing found, unknown.
+	if i.Type == "" {
+		i.Type = unknown
+	}
+	if tp, err := cleanType(i.Type); err == nil {
+		i.Type = tp
+	}
+
 	// MainGenre
-	if i.MainGenre == "" && len(i.Tags) != 0 {
+	if i.Genre == "" && len(i.Tags) != 0 {
 		cleanName, err := cleanTagName(i.Tags[0].Name)
 		if err == nil {
-			i.MainGenre = cleanName
-			i.Tags.RemoveFromNames(i.MainGenre)
+			i.Genre = cleanName
+			i.Tags.RemoveFromNames(i.Genre)
 		}
 	}
 	// if nothing valid found...
-	if i.MainGenre == "" {
-		i.MainGenre = unknown
+	if i.Genre == "" {
+		i.Genre = unknown
 	}
-	if main, err := cleanTagName(i.MainGenre); err == nil {
-		i.MainGenre = main
+	if main, err := cleanTagName(i.Genre); err == nil {
+		i.Genre = main
 	}
 
 	// clean series
@@ -195,9 +209,18 @@ func (i *Metadata) useAliases(cfg e.Config) {
 	i.Tags = cleanTags
 	// genre aliases (same as tags)
 	for mainAlias, aliases := range cfg.TagAliases {
-		_, isIn := e.StringInSlice(i.MainGenre, aliases)
+		_, isIn := e.StringInSlice(i.Genre, aliases)
 		if isIn {
-			i.MainGenre = mainAlias
+			i.Genre = mainAlias
+			break
+		}
+	}
+	// type aliases (same as tags)
+	for mainAlias, aliases := range cfg.TagAliases {
+		_, isIn := e.StringInSlice(i.Type, aliases)
+		if isIn {
+			i.Type = mainAlias
+			break
 		}
 	}
 	// publisher aliases
@@ -240,7 +263,7 @@ func (i *Metadata) IsSimilar(o Metadata) bool {
 }
 
 // Diff returns differences between Metadatas.
-func (i *Metadata) Diff(o Metadata, firstHeader, secondHeader string) string {
+func (i *Metadata) Diff(o *Metadata, firstHeader, secondHeader string) string {
 	var rows [][]string
 	rows = append(rows, []string{i.String(), o.String()})
 	rows = append(rows, []string{i.Author(), o.Author()})
@@ -250,7 +273,8 @@ func (i *Metadata) Diff(o Metadata, firstHeader, secondHeader string) string {
 	rows = append(rows, []string{i.Publisher, o.Publisher})
 	rows = append(rows, []string{i.Description, o.Description})
 	rows = append(rows, []string{i.Category, o.Category})
-	rows = append(rows, []string{i.MainGenre, o.MainGenre})
+	rows = append(rows, []string{i.Type, o.Type})
+	rows = append(rows, []string{i.Genre, o.Genre})
 	rows = append(rows, []string{i.Tags.String(), o.Tags.String()})
 	rows = append(rows, []string{i.Series.String(), o.Series.String()})
 	rows = append(rows, []string{i.Language, o.Language})
@@ -259,7 +283,7 @@ func (i *Metadata) Diff(o Metadata, firstHeader, secondHeader string) string {
 }
 
 // Merge with another Metadata.
-func (i *Metadata) Merge(o Metadata, cfg e.Config, ui e.UserInterface) (err error) {
+func (i *Metadata) Merge(o *Metadata, cfg e.Config, ui e.UserInterface) (err error) {
 	for _, field := range MetadataFieldNames {
 		err = i.MergeField(o, field, cfg, ui)
 		if err != nil {
@@ -275,11 +299,11 @@ func (i *Metadata) Merge(o Metadata, cfg e.Config, ui e.UserInterface) (err erro
 }
 
 // MergeField with another Metadata.
-func (i *Metadata) MergeField(o Metadata, field string, cfg e.Config, ui e.UserInterface) (err error) {
+func (i *Metadata) MergeField(o *Metadata, field string, cfg e.Config, ui e.UserInterface) (err error) {
 	switch field {
 	case tagsField:
 		help := "Tags can be edited as a comma-separated list of strings."
-		tagString, e := ui.Choose(strings.Title(tagsField), help, i.Tags.String(), o.Tags.String(), false)
+		tagString, e := ui.Choose(strings.Title(field), help, i.Tags.String(), o.Tags.String(), false)
 		if e != nil {
 			return e
 		}
@@ -303,7 +327,7 @@ func (i *Metadata) MergeField(o Metadata, field string, cfg e.Config, ui e.UserI
 		}
 	case authorField:
 		help := "Authors can be edited as a comma-separated list of strings."
-		userInput, e := ui.Choose(strings.Title(authorField), help, i.Author(), o.Author(), false)
+		userInput, e := ui.Choose(strings.Title(field), help, i.Author(), o.Author(), false)
 		if e != nil {
 			return e
 		}
@@ -323,39 +347,45 @@ func (i *Metadata) MergeField(o Metadata, field string, cfg e.Config, ui e.UserI
 			return
 		}
 	case publisherField:
-		i.Publisher, err = ui.Choose(strings.Title(publisherField), "", i.Publisher, o.Publisher, false)
+		i.Publisher, err = ui.Choose(strings.Title(field), "", i.Publisher, o.Publisher, false)
 		if err != nil {
 			return
 		}
 	case languageField:
-		i.Language, err = ui.Choose(strings.Title(languageField), "", cleanLanguage(i.Language), cleanLanguage(o.Language), false)
+		i.Language, err = ui.Choose(strings.Title(field), "", cleanLanguage(i.Language), cleanLanguage(o.Language), false)
 		if err != nil {
 			return
 		}
 	case categoryField:
-		i.Category, err = ui.Choose(strings.Title(categoryField), "Valid values: fiction/nonfiction.", i.Category, o.Category, false)
+		validValues := strings.Join(validCategories, "/")
+		i.Category, err = ui.Choose(strings.Title(field), fmt.Sprintf("Valid values: %s", validValues), i.Category, o.Category, false)
+		if err != nil {
+			return
+		}
+	case typeField:
+		validValues := strings.Join(validTypes, "/")
+		i.Type, err = ui.Choose(strings.Title(field), fmt.Sprintf("Valid values: %s", validValues), i.Type, o.Type, false)
 		if err != nil {
 			return
 		}
 	case genreField:
-		i.MainGenre, err = ui.Choose(strings.Title(genreField), "", i.MainGenre, o.MainGenre, false)
+		i.Genre, err = ui.Choose(strings.Title(field), "", i.Genre, o.Genre, false)
 		if err != nil {
 			return
 		}
 	case isbnField:
-		i.ISBN, err = ui.Choose(strings.Title(isbnField), "ISBN13 for this epub.", i.ISBN, o.ISBN, false)
+		i.ISBN, err = ui.Choose(strings.Title(field), "ISBN13 for this epub.", i.ISBN, o.ISBN, false)
 		if err != nil {
 			return
 		}
 	case titleField:
-		chosenTitle, e := ui.Choose(strings.Title(titleField), "Title, without series information.", i.Title(), o.Title(), false)
+		chosenTitle, e := ui.Choose(strings.Title(field), "Title, without series information.", i.Title(), o.Title(), false)
 		if e != nil {
 			return e
 		}
-		i.MainTitle = chosenTitle
-		i.OriginalTitle = chosenTitle
+		i.BookTitle = chosenTitle
 	case descriptionField:
-		i.Description, err = ui.Choose(strings.Title(descriptionField), "", cleanHTML(i.Description), cleanHTML(o.Description), true)
+		i.Description, err = ui.Choose(strings.Title(field), "", cleanHTML(i.Description), cleanHTML(o.Description), true)
 		if err != nil {
 			return
 		}
@@ -364,5 +394,101 @@ func (i *Metadata) MergeField(o Metadata, field string, cfg e.Config, ui e.UserI
 		return errors.New("Unknown field: " + field)
 	}
 	i.Clean(cfg)
+	return
+}
+
+// getOnlineMetadata retrieves the online info for this book.
+func (i *Metadata) getOnlineMetadata(ui e.UserInterface, cfg e.Config) (*Metadata, error) {
+	if cfg.GoodReadsAPIKey == "" {
+		return nil, e.WarningGoodReadsAPIKeyMissing
+	}
+	var err error
+	var g RemoteLibraryAPI
+	g = GoodReads{}
+	id := ""
+
+	// If not ISBN is found, ask for input
+	if i.ISBN == "" {
+		ui.Warning("Could not find ISBN.")
+		isbn, err := e.AskForISBN(ui)
+		if err == nil {
+			i.ISBN = isbn
+		}
+	}
+	// search by ISBN preferably
+	if i.ISBN != "" {
+		id, err = g.GetBookIDByISBN(i.ISBN, cfg.GoodReadsAPIKey)
+		if err != nil {
+			return nil, err
+		}
+	}
+	// if no ISBN or nothing was found
+	if id == "" {
+		// TODO: if unsure, show hits
+		id, err = g.GetBookIDByQuery(i.Author(), i.Title(), cfg.GoodReadsAPIKey)
+		if err != nil {
+			return nil, err
+		}
+	}
+	// if still nothing was found...
+	if id == "" {
+		return nil, errors.New("Could not find online data for " + i.String())
+	}
+	// get book info
+	onlineInfo, err := g.GetBook(id, cfg.GoodReadsAPIKey)
+	if err == nil {
+		onlineInfo.Clean(cfg)
+	}
+	return &onlineInfo, nil
+}
+
+// SearchOnline tries to find metadata from online sources.
+func (i *Metadata) SearchOnline(ui e.UserInterface, cfg e.Config) (err error) {
+	onlineInfo, err := i.getOnlineMetadata(ui, cfg)
+	if err != nil {
+		ui.Debug(err.Error())
+		ui.Warning("Could not retrieve information from GoodReads. Manual review.")
+		err = i.Merge(&Metadata{}, cfg, ui)
+		if err != nil {
+			ui.Error(err.Error())
+		}
+		return err
+	}
+
+	// show diff between epub and GR versions, then ask what to do.
+	fmt.Println(i.Diff(onlineInfo, "Epub Metadata", "GoodReads"))
+	ui.Choice("Choose: (1) Local version (2) Remote version (3) Edit (4) Abort : ")
+	validChoice := false
+	errs := 0
+	for !validChoice {
+		choice, scanErr := ui.GetInput()
+		if scanErr != nil {
+			return scanErr
+		}
+		switch choice {
+		case "4":
+			err = errors.New("Abort")
+			validChoice = true
+		case "3":
+			err = i.Merge(onlineInfo, cfg, ui)
+			if err != nil {
+				return err
+			}
+			validChoice = true
+		case "2":
+			ui.Info("Accepting online version.")
+			i = onlineInfo
+			validChoice = true
+		case "1":
+			ui.Info("Keeping epub version.")
+			validChoice = true
+		default:
+			fmt.Println("Invalid choice.")
+			errs++
+			if errs > 10 {
+				return errors.New("Too many invalid choices.")
+			}
+		}
+	}
 	return
 }

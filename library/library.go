@@ -91,7 +91,41 @@ func (l *Library) ExportToEReader(books e.Collection) (err error) {
 	} else {
 		l.UI.Title("Nothing to export.")
 	}
-	return
+	return l.markExported()
+}
+
+// markExported in Library after looking at contents of ereader.
+func (l *Library) markExported() error {
+	// scan for exported epubs
+	exported, err := e.ScanForEpubs(l.Config.EReaderMountPoint, e.KnownHashes{}, l.Collection)
+	if err != nil {
+		return err
+	}
+
+	// if in library and IsExported but not found on reader, update Book.
+	for _, marked := range l.Collection.Exported().Books() {
+		stillExported := false
+		for _, exportedEpub := range exported {
+			if marked.HasHash(exportedEpub.Hash) {
+				stillExported = true
+				break
+			}
+		}
+		if !stillExported {
+			marked.SetExported(false)
+		}
+	}
+
+	// for each exported epub, try to find hash in library
+	for _, exportedEpub := range exported {
+		b, err := l.Collection.FindByHash(exportedEpub.Hash)
+		// if found in library, mark as exported
+		if err == nil {
+			b.SetExported(true)
+		}
+	}
+
+	return nil
 }
 
 // Search and print the results
@@ -155,12 +189,13 @@ func (l *Library) prepareQuery(queryString string) string {
 		"title:", "metadata.title:",
 		"year:", "metadata.year:",
 		"language:", "metadata.language:",
-		"series:", "metadata.series.seriesname:",
+		"series:", "metadata.series.name:",
 		"tags:", "metadata.tags.name:",
 		"tag:", "metadata.tags.name:",
 		"publisher:", "metadata.publisher:",
 		"category:", "metadata.category:",
-		"genre:", "metadata.main_genre:",
+		"type:", "metadata.type:",
+		"genre:", "metadata.genre:",
 		"description:", "metadata.description:",
 	)
 	return r.Replace(queryString)
@@ -188,5 +223,7 @@ func (l *Library) ShowInfo() string {
 	rows = append(rows, []string{"Number of books shortlisted for imminent reading", fmt.Sprintf("%d", len(bks))})
 	bks = l.Collection.Progress("unread").Books()
 	rows = append(rows, []string{"Number of unread books", fmt.Sprintf("%d", len(bks))})
+	bks = l.Collection.Exported().Books()
+	rows = append(rows, []string{"Number of exported books", fmt.Sprintf("%d", len(bks))})
 	return e.TabulateRows(rows, "Library", l.Config.LibraryRoot)
 }

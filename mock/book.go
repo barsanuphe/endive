@@ -13,6 +13,12 @@ func (b *Book) ID() int {
 	return 1
 }
 
+// HasHash implementation for tests
+func (b *Book) HasHash(a string) bool {
+	fmt.Println("mock Book: HasHash " + a)
+	return true
+}
+
 // HasEpub implementation for tests
 func (b *Book) HasEpub() bool {
 	fmt.Println("mock Book: HasEpub")
@@ -53,4 +59,9 @@ func (b *Book) AddEpub(path string, isRetail bool, hash string) (bool, error) {
 func (b *Book) Check() (bool, bool, error) {
 	fmt.Println("mock Book: Check")
 	return false, false, nil
+}
+
+// SetExported implementation for tests
+func (b *Book) SetExported(bool) {
+	fmt.Println("mock Book: SetExported")
 }

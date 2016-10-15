@@ -15,7 +15,7 @@ import (
 	"github.com/barsanuphe/endive/mock"
 )
 
-func TestImport(t *testing.T) {
+func TestImportPaths(t *testing.T) {
 	var book en.GenericBook
 	assert := assert.New(t)
 
@@ -44,8 +44,7 @@ func TestImport(t *testing.T) {
 
 	fmt.Println("\n\t+ 1. import first nonretail")
 	// modifying mock UI output
-	ui.UpdateValuesResult = []string{"firstnonretail"}
-	importedFilename := filepath.Join(c.LibraryRoot, "firstnonretail - firstnonretail.epub")
+	importedFilename := filepath.Join(c.LibraryRoot, "Unknown - Beowulf - An Anglo-Saxon Epic Poem.epub")
 	// importing
 	err = endive.ImportSpecific(false, "test/pg16328.epub")
 	assert.Nil(err, "import should be successful")
@@ -58,7 +57,7 @@ func TestImport(t *testing.T) {
 	assert.Equal(1, book.ID(), "First book should have ID 1.")
 
 	fmt.Println("\n\t+ 2. import retail when nonretail exists")
-	importedFilename = filepath.Join(c.LibraryRoot, "firstnonretail - firstnonretail [retail].epub")
+	importedFilename = filepath.Join(c.LibraryRoot, "Unknown - Beowulf - An Anglo-Saxon Epic Poem [retail].epub")
 	// importing
 	err = endive.ImportSpecific(true, "test/pg16328_empty.epub")
 	assert.Nil(err, "import should be successful")
@@ -130,11 +129,6 @@ func TestImportSource(t *testing.T) {
 	c.RetailSource = []string{"test"}
 	c.NonRetailSource = []string{"test"}
 	c.EpubFilenameFormat = "$a - $t"
-	// makedirs c.LibraryRoot + defer removing all test files
-	if err := os.MkdirAll(c.LibraryRoot, 0777); err != nil {
-		panic(err)
-	}
-	defer os.RemoveAll(c.LibraryRoot)
 
 	// building endive struct
 	db := &db.JSONDB{}
@@ -152,5 +146,5 @@ func TestImportSource(t *testing.T) {
 	candidates, err := endive.analyzeSources(endive.Config.RetailSource, true)
 	assert.Nil(err, "import should be successful")
 	assert.Equal(4, len(candidates), "Expected to find 4 epubs.")
-	assert.Equal(4, len(candidates.importable()), "Expected to find 4 epubs.")
+	assert.Equal(4, len(candidates.Importable()), "Expected to find 4 epubs.")
 }

@@ -23,7 +23,6 @@ func TestInfo(t *testing.T) {
 		if err != nil {
 			assert.Equal("ISBN not found in epub", err.Error(), "Error should only mention missing ISBN")
 		}
-		e.EpubMetadata = info
 		e.Metadata = info
 
 		// testing Get, GetFirstValue
@@ -43,7 +42,7 @@ func TestInfo(t *testing.T) {
 		// copying manually
 		o.Authors = []string{}
 		o.Authors = append(o.Authors, e.Metadata.Authors...)
-		o.MainTitle = e.Metadata.MainTitle
+		o.BookTitle = e.Metadata.BookTitle
 		// checking again
 		assert.True(e.Metadata.IsSimilar(o), "Error: metadata should be similar.")
 	}

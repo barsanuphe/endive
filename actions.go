@@ -251,7 +251,7 @@ func search(c *cli.Context, endive *Endive) {
 }
 
 func listImportableEpubs(endive *Endive, c *cli.Context, isRetail bool) {
-	var candidates epubCandidates
+	var candidates e.EpubCandidates
 	var err error
 	var txt string
 
@@ -269,7 +269,7 @@ func listImportableEpubs(endive *Endive, c *cli.Context, isRetail bool) {
 	if len(candidates) != 0 {
 		endive.UI.SubPart(txt)
 		for _, cd := range candidates {
-			fmt.Println(" - " + cd.filename)
+			fmt.Println(" - " + cd.Filename)
 		}
 	} else {
 		endive.UI.SubPart("Nothing to import.")

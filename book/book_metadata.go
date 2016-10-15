@@ -19,7 +19,6 @@ func (b *Book) ForceMetadataRefresh() (err error) {
 			err = ok
 			return
 		}
-		b.EpubMetadata = info
 		b.Metadata = info
 	} else {
 		err = errors.New("Missing main epub for " + b.ShortString())
@@ -27,7 +26,7 @@ func (b *Book) ForceMetadataRefresh() (err error) {
 	}
 
 	// get online data
-	err = b.SearchOnline()
+	err = b.Metadata.SearchOnline(b.UI, b.Config)
 	if err != nil {
 		b.UI.Warning(err.Error())
 	}
@@ -48,7 +47,7 @@ func (b *Book) ForceMetadataFieldRefresh(field string) (err error) {
 		return
 	}
 	// get online data
-	onlineInfo, err := b.GetOnlineMetadata()
+	onlineInfo, err := b.Metadata.getOnlineMetadata(b.UI, b.Config)
 	if err != nil {
 		return err
 	}
@@ -74,13 +73,14 @@ func (b *Book) ForceMetadataFieldRefresh(field string) (err error) {
 		b.Metadata.Language = info.Language
 	case categoryField:
 		b.Metadata.Category = info.Category
+	case typeField:
+		b.Metadata.Type = info.Type
 	case genreField:
-		b.Metadata.MainGenre = info.MainGenre
+		b.Metadata.Genre = info.Genre
 	case isbnField:
 		b.Metadata.ISBN = info.ISBN
 	case titleField:
-		b.Metadata.MainTitle = info.MainTitle
-		b.Metadata.OriginalTitle = info.OriginalTitle
+		b.Metadata.BookTitle = info.BookTitle
 	case descriptionField:
 		b.Metadata.Description = info.Description
 	default:
@@ -94,8 +94,8 @@ func (b *Book) ForceMetadataFieldRefresh(field string) (err error) {
 // EditField in current Metadata associated with the Book.
 func (b *Book) EditField(args ...string) (err error) {
 	if len(args) == 0 {
-		// completely interactive edit
-		for _, field := range []string{"author", "title", "year", "edition_year", "category", "genre", "tags", "series", "language", "isbn", "description", "progress"} {
+		// completely interactive edit over all fields
+		for _, field := range allFields {
 			err = b.editSpecificField(field, []string{})
 			if err != nil {
 				fmt.Println("Could not assign new value to field " + field + ", continuing.")
@@ -194,12 +194,18 @@ func (b *Book) editSpecificField(field string, values []string) error {
 			return err
 		}
 		b.Metadata.Category = newValues[0]
-	case genreField:
-		newValues, err := b.UI.UpdateValues(field, b.Metadata.MainGenre, values, false)
+	case typeField:
+		newValues, err := b.UI.UpdateValues(field, b.Metadata.Type, values, false)
 		if err != nil {
 			return err
 		}
-		b.Metadata.MainGenre = newValues[0]
+		b.Metadata.Type = newValues[0]
+	case genreField:
+		newValues, err := b.UI.UpdateValues(field, b.Metadata.Genre, values, false)
+		if err != nil {
+			return err
+		}
+		b.Metadata.Genre = newValues[0]
 	case isbnField:
 		newValues, err := b.UI.UpdateValues(field, b.Metadata.ISBN, values, false)
 		if err != nil {
@@ -212,12 +218,11 @@ func (b *Book) editSpecificField(field string, values []string) error {
 		}
 		b.Metadata.ISBN = isbn
 	case titleField:
-		newValues, err := b.UI.UpdateValues(field, b.Metadata.MainTitle, values, false)
+		newValues, err := b.UI.UpdateValues(field, b.Metadata.BookTitle, values, false)
 		if err != nil {
 			return err
 		}
-		b.Metadata.MainTitle = newValues[0]
-		b.Metadata.OriginalTitle = newValues[0]
+		b.Metadata.BookTitle = newValues[0]
 	case descriptionField:
 		newValues, err := b.UI.UpdateValues(field, b.Metadata.Description, values, true)
 		if err != nil {
@@ -276,93 +281,4 @@ func (b *Book) editSpecificField(field string, values []string) error {
 	// cleaning all metadata
 	b.Metadata.Clean(b.Config)
 	return nil
-}
-
-// SearchOnline tries to find metadata from online sources.
-func (b *Book) SearchOnline() (err error) {
-	onlineInfo, err := b.GetOnlineMetadata()
-	if err != nil {
-		return err
-	}
-
-	// show diff between epub and GR versions, then ask what to do.
-	fmt.Println(b.Metadata.Diff(onlineInfo, "Epub Metadata", "GoodReads"))
-	b.UI.Choice("Choose: (1) Local version (2) Remote version (3) Edit (4) Abort : ")
-	validChoice := false
-	errs := 0
-	for !validChoice {
-		choice, scanErr := b.UI.GetInput()
-		if scanErr != nil {
-			return scanErr
-		}
-		switch choice {
-		case "4":
-			err = errors.New("Abort")
-			validChoice = true
-		case "3":
-			err = b.Metadata.Merge(onlineInfo, b.Config, b.UI)
-			if err != nil {
-				return err
-			}
-			validChoice = true
-		case "2":
-			b.UI.Info("Accepting online version.")
-			b.Metadata = onlineInfo
-			validChoice = true
-		case "1":
-			b.UI.Info("Keeping epub version.")
-			validChoice = true
-		default:
-			fmt.Println("Invalid choice.")
-			errs++
-			if errs > 10 {
-				return errors.New("Too many invalid choices.")
-			}
-		}
-	}
-	return
-}
-
-// GetOnlineMetadata retrieves the online info for this book.
-func (b *Book) GetOnlineMetadata() (onlineInfo Metadata, err error) {
-	if b.Config.GoodReadsAPIKey == "" {
-		return Metadata{}, e.WarningGoodReadsAPIKeyMissing
-	}
-	var g RemoteLibraryAPI
-	g = GoodReads{}
-	id := ""
-
-	// If not ISBN is found, ask for input
-	if b.Metadata.ISBN == "" {
-		b.UI.Warning("Could not find ISBN.")
-		isbn, err := e.AskForISBN(b.UI)
-		if err == nil {
-			b.Metadata.ISBN = isbn
-		}
-	}
-	// search by ISBN preferably
-	if b.Metadata.ISBN != "" {
-		id, err = g.GetBookIDByISBN(b.Metadata.ISBN, b.Config.GoodReadsAPIKey)
-		if err != nil {
-			return
-		}
-	}
-	// if no ISBN or nothing was found
-	if id == "" {
-		// TODO: if unsure, show hits
-		id, err = g.GetBookIDByQuery(b.Metadata.Author(), b.Metadata.Title(), b.Config.GoodReadsAPIKey)
-		if err != nil {
-			return
-		}
-	}
-	// if still nothing was found...
-	if id == "" {
-		return Metadata{}, errors.New("Could not find online data for " + b.ShortString())
-	}
-	// get book info
-	onlineInfo, err = g.GetBook(id, b.Config.GoodReadsAPIKey)
-	if err == nil {
-		onlineInfo.Clean(b.Config)
-	}
-	return
 }
