@@ -10,7 +10,7 @@ import (
 	e "github.com/barsanuphe/endive/endive"
 	l "github.com/barsanuphe/endive/library"
 
-	"github.com/codegangsta/cli"
+	"github.com/urfave/cli"
 )
 
 func checkSortOrder(c *cli.Context) (orderDefined bool, sortBy string, lastIndex int) {
@@ -25,33 +25,6 @@ func checkSortOrder(c *cli.Context) (orderDefined bool, sortBy string, lastIndex
 			if b.CheckValidSortOrder(c.Args()[i+1]) {
 				orderDefined = true
 				sortBy = strings.ToLower(c.Args()[i+1])
-				lastIndex = i
-				return
-			}
-		}
-	}
-	return
-}
-
-func checkLimits(c *cli.Context) (limitFirst, limitLast bool, number, lastIndex int) {
-	if len(c.Args()) < 2 {
-		return
-	}
-	for i, arg := range c.Args() {
-		if i >= c.NArg()-1 {
-			break
-		}
-		if strings.ToLower(arg) == "first" {
-			limitFirst = true
-		}
-		if strings.ToLower(arg) == "last" {
-			limitLast = true
-		}
-		if limitFirst || limitLast {
-			// check c.Args()[i+1] is int
-			nbr, err := strconv.Atoi(c.Args()[i+1])
-			if err == nil {
-				number = nbr
 				lastIndex = i
 				return
 			}
@@ -218,21 +191,17 @@ func listSeries(c *cli.Context, endive *Endive) {
 	return
 }
 
-func search(c *cli.Context, endive *Endive) {
+func search(c *cli.Context, endive *Endive, firstNBooks int, lastNBooks int) {
 	if c.NArg() == 0 {
 		fmt.Println("No query found!")
 	} else {
 		order, sortBy, lastIndex1 := checkSortOrder(c)
-		limitFirst, limitLast, number, lastIndex2 := checkLimits(c)
 		queryParts := c.Args()
-		if order || limitFirst || limitLast {
+		if order  {
 			// finding index of last argument part of search
 			lastIndex := c.NArg()
 			if order && lastIndex1 < lastIndex {
 				lastIndex = lastIndex1
-			}
-			if (limitFirst || limitLast) && lastIndex2 < lastIndex {
-				lastIndex = lastIndex2
 			}
 			// discard everything after "sortby"
 			queryParts = queryParts[:lastIndex]
@@ -241,7 +210,7 @@ func search(c *cli.Context, endive *Endive) {
 		endive.UI.Debug("Searching for '" + query + "'...")
 		var results e.Collection
 		results = &b.Books{}
-		hits, err := endive.Library.SearchAndPrint(query, sortBy, limitFirst, limitLast, number, results)
+		hits, err := endive.Library.SearchAndPrint(query, sortBy, firstNBooks, lastNBooks, results)
 		if err != nil {
 			endive.UI.Error(err.Error())
 			panic(err)
@@ -308,8 +277,10 @@ func exportFilter(c *cli.Context, endive *Endive) {
 	endive.UI.Title("Exporting selection to E-Reader...")
 	query := strings.Join(c.Args(), " ")
 	var books e.Collection
+	var err error
 	books = &b.Books{}
-	if err := endive.Library.Search(query, "default", false, false, 0, books); err != nil {
+	books, err = endive.Library.Search(query, "default", -1, -1, books)
+	if err != nil {
 		endive.UI.Error("Error filtering books for export to e-reader")
 		return
 	}
@@ -326,16 +297,15 @@ func exportAll(endive *Endive) {
 	}
 }
 
-func displayBooks(c *cli.Context, ui e.UserInterface, books e.Collection) {
+func displayBooks(c *cli.Context, ui e.UserInterface, books e.Collection, firstNBooks int, lastNBooks int) {
 	if sort, orderBy, _ := checkSortOrder(c); sort {
 		books.Sort(orderBy)
 	}
-	limitFirst, limitLast, number, _ := checkLimits(c)
-	if limitFirst {
-		books = books.First(number)
+	if firstNBooks != -1 {
+		books = books.First(firstNBooks)
 	}
-	if limitLast {
-		books = books.Last(number)
+	if lastNBooks != -1 {
+		books = books.Last(lastNBooks)
 	}
 	ui.Display(books.Table())
 }

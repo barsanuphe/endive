@@ -16,13 +16,30 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/codegangsta/cli"
 	"github.com/ttacon/chalk"
+	"github.com/urfave/cli"
 
 	en "github.com/barsanuphe/endive/endive"
 )
 
 func generateCLI(e *Endive) (app *cli.App) {
+	var firstNBooks, lastNBooks int
+
+	limitFlags := []cli.Flag{
+		cli.IntFlag{
+			Name:        "first,f",
+			Usage:       "Only display the first `n` books",
+			Value:       -1,
+			Destination: &firstNBooks,
+		},
+		cli.IntFlag{
+			Name:        "last,l",
+			Usage:       "Only display the last `n` books",
+			Value:       -1,
+			Destination: &lastNBooks,
+		},
+	}
+
 	app = cli.NewApp()
 	app.Name = "endive"
 	app.Usage = "Organize your epub collection."
@@ -30,10 +47,10 @@ func generateCLI(e *Endive) (app *cli.App) {
 
 	app.Commands = []cli.Command{
 		{
-			Name:    "config",
+			Name:     "config",
 			Category: "configuration",
-			Aliases: []string{"c"},
-			Usage:   "options for configuration",
+			Aliases:  []string{"c"},
+			Usage:    "options for configuration",
 			Action: func(c *cli.Context) {
 				e.UI.Display(e.Config.String())
 			},
@@ -79,10 +96,10 @@ func generateCLI(e *Endive) (app *cli.App) {
 			},
 		},
 		{
-			Name:    "export",
+			Name:     "export",
 			Category: "library",
-			Aliases: []string{"x"},
-			Usage:   "export to E-Reader",
+			Aliases:  []string{"x"},
+			Usage:    "export to E-Reader",
 			Action: func(c *cli.Context) {
 				exportFilter(c, e)
 			},
@@ -98,10 +115,10 @@ func generateCLI(e *Endive) (app *cli.App) {
 			},
 		},
 		{
-			Name:    "check",
+			Name:     "check",
 			Category: "library",
-			Aliases: []string{"fsck"},
-			Usage:   "check library",
+			Aliases:  []string{"fsck"},
+			Usage:    "check library",
 			Action: func(c *cli.Context) {
 				err := e.Library.Check()
 				if err != nil {
@@ -113,10 +130,10 @@ func generateCLI(e *Endive) (app *cli.App) {
 			},
 		},
 		{
-			Name:    "refresh",
+			Name:     "refresh",
 			Category: "library",
-			Aliases: []string{"r"},
-			Usage:   "refresh library",
+			Aliases:  []string{"r"},
+			Usage:    "refresh library",
 			Action: func(c *cli.Context) {
 				if c.NArg() != 0 {
 					e.UI.Display("refresh subcommand does not require arguments.")
@@ -131,9 +148,9 @@ func generateCLI(e *Endive) (app *cli.App) {
 			},
 		},
 		{
-			Name:  "index",
+			Name:     "index",
 			Category: "library",
-			Usage: "manipulate index",
+			Usage:    "manipulate index",
 			Subcommands: []cli.Command{
 				{
 					Name:    "rebuild",
@@ -167,10 +184,10 @@ func generateCLI(e *Endive) (app *cli.App) {
 			},
 		},
 		{
-			Name:    "metadata",
+			Name:     "metadata",
 			Category: "book",
-			Aliases: []string{"md"},
-			Usage:   "edit book metadata",
+			Aliases:  []string{"md"},
+			Usage:    "edit book metadata",
 			Subcommands: []cli.Command{
 				{
 					Name:    "refresh",
@@ -181,10 +198,10 @@ func generateCLI(e *Endive) (app *cli.App) {
 					},
 				},
 				{
-					Name:    "edit",
-					Aliases: []string{"modify", "e"},
-					Usage:   "edit metadata field using book ID: metadata edit ID field values",
-					ArgsUsage:   "ID [field [value]]",
+					Name:      "edit",
+					Aliases:   []string{"modify", "e"},
+					Usage:     "edit metadata field using book ID: metadata edit ID field values",
+					ArgsUsage: "ID [field [value]]",
 					Action: func(c *cli.Context) {
 						editMetadata(c, e)
 					},
@@ -192,10 +209,10 @@ func generateCLI(e *Endive) (app *cli.App) {
 			},
 		},
 		{
-			Name:    "progress",
-			Category: "book",
-			Aliases: []string{"p"},
-			Usage:   "modify reading progress for a given book",
+			Name:      "progress",
+			Category:  "book",
+			Aliases:   []string{"p"},
+			Usage:     "modify reading progress for a given book",
 			ArgsUsage: "ID [unread/shortlisted/reading/read [rating [review]]]",
 			Action: func(c *cli.Context) {
 				setProgress(c, e)
@@ -211,24 +228,27 @@ func generateCLI(e *Endive) (app *cli.App) {
 					Name:    "books",
 					Aliases: []string{"b"},
 					Usage:   "list all books: endive list books [sortBy CRITERIA]",
+					Flags:   limitFlags,
 					Action: func(c *cli.Context) {
-						displayBooks(c, e.UI, e.Library.Collection)
+						displayBooks(c, e.UI, e.Library.Collection, firstNBooks, lastNBooks)
 					},
 				},
 				{
 					Name:    "untagged",
 					Aliases: []string{"u"},
 					Usage:   "list untagged epubs.",
+					Flags:   limitFlags,
 					Action: func(c *cli.Context) {
-						displayBooks(c, e.UI, e.Library.Collection.Untagged())
+						displayBooks(c, e.UI, e.Library.Collection.Untagged(), firstNBooks, lastNBooks)
 					},
 				},
 				{
 					Name:    "incomplete",
 					Aliases: []string{"i"},
 					Usage:   "list books with incomplete epubs.",
+					Flags:   limitFlags,
 					Action: func(c *cli.Context) {
-						displayBooks(c, e.UI, e.Library.Collection.Incomplete())
+						displayBooks(c, e.UI, e.Library.Collection.Incomplete(), firstNBooks, lastNBooks)
 					},
 				},
 				{
@@ -269,29 +289,32 @@ func generateCLI(e *Endive) (app *cli.App) {
 					Name:    "nonretail",
 					Aliases: []string{"nrt"},
 					Usage:   "list books that only have non-retail versions.",
+					Flags:   limitFlags,
 					Action: func(c *cli.Context) {
-						displayBooks(c, e.UI, e.Library.Collection.NonRetailOnly())
+						displayBooks(c, e.UI, e.Library.Collection.NonRetailOnly(), firstNBooks, lastNBooks)
 					},
 				},
 				{
 					Name:    "retail",
 					Aliases: []string{"rt"},
 					Usage:   "list books that have retail versions.",
+					Flags:   limitFlags,
 					Action: func(c *cli.Context) {
-						displayBooks(c, e.UI, e.Library.Collection.Retail())
+						displayBooks(c, e.UI, e.Library.Collection.Retail(), firstNBooks, lastNBooks)
 					},
 				},
 			},
 		},
 		{
-			Name:     "search",
-			Category: "search",
-			Aliases:  []string{"s", "find"},
-			Usage:    "search the library for specific books",
+			Name:        "search",
+			Category:    "search",
+			Aliases:     []string{"s", "find"},
+			Usage:       "search the library for specific books",
 			Description: "A list of strings can be given as input to search for books. \n   It is also possible to restrict a value to a specific field: `field:value`.",
-			ArgsUsage: "arg1 [args2] [field:value] [+field2:value]",
+			ArgsUsage:   "arg1 [args2] [field:value] [+field2:value]",
+			Flags:       limitFlags,
 			Action: func(c *cli.Context) {
-				search(c, e)
+				search(c, e, firstNBooks, lastNBooks)
 			},
 		},
 	}
