@@ -22,6 +22,21 @@ import (
 	en "github.com/barsanuphe/endive/endive"
 )
 
+const (
+	bookCategory          = "book"
+	libraryCategory       = "library"
+	configurationCategory = "configuration"
+	searchCategory        = "search"
+	configDescription     = "Displays the contents of the configuration file in a table."
+	searchDescription     = "A list of strings can be given as input to search for books.\n" +
+		"   It is also possible to restrict a value to a specific field: field:value.\n" +
+		"   Valid fields are: author, title, year, language, series, tag, publisher, category, type, genre, description, exported, progress, review.\n\n" +
+		"   Examples: \n\n" +
+		"       'author:XX title:YY' will give results satifsying any of the two conditions.\n" +
+		"       'author:XX +title:YY' will give results satifsying both conditions.\n" +
+		"       'author:XX -title:YY' will give results satifsying the first condition excluding the second.\n"
+)
+
 func generateCLI(e *Endive) (app *cli.App) {
 	var firstNBooks, lastNBooks int
 	var sortBy string
@@ -53,17 +68,18 @@ func generateCLI(e *Endive) (app *cli.App) {
 
 	app.Commands = []cli.Command{
 		{
-			Name:     "config",
-			Category: "configuration",
-			Aliases:  []string{"c"},
-			Usage:    "options for configuration",
+			Name:        "config",
+			Category:    configurationCategory,
+			Aliases:     []string{"c"},
+			Usage:       "display configuration file contents",
+			Description: configDescription,
 			Action: func(c *cli.Context) {
 				e.UI.Display(e.Config.String())
 			},
 		},
 		{
 			Name:     "import",
-			Category: "library",
+			Category: libraryCategory,
 			Aliases:  []string{"i"},
 			Usage:    "options for importing epubs",
 			Subcommands: []cli.Command{
@@ -103,7 +119,7 @@ func generateCLI(e *Endive) (app *cli.App) {
 		},
 		{
 			Name:     "export",
-			Category: "library",
+			Category: libraryCategory,
 			Aliases:  []string{"x"},
 			Usage:    "export to E-Reader",
 			Action: func(c *cli.Context) {
@@ -122,7 +138,7 @@ func generateCLI(e *Endive) (app *cli.App) {
 		},
 		{
 			Name:     "check",
-			Category: "library",
+			Category: libraryCategory,
 			Aliases:  []string{"fsck"},
 			Usage:    "check library",
 			Action: func(c *cli.Context) {
@@ -137,7 +153,7 @@ func generateCLI(e *Endive) (app *cli.App) {
 		},
 		{
 			Name:     "refresh",
-			Category: "library",
+			Category: libraryCategory,
 			Aliases:  []string{"r"},
 			Usage:    "refresh library",
 			Action: func(c *cli.Context) {
@@ -155,7 +171,7 @@ func generateCLI(e *Endive) (app *cli.App) {
 		},
 		{
 			Name:     "index",
-			Category: "library",
+			Category: libraryCategory,
 			Usage:    "manipulate index",
 			Subcommands: []cli.Command{
 				{
@@ -182,7 +198,7 @@ func generateCLI(e *Endive) (app *cli.App) {
 		},
 		{
 			Name:     "info",
-			Category: "book",
+			Category: bookCategory,
 			Aliases:  []string{"information"},
 			Usage:    "get info about a specific book",
 			Action: func(c *cli.Context) {
@@ -191,7 +207,7 @@ func generateCLI(e *Endive) (app *cli.App) {
 		},
 		{
 			Name:     "metadata",
-			Category: "book",
+			Category: bookCategory,
 			Aliases:  []string{"md"},
 			Usage:    "edit book metadata",
 			Subcommands: []cli.Command{
@@ -216,7 +232,7 @@ func generateCLI(e *Endive) (app *cli.App) {
 		},
 		{
 			Name:      "progress",
-			Category:  "book",
+			Category:  bookCategory,
 			Aliases:   []string{"p"},
 			Usage:     "modify reading progress for a given book",
 			ArgsUsage: "ID [unread/shortlisted/reading/read [rating [review]]]",
@@ -226,7 +242,7 @@ func generateCLI(e *Endive) (app *cli.App) {
 		},
 		{
 			Name:     "list",
-			Category: "search",
+			Category: searchCategory,
 			Aliases:  []string{"ls"},
 			Usage:    "list epubs in the collection with specific filters",
 			Subcommands: []cli.Command{
@@ -313,10 +329,10 @@ func generateCLI(e *Endive) (app *cli.App) {
 		},
 		{
 			Name:        "search",
-			Category:    "search",
+			Category:    searchCategory,
 			Aliases:     []string{"s", "find"},
 			Usage:       "search the library for specific books",
-			Description: "A list of strings can be given as input to search for books. \n   It is also possible to restrict a value to a specific field: `field:value`.",
+			Description: searchDescription,
 			ArgsUsage:   "arg1 [args2] [field:value] [+field2:value]",
 			Flags:       limitFlags,
 			Action: func(c *cli.Context) {
