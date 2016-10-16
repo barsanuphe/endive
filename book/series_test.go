@@ -93,7 +93,7 @@ func TestSeries(t *testing.T) {
 		assert.Equal("7,8,9", seriesIndex, "Error:  expected epub %s to have series %s, book %f and not %s", e.FullPath(), seriesName, float32(i), seriesIndex)
 
 		// testing wrong inputs
-		wrongEntries := []string{"test5:aoqoj", "test5:1-2-3", "test5:1-a"}
+		wrongEntries := []string{"test5:aoqoj", "test5:1-2-3", "test5:1-a", "test5:a-a"}
 		for _, w := range wrongEntries {
 			seriesModified, err = e.Metadata.Series.AddFromString(w)
 			assert.NotNil(err, wrongFormatError)
