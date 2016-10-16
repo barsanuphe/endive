@@ -135,14 +135,14 @@ func (e *Endive) ImportEpubs(candidates []en.EpubCandidate, isRetail bool) (err 
 				}
 				// adding new book
 				e.Library.Collection.Add(bk)
-				e.UI.SubTitle("Added epub %s to new book with ID %d", bk.ShortString(), bk.ID())
+				e.UI.SubTitle("Added epub %s to new book with ID %d", bk.String(), bk.ID())
 			} else {
-				e.UI.Debug("Adding epub to " + knownBook.ShortString())
+				e.UI.Debug("Adding epub to " + knownBook.String())
 				imported, err = knownBook.AddEpub(candidate.Filename, isRetail, candidate.Hash)
 				if err != nil {
 					return err
 				}
-				e.UI.SubTitle("Added new epub %s to book with ID %d", knownBook.ShortString(), knownBook.ID())
+				e.UI.SubTitle("Added new epub %s to book with ID %d", knownBook.String(), knownBook.ID())
 			}
 
 			if imported {

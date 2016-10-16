@@ -85,17 +85,17 @@ func (l *Library) CheckIndex() error {
 
 func (l *Library) checkBooks() error {
 	for i := range l.Collection.Books() {
-		l.UI.Debug("Checking " + l.Collection.Books()[i].ShortString())
+		l.UI.Debug("Checking " + l.Collection.Books()[i].String())
 		retailChanged, nonRetailChanged, err := l.Collection.Books()[i].Check()
 		if err != nil {
 			return err
 		}
 		if retailChanged {
-			err = errors.New("Retail epub has changed for book: " + l.Collection.Books()[i].ShortString())
+			err = errors.New("Retail epub has changed for book: " + l.Collection.Books()[i].String())
 			return err
 		}
 		if nonRetailChanged {
-			l.UI.Warning("Non-retail epub for book " + l.Collection.Books()[i].ShortString() + " has changed, check if this is normal.")
+			l.UI.Warning("Non-retail epub for book " + l.Collection.Books()[i].String() + " has changed, check if this is normal.")
 		}
 	}
 	return nil

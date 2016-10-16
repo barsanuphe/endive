@@ -99,27 +99,22 @@ func (b *Book) ID() int {
 
 // HasHash returns true if it is associated with an Epub with the given hash, according to the GenericBook interface
 func (b *Book) HasHash(hash string) bool {
+	if hash == "" {
+		return false
+	}
 	if (b.HasRetail() && b.RetailEpub.Hash == hash) || (b.HasNonRetail() && b.NonRetailEpub.Hash == hash) {
 		return true
 	}
 	return false
 }
 
-// String returns a string representation of Epub
-func (b *Book) String() string {
-	tags := ""
-	if len(b.Metadata.Tags) != 0 {
-		tags += "[ "
-		for _, tag := range b.Metadata.Tags {
-			tags += tag.Name + " "
-		}
-		tags += " ]"
-	}
-	return b.FullPath() + ":\t" + b.Metadata.Author() + " (" + b.Metadata.OriginalYear + ") " + b.Metadata.Title() + " [" + b.Metadata.Language + "] " + tags
+// LongString returns a long string representation of Epub
+func (b *Book) LongString() string {
+	return b.FullPath() + ":\t" + b.Metadata.Author() + " (" + b.Metadata.OriginalYear + ") " + b.Metadata.Title() + " [" + b.Metadata.Language + "] "
 }
 
-// ShortString returns a short string representation of Epub
-func (b *Book) ShortString() string {
+// String returns a string representation of Epub
+func (b *Book) String() string {
 	return b.Metadata.Author() + " (" + b.Metadata.OriginalYear + ") " + b.Metadata.Title()
 }
 
@@ -375,7 +370,7 @@ func (b *Book) RefreshEpub(epub Epub, isRetail bool) (bool, string, error) {
 
 // Refresh the filenames of the Epubs associated with this Book.
 func (b *Book) Refresh() (wasRenamed []bool, newName []string, err error) {
-	b.UI.Debug("Refreshing Epub " + b.ShortString())
+	b.UI.Debug("Refreshing Epub " + b.String())
 
 	// metadata is blank, run GetMetadata
 	if hasMetadata := b.Metadata.HasAny(); !hasMetadata {
@@ -388,7 +383,7 @@ func (b *Book) Refresh() (wasRenamed []bool, newName []string, err error) {
 			}
 			b.Metadata = info
 		} else {
-			err = errors.New("Missing main epub for " + b.ShortString())
+			err = errors.New("Missing main epub for " + b.String())
 			return
 		}
 	}
@@ -610,13 +605,13 @@ func (b *Book) FromJSON(jsonBytes []byte) (err error) {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println("Loaded " + b.ShortString())
+	fmt.Println("Loaded " + b.String())
 	return
 }
 
 // JSON returns a JSON representation of the Epub and its metadata.
 func (b *Book) JSON() (JSONPart string, err error) {
-	fmt.Println("Generationg JSON for " + b.ShortString())
+	fmt.Println("Generationg JSON for " + b.String())
 	jsonEpub, err := json.Marshal(b)
 	if err != nil {
 		fmt.Println(err)

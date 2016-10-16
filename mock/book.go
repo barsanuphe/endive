@@ -32,7 +32,7 @@ func (b *Book) FullPath() string {
 }
 
 // ShortString implementation for tests
-func (b *Book) ShortString() string {
+func (b *Book) String() string {
 	fmt.Println("mock Book: ShortString")
 	return "Author (YEAR) Title"
 }

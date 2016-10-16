@@ -23,7 +23,7 @@ type GenericBook interface {
 	HasHash(string) bool
 	HasEpub() bool
 	FullPath() string
-	ShortString() string
+	String() string
 	CleanFilename() string
 	Refresh() ([]bool, []string, error)
 	AddEpub(string, bool, string) (bool, error)

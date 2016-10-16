@@ -38,7 +38,7 @@ func editMetadata(c *cli.Context, endive *Endive) {
 		endive.UI.Error("Error parsing arguments: " + err.Error())
 		return
 	}
-	endive.UI.Title("Editing metadata for " + book.ShortString() + "\n")
+	endive.UI.Title("Editing metadata for " + book.String() + "\n")
 	if err := book.EditField(args...); err != nil {
 		endive.UI.Errorf("Error editing metadata for book ID#%d\n", book.ID())
 	}
@@ -67,7 +67,7 @@ func refreshMetadata(c *cli.Context, endive *Endive) {
 			return
 		}
 		// ask for confirmation
-		if endive.UI.Accept("Confirm refreshing metadata field " + field + " for " + book.ShortString()) {
+		if endive.UI.Accept("Confirm refreshing metadata field " + field + " for " + book.String()) {
 			err := book.ForceMetadataFieldRefresh(field)
 			if err != nil {
 				endive.UI.Errorf("Error reinitializing metadata field "+field+" for book ID#%d", book.ID)
@@ -76,7 +76,7 @@ func refreshMetadata(c *cli.Context, endive *Endive) {
 		}
 	} else if len(c.Args()) == 1 {
 		// ask for confirmation
-		if endive.UI.Accept("Confirm refreshing metadata for " + book.ShortString()) {
+		if endive.UI.Accept("Confirm refreshing metadata for " + book.String()) {
 			err := book.ForceMetadataRefresh()
 			if err != nil {
 				endive.UI.Errorf("Error reinitializing metadata for book ID#%d\n", book.ID())
@@ -150,7 +150,7 @@ func listTags(c *cli.Context, endive *Endive) (err error) {
 	} else {
 		// if ID, list tags of ID
 		var rows [][]string
-		rows = append(rows, []string{book.ShortString(), book.Metadata.Tags.String()})
+		rows = append(rows, []string{book.String(), book.Metadata.Tags.String()})
 		endive.UI.Display(e.TabulateRows(rows, "Book", "Tags"))
 	}
 	return
@@ -165,7 +165,7 @@ func listSeries(c *cli.Context, endive *Endive) {
 	} else {
 		// if ID, list series of ID
 		var rows [][]string
-		rows = append(rows, []string{book.ShortString(), book.Metadata.Series.String()})
+		rows = append(rows, []string{book.String(), book.Metadata.Series.String()})
 		endive.UI.Display(e.TabulateRows(rows, "Book", "Series"))
 	}
 	return

@@ -29,11 +29,10 @@ func cleanLanguage(language string) (clean string) {
 	return
 }
 
-// TODO: names of months, dates
 // remove shelf names that are obviously not genres
 var forbiddenTags = []string{
 	"own", "school", "favorite", "favourite", "book", "adult",
-	"read", "kindle", "borrowed", "classic", "novel", "buy",
+	"read", "kindle", "borrowed", "classic", "buy",
 	"star", "release", "wait", "soon", "wish", "published", "want",
 	"tbr", "series", "finish", "to-", "not-", "library", "audible",
 	"coming", "anticipated", "default", "recommended", "-list", "sequel",

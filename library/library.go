@@ -79,13 +79,13 @@ func (l *Library) ExportToEReader(books e.Collection) (err error) {
 				}
 			}
 			if _, exists := e.FileExists(destination); exists != nil {
-				l.UI.Info(" - Exporting " + book.ShortString())
+				l.UI.Info(" - Exporting " + book.String())
 				err = e.CopyFile(book.FullPath(), destination)
 				if err != nil {
 					return err
 				}
 			} else {
-				l.UI.Info(" - Previously exported: " + book.ShortString())
+				l.UI.Info(" - Previously exported: " + book.String())
 			}
 		}
 	} else {
