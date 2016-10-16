@@ -24,19 +24,25 @@ import (
 
 func generateCLI(e *Endive) (app *cli.App) {
 	var firstNBooks, lastNBooks int
+	var sortBy string
 
 	limitFlags := []cli.Flag{
 		cli.IntFlag{
 			Name:        "first,f",
-			Usage:       "Only display the first `n` books",
+			Usage:       "Only display the first `N` books",
 			Value:       -1,
 			Destination: &firstNBooks,
 		},
 		cli.IntFlag{
 			Name:        "last,l",
-			Usage:       "Only display the last `n` books",
+			Usage:       "Only display the last `N` books",
 			Value:       -1,
 			Destination: &lastNBooks,
+		},
+		cli.StringFlag{
+			Name:        "sort,s",
+			Usage:       "sort results by `CRITERIA` among: id, author, title, year.",
+			Destination: &sortBy,
 		},
 	}
 
@@ -230,7 +236,7 @@ func generateCLI(e *Endive) (app *cli.App) {
 					Usage:   "list all books: endive list books [sortBy CRITERIA]",
 					Flags:   limitFlags,
 					Action: func(c *cli.Context) {
-						displayBooks(c, e.UI, e.Library.Collection, firstNBooks, lastNBooks)
+						displayBooks(e.UI, e.Library.Collection, firstNBooks, lastNBooks, sortBy)
 					},
 				},
 				{
@@ -239,7 +245,7 @@ func generateCLI(e *Endive) (app *cli.App) {
 					Usage:   "list untagged epubs.",
 					Flags:   limitFlags,
 					Action: func(c *cli.Context) {
-						displayBooks(c, e.UI, e.Library.Collection.Untagged(), firstNBooks, lastNBooks)
+						displayBooks(e.UI, e.Library.Collection.Untagged(), firstNBooks, lastNBooks, sortBy)
 					},
 				},
 				{
@@ -248,7 +254,7 @@ func generateCLI(e *Endive) (app *cli.App) {
 					Usage:   "list books with incomplete epubs.",
 					Flags:   limitFlags,
 					Action: func(c *cli.Context) {
-						displayBooks(c, e.UI, e.Library.Collection.Incomplete(), firstNBooks, lastNBooks)
+						displayBooks(e.UI, e.Library.Collection.Incomplete(), firstNBooks, lastNBooks, sortBy)
 					},
 				},
 				{
@@ -291,7 +297,7 @@ func generateCLI(e *Endive) (app *cli.App) {
 					Usage:   "list books that only have non-retail versions.",
 					Flags:   limitFlags,
 					Action: func(c *cli.Context) {
-						displayBooks(c, e.UI, e.Library.Collection.NonRetailOnly(), firstNBooks, lastNBooks)
+						displayBooks(e.UI, e.Library.Collection.NonRetailOnly(), firstNBooks, lastNBooks, sortBy)
 					},
 				},
 				{
@@ -300,7 +306,7 @@ func generateCLI(e *Endive) (app *cli.App) {
 					Usage:   "list books that have retail versions.",
 					Flags:   limitFlags,
 					Action: func(c *cli.Context) {
-						displayBooks(c, e.UI, e.Library.Collection.Retail(), firstNBooks, lastNBooks)
+						displayBooks(e.UI, e.Library.Collection.Retail(), firstNBooks, lastNBooks, sortBy)
 					},
 				},
 			},
@@ -314,7 +320,7 @@ func generateCLI(e *Endive) (app *cli.App) {
 			ArgsUsage:   "arg1 [args2] [field:value] [+field2:value]",
 			Flags:       limitFlags,
 			Action: func(c *cli.Context) {
-				search(c, e, firstNBooks, lastNBooks)
+				search(c, e, firstNBooks, lastNBooks, sortBy)
 			},
 		},
 	}

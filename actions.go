@@ -13,26 +13,6 @@ import (
 	"github.com/urfave/cli"
 )
 
-func checkSortOrder(c *cli.Context) (orderDefined bool, sortBy string, lastIndex int) {
-	if len(c.Args()) < 2 {
-		return
-	}
-	sortBy = "default"
-	for i, arg := range c.Args() {
-		_, isIn := e.StringInSliceCaseInsensitive(arg, []string{"orderby", "sortby"})
-		if isIn && i < c.NArg()-1 {
-			// check args is valid
-			if b.CheckValidSortOrder(c.Args()[i+1]) {
-				orderDefined = true
-				sortBy = strings.ToLower(c.Args()[i+1])
-				lastIndex = i
-				return
-			}
-		}
-	}
-	return
-}
-
 func checkArgsWithID(l l.Library, args []string) (book *b.Book, other []string, err error) {
 	if len(args) < 1 {
 		err = errors.New("Not enough arguments")
@@ -191,22 +171,11 @@ func listSeries(c *cli.Context, endive *Endive) {
 	return
 }
 
-func search(c *cli.Context, endive *Endive, firstNBooks int, lastNBooks int) {
+func search(c *cli.Context, endive *Endive, firstNBooks, lastNBooks int, sortBy string) {
 	if c.NArg() == 0 {
 		fmt.Println("No query found!")
 	} else {
-		order, sortBy, lastIndex1 := checkSortOrder(c)
-		queryParts := c.Args()
-		if order  {
-			// finding index of last argument part of search
-			lastIndex := c.NArg()
-			if order && lastIndex1 < lastIndex {
-				lastIndex = lastIndex1
-			}
-			// discard everything after "sortby"
-			queryParts = queryParts[:lastIndex]
-		}
-		query := strings.Join(queryParts, " ")
+		query := strings.Join(c.Args(), " ")
 		endive.UI.Debug("Searching for '" + query + "'...")
 		var results e.Collection
 		results = &b.Books{}
@@ -297,9 +266,9 @@ func exportAll(endive *Endive) {
 	}
 }
 
-func displayBooks(c *cli.Context, ui e.UserInterface, books e.Collection, firstNBooks int, lastNBooks int) {
-	if sort, orderBy, _ := checkSortOrder(c); sort {
-		books.Sort(orderBy)
+func displayBooks(ui e.UserInterface, books e.Collection, firstNBooks, lastNBooks int, sortBy string) {
+	if sortBy != "" {
+		books.Sort(sortBy)
 	}
 	if firstNBooks != -1 {
 		books = books.First(firstNBooks)

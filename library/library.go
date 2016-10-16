@@ -163,7 +163,9 @@ func (l *Library) Search(query, sortBy string, limitFirst, limitLast int, in e.C
 				in.Add(book)
 			}
 		}
-		in.Sort(sortBy)
+		if sortBy != "" {
+			in.Sort(sortBy)
+		}
 		if limitFirst != -1 {
 			results = in.First(limitFirst)
 		} else if limitLast != -1 {
