@@ -40,9 +40,12 @@ func (e *Epub) GetHash() (err error) {
 }
 
 // FlagForReplacement an epub of insufficient quality
-func (e *Epub) FlagForReplacement() (err error) {
-	e.NeedsReplacement = en.True
-	return
+func (e *Epub) FlagForReplacement(flag bool) {
+	if flag {
+		e.NeedsReplacement = en.True
+	} else {
+		e.NeedsReplacement = en.False
+	}
 }
 
 // Check the retail epub integrity.
@@ -111,7 +114,7 @@ func (e *Epub) ReadMetadata() (info Metadata, err error) {
 	}
 	// description
 	if results, err := getFirstFieldValue(book, "description"); err == nil {
-		info.Publisher = results
+		info.Description = results
 	}
 	// tags
 	if results, err := getFieldValues(book, "subject"); err == nil {
