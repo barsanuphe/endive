@@ -23,12 +23,16 @@ import (
 )
 
 const (
-	bookCategory          = "book"
-	libraryCategory       = "library"
-	configurationCategory = "configuration"
-	searchCategory        = "search"
-	configDescription     = "Displays the contents of the configuration file in a table."
-	searchDescription     = "A list of strings can be given as input to search for books.\n" +
+	bookCategory               = "book"
+	libraryCategory            = "library"
+	configurationCategory      = "configuration"
+	searchCategory             = "search"
+	metadataRefreshDescription = "Refreshes metadata by reading again from Epub and retrieving metadata from Goodreads.\n" +
+		"   Note: the values currently in the database will be lost.\n\n" +
+		"   If no further argument is given all the metadata fields will be refreshed.\n" +
+		"   If a valid field name is given, only it will be refreshed."
+	configDescription = "Displays the contents of the configuration file in a table."
+	searchDescription = "A list of strings can be given as input to search for books.\n" +
 		"   It is also possible to restrict a value to a specific field: field:value.\n" +
 		"   Valid fields are: author, title, year, language, series, tag, publisher, category, type, genre, description, exported, progress, review.\n\n" +
 		"   Examples: \n\n" +
@@ -212,9 +216,11 @@ func generateCLI(e *Endive) (app *cli.App) {
 			Usage:    "edit book metadata",
 			Subcommands: []cli.Command{
 				{
-					Name:    "refresh",
-					Aliases: []string{"r"},
-					Usage:   "reload metadata from epub and online sources (overwrites previous changes).",
+					Name:        "refresh",
+					Aliases:     []string{"r"},
+					Usage:       "reload metadata from epub and online sources (overwrites previous changes).",
+					ArgsUsage:   "ID [field]",
+					Description: metadataRefreshDescription,
 					Action: func(c *cli.Context) {
 						refreshMetadata(c, e)
 					},
