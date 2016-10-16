@@ -26,9 +26,10 @@ func TestEpubFlagReplacement(t *testing.T) {
 		e := NewBook(ui, i, testEpub.filename, standardTestConfig, true)
 		assert.Equal(e.RetailEpub.NeedsReplacement, endive.False)
 
-		err := e.RetailEpub.FlagForReplacement()
-		assert.Nil(err, "Error flagging for replacement")
+		e.RetailEpub.FlagForReplacement(true)
 		assert.Equal(e.RetailEpub.NeedsReplacement, endive.True)
+		e.RetailEpub.FlagForReplacement(false)
+		assert.Equal(e.RetailEpub.NeedsReplacement, endive.False)
 	}
 }
 

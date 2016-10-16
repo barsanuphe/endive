@@ -116,12 +116,26 @@ func TestBookNewName(t *testing.T) {
 	assert := assert.New(t)
 	for i, testEpub := range epubs {
 		e := NewBook(ui, i, testEpub.filename, standardTestConfig, !isRetail)
+		// testing ID()
+		assert.Equal(i, e.ID())
+		// testing HasHash()
+		assert.False(e.HasHash(""))
+		assert.False(e.HasHash("hgfhgf"))
+		err := e.MainEpub().GetHash()
+		assert.Nil(err, "error getting hash")
+		assert.True(e.HasHash(testEpub.expectedSha256))
+
+		// reading metadata
 		info, err := e.MainEpub().ReadMetadata()
 		assert.NotNil(err, "Error should be found (no ISBN in test epubs) for "+e.FullPath())
 		if err != nil {
 			assert.Equal("ISBN not found in epub", err.Error(), "Error should only mention missing ISBN")
 		}
 		e.Metadata = info
+
+		// test String()
+		expectedString := filepath.Join(standardTestConfig.LibraryRoot, testEpub.filename) + ":\t" + testEpub.expectedAuthor + " (" + testEpub.expectedPublicationYear + ") " + testEpub.expectedTitle + " [" + testEpub.expectedLanguage + "] "
+		assert.Equal(expectedString, e.LongString())
 
 		newName1, err := e.generateNewName("$a $y $t", !isRetail)
 		assert.Nil(err, "Error generating new name")

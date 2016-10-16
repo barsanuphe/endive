@@ -19,11 +19,15 @@ func TestTags(t *testing.T) {
 	e := NewBook(ui, 0, epubs[0].filename, standardTestConfig, isRetail)
 
 	// check empty tags
+	hasAny := e.Metadata.Tags.HasAny()
+	assert.False(hasAny, "book does not have any tags")
 	isIn, _ := e.Metadata.Tags.Has(tag1)
 	assert.False(isIn, "Error: did not expect to have tag1.")
 	// check adding 2 tags
 	added := e.Metadata.Tags.Add(tag1, tag2)
 	assert.True(added, "Error: book should have tags now.")
+	hasAny = e.Metadata.Tags.HasAny()
+	assert.True(hasAny, "book has tags now.")
 	isIn, _ = e.Metadata.Tags.Has(tag1)
 	assert.True(isIn, "Error: expected to have tag1.")
 	isIn, _ = e.Metadata.Tags.Has(tag2)

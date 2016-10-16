@@ -13,8 +13,8 @@ const (
 	shouldNotBeModifiedError = "series should not have been modified"
 	wrongFormatError         = "adding series with wrong format should have failed"
 	expectedSeriesError      = "expected epub %s to have series %s"
-	addingSeriesError = "error adding Series %s - %f for epub %s"
-	seriesAtIndex0Error = "expected epub %s to have series %s at index 0"
+	addingSeriesError        = "error adding Series %s - %f for epub %s"
+	seriesAtIndex0Error      = "expected epub %s to have series %s at index 0"
 )
 
 // TestSeries tests Add, Remove, Has and HasAny

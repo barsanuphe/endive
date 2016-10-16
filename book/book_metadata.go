@@ -21,7 +21,7 @@ func (b *Book) ForceMetadataRefresh() (err error) {
 		}
 		b.Metadata = info
 	} else {
-		err = errors.New("Missing main epub for " + b.ShortString())
+		err = errors.New("Missing main epub for " + b.String())
 		return
 	}
 
@@ -43,7 +43,7 @@ func (b *Book) ForceMetadataFieldRefresh(field string) (err error) {
 			return
 		}
 	} else {
-		err = errors.New("Missing main epub for " + b.ShortString())
+		err = errors.New("Missing main epub for " + b.String())
 		return
 	}
 	// get online data
@@ -131,7 +131,7 @@ func (b *Book) editSpecificField(field string, values []string) error {
 		b.Metadata.Tags = Tags{}
 		// add new ones
 		if b.Metadata.Tags.AddFromNames(newValues...) {
-			b.UI.Infof("Tags added to %s\n", b.ShortString())
+			b.UI.Infof("Tags added to %s\n", b.String())
 		}
 	case seriesField:
 		fmt.Println("NOTE: series can be edited as a comma-separated list of 'series name:index' strings. Index can be empty, or a range.")
