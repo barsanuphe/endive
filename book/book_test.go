@@ -124,6 +124,8 @@ func TestBookNewName(t *testing.T) {
 		err := e.MainEpub().GetHash()
 		assert.Nil(err, "error getting hash")
 		assert.True(e.HasHash(testEpub.expectedSha256))
+		// testing HasEpub()
+		assert.True(e.HasEpub())
 
 		// reading metadata
 		info, err := e.MainEpub().ReadMetadata()
@@ -136,7 +138,15 @@ func TestBookNewName(t *testing.T) {
 		// test String()
 		expectedString := filepath.Join(standardTestConfig.LibraryRoot, testEpub.filename) + ":\t" + testEpub.expectedAuthor + " (" + testEpub.expectedPublicationYear + ") " + testEpub.expectedTitle + " [" + testEpub.expectedLanguage + "] "
 		assert.Equal(expectedString, e.LongString())
+		// test SetExported()
+		e.SetExported(true)
+		assert.Equal(e.IsExported, en.True)
+		e.SetExported(false)
+		assert.Equal(e.IsExported, en.False)
 
+		// test generateNewName()
+		_, err = e.generateNewName("", !isRetail)
+		assert.NotNil(err, "cannot generate name without template")
 		newName1, err := e.generateNewName("$a $y $t", !isRetail)
 		assert.Nil(err, "Error generating new name")
 		assert.Equal(newName1, testEpub.expectedFormat1, "Error getting new name")

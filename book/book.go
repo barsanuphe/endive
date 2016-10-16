@@ -223,7 +223,8 @@ func (b *Book) MainEpub() *Epub {
 	} else if b.HasNonRetail() {
 		return &b.NonRetailEpub
 	} else {
-		panic(errors.New("Book has no epub file!"))
+		b.UI.Warning("Book has no epub file!")
+		return nil
 	}
 }
 
@@ -602,7 +603,7 @@ func (b *Book) FromJSON(jsonBytes []byte) (err error) {
 	fmt.Println("Filling Epub from DB...")
 	err = json.Unmarshal(jsonBytes, b)
 	if err != nil {
-		fmt.Println(err)
+		b.UI.Error(err.Error())
 		return
 	}
 	fmt.Println("Loaded " + b.String())
@@ -614,7 +615,7 @@ func (b *Book) JSON() (JSONPart string, err error) {
 	fmt.Println("Generationg JSON for " + b.String())
 	jsonEpub, err := json.Marshal(b)
 	if err != nil {
-		fmt.Println(err)
+		b.UI.Error(err.Error())
 		return
 	}
 	JSONPart = string(jsonEpub)
