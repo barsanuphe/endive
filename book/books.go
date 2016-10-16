@@ -149,6 +149,9 @@ func (bks *Books) RemoveByID(id int) (err error) {
 
 // FindByFullPath among known Books
 func (bks *Books) FindByFullPath(filename string) (e.GenericBook, error) {
+	if filename == "" {
+		return nil, errors.New("empty path")
+	}
 	b := bks.findUnique(func(b *Book) bool {
 		return b.RetailEpub.FullPath() == filename || b.NonRetailEpub.FullPath() == filename
 	})
@@ -162,7 +165,11 @@ func (bks *Books) FindByFullPath(filename string) (e.GenericBook, error) {
 
 // FindByMetadata among known Books
 func (bks *Books) FindByMetadata(isbn, authors, title string) (e.GenericBook, error) {
-	o := Metadata{ISBN: isbn, Authors: []string{authors}, BookTitle: title}
+	isbnCandidate, err := e.CleanISBN(isbn)
+	if (authors == "" && title == "") && err != nil {
+		return nil, errors.New("invalid isbn and/or empty author and title")
+	}
+	o := Metadata{ISBN: isbnCandidate, Authors: []string{authors}, BookTitle: title}
 	b := bks.findUnique(func(b *Book) bool {
 		return b.Metadata.IsSimilar(o)
 	})
@@ -176,6 +183,9 @@ func (bks *Books) FindByMetadata(isbn, authors, title string) (e.GenericBook, er
 
 //FindByHash among known Books
 func (bks *Books) FindByHash(hash string) (e.GenericBook, error) {
+	if hash == "" {
+		return nil, errors.New("empty hash")
+	}
 	b := bks.findUnique(func(b *Book) bool {
 		return b.RetailEpub.Hash == hash || b.NonRetailEpub.Hash == hash
 	})
@@ -320,7 +330,7 @@ func (bks Books) Sort(sortBy string) {
 // First books
 func (bks Books) First(nb int) e.Collection {
 	var res e.Collection
-	if len(bks) > nb {
+	if nb > 0 && len(bks) > nb {
 		bks = bks[:nb]
 	}
 	res = &bks
@@ -330,7 +340,7 @@ func (bks Books) First(nb int) e.Collection {
 // Last books
 func (bks Books) Last(nb int) e.Collection {
 	var res e.Collection
-	if len(bks) > nb {
+	if nb > 0 && len(bks) > nb {
 		bks = bks[len(bks)-nb:]
 	}
 	res = &bks
