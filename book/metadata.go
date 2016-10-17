@@ -291,7 +291,7 @@ func (i *Metadata) Merge(o *Metadata, cfg e.Config, ui e.UserInterface) (err err
 		}
 	}
 	// automatically fill fields usually not found in epubs.
-	i.ImageURL = o.ImageURL
+	i.ImageURL = getLargeGRUrl(o.ImageURL)
 	i.NumPages = o.NumPages
 	i.AverageRating = o.AverageRating
 	i.Clean(cfg)

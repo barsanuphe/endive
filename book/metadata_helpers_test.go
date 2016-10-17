@@ -53,3 +53,16 @@ func TestCleanType(t *testing.T) {
 	_, err = cleanType("invalid type")
 	assert.NotNil(err, "invalid category entered")
 }
+
+func TestGetLargeImgURL(t *testing.T) {
+	fmt.Println("+ Testing Info/getLargeGRUrl()...")
+	assert := assert.New(t)
+
+	mURL := "https://images.gr-assets.com/books/1426192671m/53732.jpg"
+	lURL := "https://images.gr-assets.com/books/1426192671l/53732.jpg"
+	badURL := "https://images.gr-assets.com/books/1426192671m/bad.jpg"
+
+	assert.Equal(lURL, getLargeGRUrl(mURL))
+	assert.Equal(lURL, getLargeGRUrl(lURL))
+	assert.Equal(badURL, getLargeGRUrl(badURL))
+}

@@ -2,11 +2,13 @@ package book
 
 import (
 	"errors"
+	"fmt"
+	"regexp"
 	"strings"
 
-	e "github.com/barsanuphe/endive/endive"
-
 	"github.com/kennygrant/sanitize"
+
+	e "github.com/barsanuphe/endive/endive"
 )
 
 // tagAliases defines redundant tags and a main alias for them.
@@ -27,6 +29,16 @@ func cleanLanguage(language string) (clean string) {
 		}
 	}
 	return
+}
+
+// GR information return the "medium" version of the cover url. This generates the "large" URL.
+func getLargeGRUrl(url string) string {
+	re := regexp.MustCompile(`[0-9]+`)
+	ids := re.FindAllString(url, -1)
+	if len(ids) == 2 {
+		return fmt.Sprintf("https://images.gr-assets.com/books/%sl/%s.jpg", ids[0], ids[1])
+	}
+	return url
 }
 
 // remove shelf names that are obviously not genres
