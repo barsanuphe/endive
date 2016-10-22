@@ -322,11 +322,9 @@ func (i *Metadata) MergeField(o *Metadata, field string, cfg e.Config, ui e.User
 			return e
 		}
 		i.Series = Series{}
-		userInput = strings.TrimSpace(userInput)
 		if userInput != "" {
 			for _, s := range strings.Split(userInput, ",") {
-				_, errAdding := i.Series.AddFromString(s)
-				if errAdding != nil {
+				if _, errAdding := i.Series.AddFromString(s); errAdding != nil {
 					ui.Warning("Could not add series " + s + " , " + errAdding.Error())
 				}
 			}

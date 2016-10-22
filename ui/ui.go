@@ -161,19 +161,15 @@ func (ui UI) updateValue(field, oldValue string, longField bool) (newValue strin
 }
 
 // UpdateValues from candidates or from user input
-func (ui UI) UpdateValues(field, oldValue string, candidates []string, longField bool) ([]string, error) {
-	if len(candidates) == 0 {
-		value, err := ui.updateValue(field, oldValue, longField)
+func (ui UI) UpdateValues(field, oldValue string, candidate string, longField bool) (string, error) {
+	var err error
+	if candidate == "" {
+		candidate, err = ui.updateValue(field, oldValue, longField)
 		if err != nil {
-			return []string{}, err
+			return "", err
 		}
-		candidates = append(candidates, value)
 	}
-	// cleanup
-	for i := range candidates {
-		candidates[i] = strings.TrimSpace(candidates[i])
-	}
-	return candidates, nil
+	return strings.TrimSpace(candidate), nil
 }
 
 // GetInput from user

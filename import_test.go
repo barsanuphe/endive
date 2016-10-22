@@ -97,7 +97,7 @@ func TestImportPaths(t *testing.T) {
 	_, err = endive.Refresh()
 	assert.Nil(err, "Error refreshing after removing retail epub")
 	// modifying mock UI output
-	ui.UpdateValuesResult = []string{"irrelevant"}
+	ui.UpdateValuesResult = "irrelevant"
 	importedFilename = filepath.Join(c.LibraryRoot, "2005 [retail].epub")
 	// testing file has been imported and renamed
 	_, err = en.FileExists(importedFilename)
