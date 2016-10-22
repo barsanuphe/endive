@@ -18,7 +18,6 @@ import (
 
 const (
 	editOrKeep    = "(1) Keep Value (2) Edit: "
-	chooseOrEdit  = "(1) Local version (2) Remote version (3) Edit (4) Abort: "
 	enterNewValue = "Enter new value: "
 	invalidChoice = "Invalid choice."
 	emptyValue    = "Empty value detected."
@@ -35,7 +34,7 @@ type UI struct {
 	logFile *os.File
 }
 
-// TODO: replace Choose + UpdateValues with this!!!!
+// SelectOption among several, or input a new one, and return user input.
 func (ui UI) SelectOption(title, usage string, options []string, longField bool) (string, error) {
 	ui.SubPart(title)
 	if usage != "" {
@@ -63,13 +62,12 @@ func (ui UI) SelectOption(title, usage string, options []string, longField bool)
 		}
 
 		if strings.ToUpper(choice) == "E" {
-			fmt.Println("EEE")
 			var edited string
 			var scanErr error
 			if longField {
 				allVersions := ""
 				for i, o := range options {
-					allVersions += fmt.Sprintf("%d\n%s\n", i+1, o)
+					allVersions += fmt.Sprintf("%d\n%s\n", i+1, e.CleanEntry(o))
 				}
 				edited, scanErr = ui.Edit(allVersions)
 			} else {
@@ -89,7 +87,7 @@ func (ui UI) SelectOption(title, usage string, options []string, longField bool)
 			ui.Warning(notConfirmed)
 		} else if strings.ToUpper(choice) == "A" {
 			return "", errors.New(userAborted)
-		} else if index, err := strconv.Atoi(choice); err == nil && 0 < index && index < len(options) {
+		} else if index, err := strconv.Atoi(choice); err == nil && 0 < index && index <= len(options) {
 			return e.CleanEntry(options[index-1]), nil
 		}
 
@@ -103,72 +101,6 @@ func (ui UI) SelectOption(title, usage string, options []string, longField bool)
 		}
 	}
 	return choice, nil
-}
-
-// Choose among two choices
-func (ui UI) Choose(title, help, local, remote string, longField bool) (string, error) {
-	ui.SubPart(title)
-	if help != "" {
-		fmt.Println(ui.Green(help))
-	}
-	return ui.chooseVersion(local, remote, longField)
-}
-
-// chooseVersion displays a list of candidates and returns the user's pick
-func (ui UI) chooseVersion(localCandidate, remoteCandidate string, longField bool) (chosenOne string, err error) {
-	fmt.Printf("1. %s\n", localCandidate)
-	fmt.Printf("2. %s\n", remoteCandidate)
-
-	validChoice := false
-	errs := 0
-	for !validChoice {
-		ui.Choice(chooseOrEdit)
-		choice, scanErr := ui.GetInput()
-		if scanErr != nil {
-			return chosenOne, scanErr
-		}
-		switch choice {
-		case "4":
-			err = errors.New("Abort")
-			validChoice = true
-		case "3":
-			var choice string
-			var scanErr error
-			if longField {
-				bothVersions := fmt.Sprintf("Local:\n%s\n\nRemote:\n%s\n", localCandidate, remoteCandidate)
-				choice, scanErr = ui.Edit(bothVersions)
-			} else {
-				ui.Choice(enterNewValue)
-				choice, scanErr = ui.GetInput()
-			}
-			if scanErr != nil {
-				return chosenOne, scanErr
-			}
-			if choice == "" {
-				ui.Warning(emptyValue)
-			}
-			confirmed := ui.Accept("Confirm: " + choice)
-			if confirmed {
-				chosenOne = choice
-				validChoice = true
-			} else {
-				fmt.Println(notConfirmed)
-			}
-		case "2":
-			chosenOne = remoteCandidate
-			validChoice = true
-		case "1":
-			chosenOne = localCandidate
-			validChoice = true
-		default:
-			ui.Warning(invalidChoice)
-			errs++
-			if errs > 10 {
-				return "", errors.New(invalidChoice)
-			}
-		}
-	}
-	return
 }
 
 // askForNewValue from user

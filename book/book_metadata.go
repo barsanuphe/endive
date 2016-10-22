@@ -10,6 +10,21 @@ import (
 	e "github.com/barsanuphe/endive/endive"
 )
 
+const (
+	authorUsage      = "Authors can be edited as a comma-separated list of strings."
+	categoryUsage    = "A book can be either fiction or nonfiction."
+	tagsUsage        = "Tags can be edited as a comma-separated list of strings."
+	seriesUsage      = "Series can be edited as a comma-separated list of 'series name:index' strings. Index can be empty, or a range."
+	yearUsage        = "The year in which the book was written."
+	editionYearUsage = "The year in which this edition was published."
+	publisherUsage   = "Publisher of this edition."
+	languageUsage    = "Language of this edition."
+	genreUsage       = "Main genre of this book."
+	isbnUsage        = "ISBN13 for this edition."
+	titleUsage       = "Title, without series information."
+	descriptionUsage = "Description for this edition."
+)
+
 // ForceMetadataRefresh overwrites current Metadata
 func (b *Book) ForceMetadataRefresh() (err error) {
 	_, exists := e.FileExists(b.MainEpub().FullPath())

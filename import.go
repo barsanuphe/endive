@@ -119,7 +119,7 @@ func (e *Endive) ImportEpubs(candidates []en.EpubCandidate, isRetail bool) (err 
 			}
 
 			// get online data to prepare import
-			if err = info.SearchOnline(e.UI, e.Config); err != nil {
+			if err := info.SearchOnline(e.UI, e.Config); err != nil {
 				e.UI.Error("Could not merge metadata with online sources. Continuing importing nonetheless.")
 			}
 

@@ -24,12 +24,6 @@ func (u *UserInterface) Accept(a string) bool {
 	return true
 }
 
-// Choose for mock UserInterface
-func (u *UserInterface) Choose(a, b, c, d string, e bool) (string, error) {
-	fmt.Println("mock UserInterface: Choose " + a + ", " + b + ", " + c + ", " + d)
-	return c, nil
-}
-
 // UpdateValues for mock UserInterface
 func (u *UserInterface) UpdateValues(a, b string, c []string, isLong bool) ([]string, error) {
 	fmt.Println("mock UserInterface: UpdateValues " + a + ", " + b + ", " + strings.Join(c, "|"))

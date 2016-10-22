@@ -17,8 +17,8 @@ import (
 const (
 	// LocalTag an option to show it's the value in current database
 	LocalTag = "[local] "
-	// RemoteTag an option to show it's from GR
-	RemoteTag = "[remote] "
+	// OnlineTag an option to show it's from GR
+	OnlineTag = "[online] "
 )
 
 // TimeTrack helps track the time taken by a function.
@@ -38,8 +38,12 @@ func StringInSlice(a string, list []string) (index int, isIn bool) {
 }
 
 // RemoveDuplicates in []string
-func RemoveDuplicates(options *[]string) {
+func RemoveDuplicates(options *[]string, otherStringsToClean ...string) {
 	found := make(map[string]bool)
+	// specifically remove other strings from values
+	for _, o := range otherStringsToClean {
+		found[o] = true
+	}
 	j := 0
 	for i, x := range *options {
 		if !found[x] {
@@ -52,17 +56,21 @@ func RemoveDuplicates(options *[]string) {
 }
 
 // CleanSliceAndTagEntries as remote or local among a list
-func CleanSliceAndTagEntries(local, remote string, options *[]string) {
-	RemoveDuplicates(options)
+func CleanSliceAndTagEntries(local, remote string, options *[]string, otherStringsToClean ...string) {
+	RemoveDuplicates(options, otherStringsToClean...)
 	// NOTE: what to do is local or remote are not found?
 	// NOTE: for now, ignore that
 	for i, x := range *options {
 		if x == remote {
-			(*options)[i] = RemoteTag + (*options)[i]
+			(*options)[i] = OnlineTag + (*options)[i]
 		}
 		if x == local {
 			(*options)[i] = LocalTag + (*options)[i]
 		}
+	}
+	// keep at least an entry
+	if len(*options) == 0 {
+		*options = append(*options, "unknown")
 	}
 }
 
@@ -70,7 +78,7 @@ func CleanSliceAndTagEntries(local, remote string, options *[]string) {
 func CleanEntry(option string) string {
 	out := option
 	out = strings.Replace(out, LocalTag, "", -1)
-	out = strings.Replace(out, RemoteTag, "", -1)
+	out = strings.Replace(out, OnlineTag, "", -1)
 	return strings.TrimSpace(out)
 }
 

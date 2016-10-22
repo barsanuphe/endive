@@ -133,14 +133,14 @@ func TestOptions(t *testing.T) {
 	CleanSliceAndTagEntries(option1, option3, &t5)
 	assert.Equal(4, len(t5), fmt.Sprintf(expectedOptionsCount, 4))
 	assert.Equal(LocalTag+option1, t5[0], expectedLocal)
-	assert.Equal(RemoteTag+option3, t5[1], expectedRemote)
+	assert.Equal(OnlineTag+option3, t5[1], expectedRemote)
 	assert.Equal(option4, t5[2], unexpectedOption)
 	assert.Equal(option5, t5[3], unexpectedOption)
 
 	t6 := []string{option1, option1, option3, option4, option5, option5}
 	CleanSliceAndTagEntries(option1, option1, &t6)
 	assert.Equal(4, len(t6), fmt.Sprintf(expectedOptionsCount, 4))
-	assert.Equal(LocalTag+RemoteTag+option1, t6[0], expectedLocal+" & "+expectedRemote)
+	assert.Equal(LocalTag+OnlineTag+option1, t6[0], expectedLocal+" & "+expectedRemote)
 	assert.Equal(option3, t6[1], unexpectedOption)
 	assert.Equal(option4, t6[2], unexpectedOption)
 	assert.Equal(option5, t6[3], unexpectedOption)
@@ -153,4 +153,11 @@ func TestOptions(t *testing.T) {
 	assert.Equal(option3, t7[1], unexpectedOption)
 	assert.Equal(option4, t7[2], unexpectedOption)
 	assert.Equal(option5, t7[3], unexpectedOption)
+
+	t8 := []string{option1, option1, option3, option4, option5, option5}
+	CleanSliceAndTagEntries(option1, option1, &t8, option5)
+	assert.Equal(3, len(t8), fmt.Sprintf(expectedOptionsCount, 3))
+	assert.Equal(LocalTag+OnlineTag+option1, t8[0], expectedLocal+" & "+expectedRemote)
+	assert.Equal(option3, t8[1], unexpectedOption)
+	assert.Equal(option4, t8[2], unexpectedOption)
 }

@@ -88,7 +88,6 @@ type UserInterface interface {
 	// input
 	GetInput() (string, error)
 	Accept(string) bool
-	Choose(string, string, string, string, bool) (string, error)
 	UpdateValues(string, string, []string, bool) ([]string, error)
 	SelectOption(string, string, []string, bool) (string, error)
 	Edit(string) (string, error)

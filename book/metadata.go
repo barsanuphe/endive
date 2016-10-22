@@ -8,26 +8,6 @@ import (
 	e "github.com/barsanuphe/endive/endive"
 )
 
-// Metadata contains all of the known book metadata.
-type Metadata struct {
-	BookTitle     string   `json:"title" xml:"title"`
-	ImageURL      string   `json:"image_url" xml:"image_url"`
-	NumPages      string   `json:"num_pages" xml:"num_pages"`
-	Authors       []string `json:"authors" xml:"authors>author>name"`
-	ISBN          string   `json:"isbn" xml:"isbn13"`
-	OriginalYear  string   `json:"year" xml:"work>original_publication_year"`
-	EditionYear   string   `json:"edition_year" xml:"publication_year"`
-	Description   string   `json:"description" xml:"description"`
-	Series        Series   `json:"series" xml:"series_works>series_work"`
-	AverageRating string   `json:"average_rating" xml:"average_rating"`
-	Tags          Tags     `json:"tags" xml:"popular_shelves>shelf"`
-	Category      string   `json:"category"`
-	Type          string   `json:"type"`
-	Genre         string   `json:"genre"`
-	Language      string   `json:"language" xml:"language_code"`
-	Publisher     string   `json:"publisher" xml:"publisher"`
-}
-
 const (
 	titleField         = "title"
 	descriptionField   = "description"
@@ -48,6 +28,26 @@ const (
 	unknownYear = "XXXX"
 	unknown     = "Unknown"
 )
+
+// Metadata contains all of the known book metadata.
+type Metadata struct {
+	BookTitle     string   `json:"title" xml:"title"`
+	ImageURL      string   `json:"image_url" xml:"image_url"`
+	NumPages      string   `json:"num_pages" xml:"num_pages"`
+	Authors       []string `json:"authors" xml:"authors>author>name"`
+	ISBN          string   `json:"isbn" xml:"isbn13"`
+	OriginalYear  string   `json:"year" xml:"work>original_publication_year"`
+	EditionYear   string   `json:"edition_year" xml:"publication_year"`
+	Description   string   `json:"description" xml:"description"`
+	Series        Series   `json:"series" xml:"series_works>series_work"`
+	AverageRating string   `json:"average_rating" xml:"average_rating"`
+	Tags          Tags     `json:"tags" xml:"popular_shelves>shelf"`
+	Category      string   `json:"category"`
+	Type          string   `json:"type"`
+	Genre         string   `json:"genre"`
+	Language      string   `json:"language" xml:"language_code"`
+	Publisher     string   `json:"publisher" xml:"publisher"`
+}
 
 // MetadataFieldNames is a list of valid field names
 var MetadataFieldNames = []string{authorField, titleField, yearField, editionYearField, publisherField, descriptionField, languageField, categoryField, typeField, genreField, tagsField, seriesField, isbnField}
@@ -300,18 +300,21 @@ func (i *Metadata) Merge(o *Metadata, cfg e.Config, ui e.UserInterface) (err err
 
 // MergeField with another Metadata.
 func (i *Metadata) MergeField(o *Metadata, field string, cfg e.Config, ui e.UserInterface) (err error) {
+	options := []string{}
 	switch field {
 	case tagsField:
-		help := "Tags can be edited as a comma-separated list of strings."
-		tagString, e := ui.Choose(strings.Title(field), help, i.Tags.String(), o.Tags.String(), false)
+		options := append(options, i.Tags.String(), o.Tags.String())
+		e.CleanSliceAndTagEntries(i.Tags.String(), o.Tags.String(), &options, unknown)
+		userInput, e := ui.SelectOption(strings.Title(field), tagsUsage, options, false)
 		if e != nil {
 			return e
 		}
 		i.Tags = Tags{}
-		i.Tags.AddFromNames(strings.Split(tagString, ",")...)
+		i.Tags.AddFromNames(strings.Split(userInput, ",")...)
 	case seriesField:
-		help := "Series can be edited as a comma-separated list of 'series name:index' strings. Index can be empty, or a range."
-		userInput, e := ui.Choose(strings.Title(seriesField), help, i.Series.rawString(), o.Series.rawString(), false)
+		options := append(options, i.Series.rawString(), o.Series.rawString())
+		e.CleanSliceAndTagEntries(i.Series.rawString(), o.Series.rawString(), &options, unknown)
+		userInput, e := ui.SelectOption(strings.Title(field), seriesUsage, options, false)
 		if e != nil {
 			return e
 		}
@@ -326,10 +329,9 @@ func (i *Metadata) MergeField(o *Metadata, field string, cfg e.Config, ui e.User
 			}
 		}
 	case authorField:
-		help := "Authors can be edited as a comma-separated list of strings."
-		options := []string{i.Author(), o.Author()}
-		e.CleanSliceAndTagEntries(i.Author(), o.Author(), &options)
-		userInput, e := ui.SelectOption(strings.Title(field), help, options, false)
+		options := append(options, i.Author(), o.Author())
+		e.CleanSliceAndTagEntries(i.Author(), o.Author(), &options, unknown)
+		userInput, e := ui.SelectOption(strings.Title(field), authorUsage, options, false)
 		if e != nil {
 			return e
 		}
@@ -339,58 +341,85 @@ func (i *Metadata) MergeField(o *Metadata, field string, cfg e.Config, ui e.User
 			i.Authors[j] = strings.TrimSpace(i.Authors[j])
 		}
 	case yearField:
-		i.OriginalYear, err = ui.Choose("Original Publication year", "", i.OriginalYear, o.OriginalYear, false)
-		if err != nil {
-			return
-		}
-	case editionYearField:
-		i.EditionYear, err = ui.Choose("Publication year", "", i.EditionYear, o.EditionYear, false)
-		if err != nil {
-			return
-		}
-	case publisherField:
-		i.Publisher, err = ui.Choose(strings.Title(field), "", i.Publisher, o.Publisher, false)
-		if err != nil {
-			return
-		}
-	case languageField:
-		i.Language, err = ui.Choose(strings.Title(field), "", cleanLanguage(i.Language), cleanLanguage(o.Language), false)
-		if err != nil {
-			return
-		}
-	case categoryField:
-		validValues := strings.Join(validCategories, "/")
-		i.Category, err = ui.Choose(strings.Title(field), fmt.Sprintf("Valid values: %s", validValues), i.Category, o.Category, false)
-		if err != nil {
-			return
-		}
-	case typeField:
-		validValues := strings.Join(validTypes, "/")
-		i.Type, err = ui.Choose(strings.Title(field), fmt.Sprintf("Valid values: %s", validValues), i.Type, o.Type, false)
-		if err != nil {
-			return
-		}
-	case genreField:
-		i.Genre, err = ui.Choose(strings.Title(field), "", i.Genre, o.Genre, false)
-		if err != nil {
-			return
-		}
-	case isbnField:
-		i.ISBN, err = ui.Choose(strings.Title(field), "ISBN13 for this epub.", i.ISBN, o.ISBN, false)
-		if err != nil {
-			return
-		}
-	case titleField:
-		chosenTitle, e := ui.Choose(strings.Title(field), "Title, without series information.", i.Title(), o.Title(), false)
+		options := append(options, i.OriginalYear, o.OriginalYear)
+		e.CleanSliceAndTagEntries(i.OriginalYear, o.OriginalYear, &options, unknownYear)
+		userInput, e := ui.SelectOption("Original Publication year", yearUsage, options, false)
 		if e != nil {
 			return e
 		}
-		i.BookTitle = chosenTitle
-	case descriptionField:
-		i.Description, err = ui.Choose(strings.Title(field), "", cleanHTML(i.Description), cleanHTML(o.Description), true)
-		if err != nil {
-			return
+		i.OriginalYear = userInput
+	case editionYearField:
+		options := append(options, i.EditionYear, o.EditionYear)
+		e.CleanSliceAndTagEntries(i.EditionYear, o.EditionYear, &options, unknownYear)
+		userInput, e := ui.SelectOption("Publication year", editionYearUsage, options, false)
+		if e != nil {
+			return e
 		}
+		i.EditionYear = userInput
+	case publisherField:
+		options := append(options, i.Publisher, o.Publisher)
+		e.CleanSliceAndTagEntries(i.Publisher, o.Publisher, &options, unknown)
+		userInput, e := ui.SelectOption(strings.Title(field), publisherUsage, options, false)
+		if e != nil {
+			return e
+		}
+		i.Publisher = userInput
+	case languageField:
+		options := append(options, i.Language, o.Language)
+		e.CleanSliceAndTagEntries(i.Language, o.Language, &options, unknown)
+		userInput, e := ui.SelectOption(strings.Title(field), languageUsage, options, false)
+		if e != nil {
+			return e
+		}
+		i.Language = userInput
+	case categoryField:
+		options = append(options, validCategories...)
+		e.CleanSliceAndTagEntries(i.Category, o.Category, &options, unknown)
+		userInput, e := ui.SelectOption(strings.Title(field), categoryUsage, options, false)
+		if e != nil {
+			return e
+		}
+		i.Category = userInput
+	case typeField:
+		options = append(options, validTypes...)
+		e.CleanSliceAndTagEntries(i.Type, o.Type, &options, unknown)
+		userInput, e := ui.SelectOption(strings.Title(field), fmt.Sprintf("Valid values: %s", strings.Join(validTypes, "/")), options, false)
+		if e != nil {
+			return e
+		}
+		i.Type = userInput
+	case genreField:
+		options := append(options, i.Genre, o.Genre)
+		e.CleanSliceAndTagEntries(i.Genre, o.Genre, &options, unknown)
+		userInput, e := ui.SelectOption(strings.Title(field), genreUsage, options, false)
+		if e != nil {
+			return e
+		}
+		i.Genre = userInput
+	case isbnField:
+		options := append(options, i.ISBN, o.ISBN)
+		e.CleanSliceAndTagEntries(i.ISBN, o.ISBN, &options, unknown)
+		userInput, e := ui.SelectOption(strings.Title(field), isbnUsage, options, false)
+		if e != nil {
+			return e
+		}
+		i.ISBN = userInput
+	case titleField:
+		options := append(options, i.Title(), o.Title())
+		e.CleanSliceAndTagEntries(i.Title(), o.Title(), &options, unknown)
+		userInput, e := ui.SelectOption(strings.Title(field), titleUsage, options, false)
+		if e != nil {
+			return e
+		}
+		i.BookTitle = userInput
+	case descriptionField:
+		options := append(options, cleanHTML(i.Description), cleanHTML(o.Description))
+		e.CleanSliceAndTagEntries(cleanHTML(i.Description), cleanHTML(o.Description), &options, unknown)
+		userInput, e := ui.SelectOption(strings.Title(field), descriptionUsage, options, true)
+		if e != nil {
+			return e
+		}
+		i.Description = userInput
 	default:
 		ui.Debug("Unknown field: " + field)
 		return errors.New("Unknown field: " + field)
