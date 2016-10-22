@@ -3,6 +3,8 @@ package mock
 import (
 	"fmt"
 	"strings"
+
+	"github.com/barsanuphe/endive/endive"
 )
 
 // UserInterface represents a mock implementation of endive.UserInterface.
@@ -32,6 +34,16 @@ func (u *UserInterface) Choose(a, b, c, d string, e bool) (string, error) {
 func (u *UserInterface) UpdateValues(a, b string, c []string, isLong bool) ([]string, error) {
 	fmt.Println("mock UserInterface: UpdateValues " + a + ", " + b + ", " + strings.Join(c, "|"))
 	return u.UpdateValuesResult, nil
+}
+
+// SelectOption for mock UserInterface
+func (u *UserInterface) SelectOption(a, b string, c []string, isLong bool) (string, error) {
+	fmt.Println("mock UserInterface: SelectOption " + a + ", " + b + ", " + strings.Join(c, "|"))
+	if len(c) == 0 {
+		return "", nil
+	}
+	// removing local or remote tags on options
+	return endive.CleanEntry(c[0]), nil
 }
 
 // Title for mock UserInterface

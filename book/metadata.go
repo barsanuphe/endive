@@ -327,7 +327,9 @@ func (i *Metadata) MergeField(o *Metadata, field string, cfg e.Config, ui e.User
 		}
 	case authorField:
 		help := "Authors can be edited as a comma-separated list of strings."
-		userInput, e := ui.Choose(strings.Title(field), help, i.Author(), o.Author(), false)
+		options := []string{i.Author(), o.Author()}
+		e.CleanSliceAndTagEntries(i.Author(), o.Author(), &options)
+		userInput, e := ui.SelectOption(strings.Title(field), help, options, false)
 		if e != nil {
 			return e
 		}

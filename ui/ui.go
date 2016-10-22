@@ -5,13 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 
-	"io/ioutil"
-
 	"github.com/op/go-logging"
+
+	e "github.com/barsanuphe/endive/endive"
 )
 
 const (
@@ -21,6 +23,8 @@ const (
 	invalidChoice = "Invalid choice."
 	emptyValue    = "Empty value detected."
 	notConfirmed  = "Manual entry not confirmed, trying again."
+	tooManyErrors = "Too many errors, giving up."
+	userAborted   = "User aborted."
 )
 
 // UI implements endive.UserInterface
@@ -29,6 +33,76 @@ type UI struct {
 	logger *logging.Logger
 	// LogFile is the pointer to the log file, to be closed by the main function.
 	logFile *os.File
+}
+
+// TODO: replace Choose + UpdateValues with this!!!!
+func (ui UI) SelectOption(title, usage string, options []string, longField bool) (string, error) {
+	ui.SubPart(title)
+	if usage != "" {
+		fmt.Println(ui.Green(usage))
+	}
+
+	// remove duplicates from options
+	e.RemoveDuplicates(&options)
+	for i, o := range options {
+		fmt.Printf("%d. %s\n", i+1, o)
+	}
+
+	var choice string
+	errs := 0
+	validChoice := false
+	for !validChoice {
+		if len(options) > 1 {
+			ui.Choice("Choose option [1-%d], [E]dit manually, or [A]bort: ", len(options))
+		} else {
+			ui.Choice("Choose [1], [E]dit manually, or [A]bort: ")
+		}
+		choice, scanErr := ui.GetInput()
+		if scanErr != nil {
+			return "", scanErr
+		}
+
+		if strings.ToUpper(choice) == "E" {
+			fmt.Println("EEE")
+			var edited string
+			var scanErr error
+			if longField {
+				allVersions := ""
+				for i, o := range options {
+					allVersions += fmt.Sprintf("%d\n%s\n", i+1, o)
+				}
+				edited, scanErr = ui.Edit(allVersions)
+			} else {
+				ui.Choice(enterNewValue)
+				edited, scanErr = ui.GetInput()
+			}
+			if scanErr != nil {
+				return "", scanErr
+			}
+			if edited == "" {
+				ui.Warning(emptyValue)
+			}
+			confirmed := ui.Accept("Confirm: " + edited)
+			if confirmed {
+				return edited, nil
+			}
+			ui.Warning(notConfirmed)
+		} else if strings.ToUpper(choice) == "A" {
+			return "", errors.New(userAborted)
+		} else if index, err := strconv.Atoi(choice); err == nil && 0 < index && index < len(options) {
+			return e.CleanEntry(options[index-1]), nil
+		}
+
+		if !validChoice {
+			ui.Warning(invalidChoice)
+			errs++
+			if errs > 10 {
+				ui.Warning(tooManyErrors)
+				return "", errors.New(invalidChoice)
+			}
+		}
+	}
+	return choice, nil
 }
 
 // Choose among two choices

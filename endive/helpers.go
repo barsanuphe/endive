@@ -14,6 +14,13 @@ import (
 	"github.com/tj/go-spin"
 )
 
+const (
+	// LocalTag an option to show it's the value in current database
+	LocalTag = "[local] "
+	// RemoteTag an option to show it's from GR
+	RemoteTag = "[remote] "
+)
+
 // TimeTrack helps track the time taken by a function.
 func TimeTrack(ui UserInterface, start time.Time, name string) {
 	elapsed := time.Since(start)
@@ -28,6 +35,43 @@ func StringInSlice(a string, list []string) (index int, isIn bool) {
 		}
 	}
 	return -1, false
+}
+
+// RemoveDuplicates in []string
+func RemoveDuplicates(options *[]string) {
+	found := make(map[string]bool)
+	j := 0
+	for i, x := range *options {
+		if !found[x] {
+			found[x] = true
+			(*options)[j] = (*options)[i]
+			j++
+		}
+	}
+	*options = (*options)[:j]
+}
+
+// CleanSliceAndTagEntries as remote or local among a list
+func CleanSliceAndTagEntries(local, remote string, options *[]string) {
+	RemoveDuplicates(options)
+	// NOTE: what to do is local or remote are not found?
+	// NOTE: for now, ignore that
+	for i, x := range *options {
+		if x == remote {
+			(*options)[i] = RemoteTag + (*options)[i]
+		}
+		if x == local {
+			(*options)[i] = LocalTag + (*options)[i]
+		}
+	}
+}
+
+// CleanEntry of tags added with CleanSliceAndTagEntries
+func CleanEntry(option string) string {
+	out := option
+	out = strings.Replace(out, LocalTag, "", -1)
+	out = strings.Replace(out, RemoteTag, "", -1)
+	return strings.TrimSpace(out)
 }
 
 // StringInSliceCaseInsensitive checks if a string is in a []string, regardless of case.
