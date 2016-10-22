@@ -34,7 +34,7 @@ func (u *UserInterface) UpdateValues(a, b string, c []string, isLong bool) ([]st
 func (u *UserInterface) SelectOption(a, b string, c []string, isLong bool) (string, error) {
 	fmt.Println("mock UserInterface: SelectOption " + a + ", " + b + ", " + strings.Join(c, "|"))
 	if len(c) == 0 {
-		return "", nil
+		return "unknown", nil
 	}
 	// removing local or remote tags on options
 	return endive.CleanEntry(c[0]), nil

@@ -41,7 +41,7 @@ func (ui UI) SelectOption(title, usage string, options []string, longField bool)
 		fmt.Println(ui.Green(usage))
 	}
 
-	// remove duplicates from options
+	// remove duplicates from options and display them
 	e.RemoveDuplicates(&options)
 	for i, o := range options {
 		fmt.Printf("%d. %s\n", i+1, o)
@@ -51,10 +51,12 @@ func (ui UI) SelectOption(title, usage string, options []string, longField bool)
 	errs := 0
 	validChoice := false
 	for !validChoice {
-		if len(options) > 1 {
-			ui.Choice("Choose option [1-%d], [E]dit manually, or [A]bort: ", len(options))
+		if len(options) == 0 {
+			ui.Choice("Leave [B]lank, [E]dit manually, or [A]bort: ")
+		} else if len(options) > 1 {
+			ui.Choice("Choose option [1-%d], leave [B]lank, [E]dit manually, or [A]bort: ", len(options))
 		} else {
-			ui.Choice("Choose [1], [E]dit manually, or [A]bort: ")
+			ui.Choice("Choose [1], leave [B]lank, [E]dit manually, or [A]bort: ")
 		}
 		choice, scanErr := ui.GetInput()
 		if scanErr != nil {
@@ -67,7 +69,7 @@ func (ui UI) SelectOption(title, usage string, options []string, longField bool)
 			if longField {
 				allVersions := ""
 				for i, o := range options {
-					allVersions += fmt.Sprintf("%d\n%s\n", i+1, e.CleanEntry(o))
+					allVersions += fmt.Sprintf("--- %d ---\n%s\n", i+1, e.CleanEntry(o))
 				}
 				edited, scanErr = ui.Edit(allVersions)
 			} else {
@@ -87,6 +89,8 @@ func (ui UI) SelectOption(title, usage string, options []string, longField bool)
 			ui.Warning(notConfirmed)
 		} else if strings.ToUpper(choice) == "A" {
 			return "", errors.New(userAborted)
+		} else if strings.ToUpper(choice) == "B" {
+			return "", nil
 		} else if index, err := strconv.Atoi(choice); err == nil && 0 < index && index <= len(options) {
 			return e.CleanEntry(options[index-1]), nil
 		}

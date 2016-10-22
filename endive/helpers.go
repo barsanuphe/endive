@@ -46,7 +46,7 @@ func RemoveDuplicates(options *[]string, otherStringsToClean ...string) {
 	}
 	j := 0
 	for i, x := range *options {
-		if !found[x] {
+		if !found[x] && x != "" {
 			found[x] = true
 			(*options)[j] = (*options)[i]
 			j++
@@ -67,10 +67,6 @@ func CleanSliceAndTagEntries(local, remote string, options *[]string, otherStrin
 		if x == local {
 			(*options)[i] = LocalTag + (*options)[i]
 		}
-	}
-	// keep at least an entry
-	if len(*options) == 0 {
-		*options = append(*options, "unknown")
 	}
 }
 
