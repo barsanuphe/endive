@@ -27,7 +27,13 @@ const (
 
 	unknownYear = "XXXX"
 	unknown     = "Unknown"
+
+	localSource  = "Epub"
+	onlineSource = "Online"
 )
+
+// MetadataFieldNames is a list of valid field names
+var MetadataFieldNames = []string{authorField, titleField, yearField, editionYearField, publisherField, descriptionField, languageField, categoryField, typeField, genreField, tagsField, seriesField, isbnField}
 
 // Metadata contains all of the known book metadata.
 type Metadata struct {
@@ -48,9 +54,6 @@ type Metadata struct {
 	Language      string   `json:"language" xml:"language_code"`
 	Publisher     string   `json:"publisher" xml:"publisher"`
 }
-
-// MetadataFieldNames is a list of valid field names
-var MetadataFieldNames = []string{authorField, titleField, yearField, editionYearField, publisherField, descriptionField, languageField, categoryField, typeField, genreField, tagsField, seriesField, isbnField}
 
 // String returns a representation of Metadata
 func (i *Metadata) String() string {
@@ -299,7 +302,7 @@ func (i *Metadata) Merge(o *Metadata, cfg e.Config, ui e.UserInterface) (err err
 }
 
 // MergeField with another Metadata.
-func (i *Metadata) MergeField(o *Metadata, field string, cfg e.Config, ui e.UserInterface) (err error) {
+func (i *Metadata) MergeField(o *Metadata, field string, cfg e.Config, ui e.UserInterface) error {
 	options := []string{}
 	switch field {
 	case tagsField:
@@ -425,7 +428,7 @@ func (i *Metadata) MergeField(o *Metadata, field string, cfg e.Config, ui e.User
 		return errors.New("Unknown field: " + field)
 	}
 	i.Clean(cfg)
-	return
+	return nil
 }
 
 // getOnlineMetadata retrieves the online info for this book.
@@ -474,7 +477,7 @@ func (i *Metadata) getOnlineMetadata(ui e.UserInterface, cfg e.Config) (*Metadat
 }
 
 // SearchOnline tries to find metadata from online sources.
-func (i *Metadata) SearchOnline(ui e.UserInterface, cfg e.Config) (err error) {
+func (i *Metadata) SearchOnline(ui e.UserInterface, cfg e.Config, fields ...string) (err error) {
 	onlineInfo, err := i.getOnlineMetadata(ui, cfg)
 	if err != nil {
 		ui.Debug(err.Error())
@@ -487,8 +490,8 @@ func (i *Metadata) SearchOnline(ui e.UserInterface, cfg e.Config) (err error) {
 	}
 
 	// show diff between epub and GR versions, then ask what to do.
-	fmt.Println(i.Diff(onlineInfo, "Epub Metadata", "GoodReads"))
-	ui.Choice("Choose: (1) Local version (2) Remote version (3) Edit (4) Abort : ")
+	fmt.Println(i.Diff(onlineInfo, localSource, onlineSource))
+	ui.Choice("[E]dit or [A]bort : ")
 	validChoice := false
 	errs := 0
 	for !validChoice {
@@ -496,22 +499,22 @@ func (i *Metadata) SearchOnline(ui e.UserInterface, cfg e.Config) (err error) {
 		if scanErr != nil {
 			return scanErr
 		}
-		switch choice {
-		case "4":
+		switch strings.ToLower(choice) {
+		case "a":
 			err = errors.New("Abort")
 			validChoice = true
-		case "3":
-			err = i.Merge(onlineInfo, cfg, ui)
-			if err != nil {
-				return err
+		case "e":
+			if len(fields) == 0 {
+				if err := i.Merge(onlineInfo, cfg, ui); err != nil {
+					return err
+				}
+			} else {
+				for _, f := range fields {
+					if err := i.MergeField(onlineInfo, f, cfg, ui); err != nil {
+						return err
+					}
+				}
 			}
-			validChoice = true
-		case "2":
-			ui.Info("Accepting online version.")
-			i = onlineInfo
-			validChoice = true
-		case "1":
-			ui.Info("Keeping epub version.")
 			validChoice = true
 		default:
 			fmt.Println("Invalid choice.")

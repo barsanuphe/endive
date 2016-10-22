@@ -101,8 +101,6 @@ func (b *Book) ForceMetadataFieldRefresh(field string) (err error) {
 	default:
 		return errors.New("Unknown field: " + field)
 	}
-	// cleaning all metadata
-	b.Metadata.Clean(b.Config)
 	return
 }
 
@@ -130,7 +128,7 @@ func (b *Book) EditField(args ...string) (err error) {
 func (b *Book) editSpecificField(field string, values []string) error {
 	switch field {
 	case tagsField:
-		fmt.Println("NOTE: tags can be edited as a comma-separated list of strings.")
+		fmt.Println(tagsUsage)
 		newValues, err := b.UI.UpdateValues(field, b.Metadata.Tags.String(), values, false)
 		if err != nil {
 			return err
@@ -149,7 +147,7 @@ func (b *Book) editSpecificField(field string, values []string) error {
 			b.UI.Infof("Tags added to %s\n", b.String())
 		}
 	case seriesField:
-		fmt.Println("NOTE: series can be edited as a comma-separated list of 'series name:index' strings. Index can be empty, or a range.")
+		fmt.Println(seriesUsage)
 		newValues, err := b.UI.UpdateValues(field, b.Metadata.Series.rawString(), values, false)
 		if err != nil {
 			return err
