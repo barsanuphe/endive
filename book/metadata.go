@@ -344,6 +344,7 @@ func (i *Metadata) Set(field, value string) error {
 	// set value
 	switch publicFieldName {
 	case tagsField:
+		value = strings.ToLower(value)
 		i.Tags = Tags{}
 		i.Tags.AddFromNames(strings.Split(value, ",")...)
 	case seriesField:
@@ -374,6 +375,20 @@ func (i *Metadata) Set(field, value string) error {
 			return err
 		}
 		structField.SetString(isbn)
+	case categoryField:
+		value = strings.ToLower(value)
+		// check it's a valid category
+		if _, isIn := e.StringInSlice(value, validCategories); !isIn {
+			return errors.New("Invalid category: " + value)
+		}
+		structField.SetString(value)
+	case typeField:
+		value = strings.ToLower(value)
+		// check it's a valid type
+		if _, isIn := e.StringInSlice(value, validTypes); !isIn {
+			return errors.New("Invalid type: " + value)
+		}
+		structField.SetString(value)
 	default:
 		structField.SetString(value)
 	}
