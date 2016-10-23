@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"reflect"
+
 	e "github.com/barsanuphe/endive/endive"
 )
 
@@ -124,166 +126,114 @@ func (b *Book) EditField(args ...string) error {
 	return nil
 }
 
-func (b *Book) editSpecificField(field string, value string) error {
-	switch field {
-	case tagsField:
-		fmt.Println(tagsUsage)
-		newValue, err := b.UI.UpdateValues(field, b.Metadata.Tags.String(), value, false)
-		if err != nil {
-			return err
-		}
-		// if user input was entered
-		if strings.TrimSpace(newValue) != "" {
-			// remove all tags
-			b.Metadata.Tags = Tags{}
-			// add new ones
-			b.Metadata.Tags.AddFromNames(strings.Split(newValue, ",")...)
-		}
-	case seriesField:
-		fmt.Println(seriesUsage)
-		newValue, err := b.UI.UpdateValues(field, b.Metadata.Series.rawString(), value, false)
-		if err != nil {
-			return err
-		}
-		// if user input was entered, we have to split the line
-		if strings.TrimSpace(newValue) != "" {
-			// remove all Series
-			b.Metadata.Series = Series{}
-			for _, s := range strings.Split(newValue, ",") {
-				if _, err := b.Metadata.Series.AddFromString(s); err != nil {
-					b.UI.Warning("Could not parse series " + s + ", " + err.Error())
-				}
+// Set a field value for Book or Metadata
+func (b *Book) Set(field, value string) error {
+	// try to set Metadata fields first
+	if err := b.Metadata.Set(field, value); err != nil {
+		// probably failed because field was not a Metadata field
+		// try to set Book fields
+		structFieldName := ""
+		publicFieldName := ""
+
+		// try to find struct name from public name
+		for k, v := range bookFieldMap {
+			if v == field || k == field {
+				structFieldName = v
+				publicFieldName = k
 			}
 		}
-	case authorField:
-		newValue, err := b.UI.UpdateValues(field, b.Metadata.Author(), value, false)
-		if err != nil {
-			return err
+		if structFieldName == "" {
+			// nothing was found, invalid field
+			return errors.New("Invalid field " + field)
 		}
-		b.Metadata.Authors = strings.Split(newValue, ",")
-		// trim spaces
-		for j := range b.Metadata.Authors {
-			b.Metadata.Authors[j] = strings.TrimSpace(b.Metadata.Authors[j])
+		// setting the field
+		structField := reflect.ValueOf(b).Elem().FieldByName(structFieldName)
+		if !structField.IsValid() || !structField.CanSet() {
+			return fmt.Errorf(cannotSetField, field)
 		}
-	case yearField:
-		newValue, err := b.UI.UpdateValues(field, b.Metadata.OriginalYear, value, false)
-		if err != nil {
-			return err
+
+		switch publicFieldName {
+		case progressField:
+			// check it's a valid progress
+			if _, isIn := e.StringInSlice(value, validProgress); !isIn {
+				return errors.New("Invalid reading progress: " + value)
+			}
+			structField.SetString(value)
+		case readDateField:
+			// check it's a valid date
+			if _, err = time.Parse("2006-01-02", value); err != nil {
+				return errors.New("Invalid read date: " + value)
+			}
+			structField.SetString(value)
+		case ratingField:
+			// checking rating is between 0 and 10
+			val, err := strconv.ParseFloat(value, 32)
+			if err != nil || val > 5 || val < 0 {
+				return errors.New("Rating must be between 0 and 5.")
+			}
+			structField.SetString(value)
+		default:
+			structField.SetString(value)
 		}
-		// check it's a valid date!
-		_, err = strconv.Atoi(newValue)
-		if err != nil {
-			return err
-		}
-		b.Metadata.OriginalYear = newValue
-	case editionYearField:
-		newValue, err := b.UI.UpdateValues(field, b.Metadata.EditionYear, value, false)
-		if err != nil {
-			return err
-		}
-		// check it's a valid date!
-		_, err = strconv.Atoi(newValue)
-		if err != nil {
-			return err
-		}
-		b.Metadata.EditionYear = newValue
-	case languageField:
-		newValue, err := b.UI.UpdateValues(field, b.Metadata.Language, value, false)
-		if err != nil {
-			return err
-		}
-		b.Metadata.Language = newValue
-	case categoryField:
-		newValue, err := b.UI.UpdateValues(field, b.Metadata.Category, value, false)
-		if err != nil {
-			return err
-		}
-		b.Metadata.Category = newValue
-	case typeField:
-		newValue, err := b.UI.UpdateValues(field, b.Metadata.Type, value, false)
-		if err != nil {
-			return err
-		}
-		b.Metadata.Type = newValue
-	case genreField:
-		newValue, err := b.UI.UpdateValues(field, b.Metadata.Genre, value, false)
-		if err != nil {
-			return err
-		}
-		b.Metadata.Genre = newValue
-	case isbnField:
-		newValue, err := b.UI.UpdateValues(field, b.Metadata.ISBN, value, false)
-		if err != nil {
-			return err
-		}
-		// check it's a valid ISBN
-		isbn, err := e.CleanISBN(newValue)
-		if err != nil {
-			return err
-		}
-		b.Metadata.ISBN = isbn
-	case titleField:
-		newValue, err := b.UI.UpdateValues(field, b.Metadata.BookTitle, value, false)
-		if err != nil {
-			return err
-		}
-		b.Metadata.BookTitle = newValue
-	case descriptionField:
-		newValue, err := b.UI.UpdateValues(field, b.Metadata.Description, value, true)
-		if err != nil {
-			return err
-		}
-		b.Metadata.Description = newValue
-	case publisherField:
-		newValue, err := b.UI.UpdateValues(field, b.Metadata.Publisher, value, false)
-		if err != nil {
-			return err
-		}
-		b.Metadata.Publisher = newValue
-	case progressField:
-		newValue, err := b.UI.UpdateValues(field, b.Progress, value, false)
-		if err != nil {
-			return err
-		}
-		if _, isIn := e.StringInSlice(newValue, validProgress); isIn {
-			b.Progress = newValue
-		} else {
-			return errors.New(newValue + " is not a valid reading progress")
-		}
-	case readDateField:
-		newValue, err := b.UI.UpdateValues(field, b.ReadDate, value, false)
-		if err != nil {
-			return err
-		}
-		// check it's a valid date
-		_, err = time.Parse("2006-01-02", newValue)
-		if err != nil {
-			return err
-		}
-		b.ReadDate = newValue
-	case ratingField:
-		newValue, err := b.UI.UpdateValues(field, b.Rating, value, false)
-		if err != nil {
-			return err
-		}
-		// checking rating is between 0 and 10
-		val, err := strconv.ParseFloat(newValue, 32)
-		if err != nil || val > 5 || val < 0 {
-			b.UI.Error("Rating must be between 0 and 5.")
-			return err
-		}
-		b.Rating = newValue
-	case reviewField:
-		newValue, err := b.UI.UpdateValues(field, b.Review, value, true)
-		if err != nil {
-			return err
-		}
-		b.Review = newValue
-	default:
-		b.UI.Debug("Unknown field: " + field)
-		return errors.New("Unknown field: " + field)
 	}
+	return nil
+}
+
+func (b *Book) editSpecificField(field string, value string) (err error) {
+	if value == "" {
+		switch field {
+		case tagsField:
+			fmt.Println(tagsUsage)
+			value, err = b.UI.UpdateValues(field, b.Metadata.Tags.String(), false)
+		case seriesField:
+			fmt.Println(seriesUsage)
+			value, err = b.UI.UpdateValues(field, b.Metadata.Series.rawString(), false)
+		case authorField:
+			value, err = b.UI.UpdateValues(field, b.Metadata.Author(), false)
+		case yearField:
+			value, err = b.UI.UpdateValues(field, b.Metadata.OriginalYear, false)
+		case editionYearField:
+			value, err = b.UI.UpdateValues(field, b.Metadata.EditionYear, false)
+		case languageField:
+			value, err = b.UI.UpdateValues(field, b.Metadata.Language, false)
+		case categoryField:
+			value, err = b.UI.UpdateValues(field, b.Metadata.Category, false)
+		case typeField:
+			value, err = b.UI.UpdateValues(field, b.Metadata.Type, false)
+		case genreField:
+			value, err = b.UI.UpdateValues(field, b.Metadata.Genre, false)
+		case isbnField:
+			value, err = b.UI.UpdateValues(field, b.Metadata.ISBN, false)
+		case titleField:
+			value, err = b.UI.UpdateValues(field, b.Metadata.BookTitle, false)
+		case descriptionField:
+			value, err = b.UI.UpdateValues(field, b.Metadata.Description, true)
+		case publisherField:
+			value, err = b.UI.UpdateValues(field, b.Metadata.Publisher, false)
+		case progressField:
+			value, err = b.UI.UpdateValues(field, b.Progress, false)
+		case readDateField:
+			value, err = b.UI.UpdateValues(field, b.ReadDate, false)
+		case ratingField:
+			value, err = b.UI.UpdateValues(field, b.Rating, false)
+		case reviewField:
+			value, err = b.UI.UpdateValues(field, b.Review, true)
+		default:
+			b.UI.Debug("Unknown field: " + field)
+			return errors.New("Unknown field: " + field)
+		}
+		if err != nil {
+			return err
+		}
+	}
+
+	// set the field
+	err = b.Set(field, value)
+	if err != nil {
+		return
+	}
+
 	// cleaning all metadata
 	b.Metadata.Clean(b.Config)
-	return nil
+	return
 }

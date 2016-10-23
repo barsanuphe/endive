@@ -35,7 +35,7 @@ const (
 	ratingField   = "rating"
 	reviewField   = "review"
 	versions      = "versions"
-	exported      = "exported"
+	exportedField = "exported"
 	// progress values
 	unread      = "unread"
 	read        = "read"
@@ -54,10 +54,18 @@ const (
 	poetry        = "poetry"
 )
 
+var bookFieldMap = map[string]string{
+	progressField: "progress",
+	readDateField: "readdate",
+	ratingField:   "rating",
+	reviewField:   "review",
+	exportedField: "exported",
+}
+
 var validProgress = []string{unread, read, reading, shortlisted}
 var validCategories = []string{fiction, nonfiction}
 var validTypes = []string{essay, biography, autobiography, novel, shortstory, anthology, poetry}
-var allFields = []string{idField, filenameField, authorField, titleField, yearField, editionYearField, publisherField, isbnField, descriptionField, numPagesField, languageField, categoryField, typeField, genreField, tagsField, seriesField, versions, progressField, readDateField, averageRatingField, ratingField, reviewField, exported}
+var allFields = []string{idField, filenameField, authorField, titleField, yearField, editionYearField, publisherField, isbnField, descriptionField, numPagesField, languageField, categoryField, typeField, genreField, tagsField, seriesField, versions, progressField, readDateField, averageRatingField, ratingField, reviewField, exportedField}
 
 // Book can manipulate a book.
 // A Book can have multiple epub files.
@@ -200,9 +208,9 @@ func (b *Book) ShowInfo(fields ...string) string {
 			if b.Review != "" {
 				rows = append(rows, []string{strings.Title(reviewField), b.Review})
 			}
-		case exported:
+		case exportedField:
 			if b.IsExported == e.True {
-				rows = append(rows, []string{strings.Title(exported), e.True})
+				rows = append(rows, []string{strings.Title(exportedField), e.True})
 			}
 		}
 	}
