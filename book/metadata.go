@@ -390,12 +390,11 @@ func (i *Metadata) Set(field, value string) error {
 		}
 		structField.SetString(isbn)
 	case categoryField:
-		value = strings.ToLower(value)
-		// check it's a valid category
-		if _, isIn := e.StringInSlice(value, validCategories); !isIn {
-			return errors.New("Invalid category: " + value)
+		cleanCategory, err := cleanCategory(value)
+		if err != nil {
+			return err
 		}
-		structField.SetString(value)
+		structField.SetString(cleanCategory)
 	case typeField:
 		value = strings.ToLower(value)
 		// check it's a valid type
@@ -403,6 +402,10 @@ func (i *Metadata) Set(field, value string) error {
 			return errors.New("Invalid type: " + value)
 		}
 		structField.SetString(value)
+	case descriptionField:
+		structField.SetString(cleanHTML(value))
+	case languageField:
+		structField.SetString(cleanLanguage(value))
 	default:
 		structField.SetString(value)
 	}

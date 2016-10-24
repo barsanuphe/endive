@@ -55,11 +55,11 @@ const (
 )
 
 var bookFieldMap = map[string]string{
-	progressField: "progress",
-	readDateField: "readdate",
-	ratingField:   "rating",
-	reviewField:   "review",
-	exportedField: "exported",
+	progressField: "Progress",
+	readDateField: "ReadDate",
+	ratingField:   "Rating",
+	reviewField:   "Review",
+	exportedField: "Exported",
 }
 
 var validProgress = []string{unread, read, reading, shortlisted}

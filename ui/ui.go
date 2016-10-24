@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	editOrKeep    = "(1) Keep Value (2) Edit: "
+	editOrKeep    = "[E]dit or [K]eep current value: "
 	enterNewValue = "Enter new value: "
 	invalidChoice = "Invalid choice."
 	emptyValue    = "Empty value detected."
