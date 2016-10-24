@@ -107,27 +107,31 @@ func (ui UI) SelectOption(title, usage string, options []string, longField bool)
 	return choice, nil
 }
 
-// askForNewValue from user
-func (ui UI) updateValue(field, oldValue string, longField bool) (newValue string, err error) {
+// UpdateValue with user input
+func (ui UI) UpdateValue(field, usage, oldValue string, longField bool) (newValue string, err error) {
 	ui.SubPart("Modifying " + field)
+	if usage != "" {
+		ui.Info(ui.Green(usage)) // TODO ui.Info dans SelectOption aussi!
+	}
 	fmt.Printf("Current value: %s\n", oldValue)
-	ui.Choice(editOrKeep)
+
 	validChoice := false
 	errs := 0
 	for !validChoice {
+		ui.Choice(editOrKeep)
 		choice, scanErr := ui.GetInput()
 		if scanErr != nil {
 			return newValue, scanErr
 		}
-		switch choice {
-		case "2":
+		switch strings.ToLower(choice) {
+		case "e":
 			var choice string
 			var scanErr error
 			if longField {
 				choice, scanErr = ui.Edit(oldValue)
 			} else {
 				ui.Choice(enterNewValue)
-				choice, scanErr = ui.GetInput()
+				choice, scanErr = ui.GetInput() // TODO add title to GetInput()?
 			}
 			if scanErr != nil {
 				return newValue, scanErr
@@ -135,38 +139,27 @@ func (ui UI) updateValue(field, oldValue string, longField bool) (newValue strin
 			if choice == "" {
 				ui.Warning(emptyValue)
 			} else {
-				fmt.Printf("New value:\n%s\n", choice)
+				ui.Infof("New value:\n%s\n", choice)
 			}
-			confirmed := ui.Accept("Confirm")
-			if confirmed {
+			if ui.Accept("Confirm") {
 				newValue = choice
 				validChoice = true
 			} else {
-				fmt.Println(notConfirmed)
+				ui.Warning(notConfirmed)
 				ui.Choice(editOrKeep)
 			}
-		case "1":
+		case "k":
 			newValue = oldValue
 			validChoice = true
 		default:
 			ui.Warning(invalidChoice)
-			ui.Choice(editOrKeep)
 			errs++
 			if errs > 10 {
 				return "", errors.New(invalidChoice)
 			}
 		}
 	}
-	return
-}
-
-// UpdateValues from candidates or from user input
-func (ui UI) UpdateValues(field, oldValue string, longField bool) (string, error) {
-	candidate, err := ui.updateValue(field, oldValue, longField)
-	if err != nil {
-		return "", err
-	}
-	return strings.TrimSpace(candidate), nil
+	return strings.TrimSpace(newValue), nil
 }
 
 // GetInput from user

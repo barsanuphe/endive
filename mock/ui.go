@@ -24,9 +24,9 @@ func (u *UserInterface) Accept(a string) bool {
 	return true
 }
 
-// UpdateValues for mock UserInterface
-func (u *UserInterface) UpdateValues(a, b string, isLong bool) (string, error) {
-	fmt.Println("mock UserInterface: UpdateValues " + a + ", " + b)
+// UpdateValue for mock UserInterface
+func (u *UserInterface) UpdateValue(a, b, c string, isLong bool) (string, error) {
+	fmt.Println("mock UserInterface: UpdateValues " + a + ", " + b + ", " + c)
 	return u.UpdateValuesResult, nil
 }
 

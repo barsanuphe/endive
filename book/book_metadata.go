@@ -13,18 +13,10 @@ import (
 )
 
 const (
-	authorUsage      = "Authors can be edited as a comma-separated list of strings."
-	categoryUsage    = "A book can be either fiction or nonfiction."
-	tagsUsage        = "Tags can be edited as a comma-separated list of strings."
-	seriesUsage      = "Series can be edited as a comma-separated list of 'series name:index' strings. Index can be empty, or a range."
-	yearUsage        = "The year in which the book was written."
-	editionYearUsage = "The year in which this edition was published."
-	publisherUsage   = "Publisher of this edition."
-	languageUsage    = "Language of this edition."
-	genreUsage       = "Main genre of this book."
-	isbnUsage        = "ISBN13 for this edition."
-	titleUsage       = "Title, without series information."
-	descriptionUsage = "Description for this edition."
+	progressUsage = "Your progress for this book: unread, shortlisted, reading or read."
+	readDateUsage = "When you finished reading this book."
+	ratingUsage   = "Give a rating between 0 and 5."
+	reviewUsage   = "Your review of this book."
 )
 
 // ForceMetadataRefresh overwrites current Metadata
@@ -183,41 +175,39 @@ func (b *Book) editSpecificField(field string, value string) (err error) {
 	if value == "" {
 		switch field {
 		case tagsField:
-			fmt.Println(tagsUsage)
-			value, err = b.UI.UpdateValues(field, b.Metadata.Tags.String(), false)
+			value, err = b.UI.UpdateValue(field, tagsUsage, b.Metadata.Tags.String(), false)
 		case seriesField:
-			fmt.Println(seriesUsage)
-			value, err = b.UI.UpdateValues(field, b.Metadata.Series.rawString(), false)
+			value, err = b.UI.UpdateValue(field, seriesUsage, b.Metadata.Series.rawString(), false)
 		case authorField:
-			value, err = b.UI.UpdateValues(field, b.Metadata.Author(), false)
+			value, err = b.UI.UpdateValue(field, authorUsage, b.Metadata.Author(), false)
 		case yearField:
-			value, err = b.UI.UpdateValues(field, b.Metadata.OriginalYear, false)
+			value, err = b.UI.UpdateValue(field, yearUsage, b.Metadata.OriginalYear, false)
 		case editionYearField:
-			value, err = b.UI.UpdateValues(field, b.Metadata.EditionYear, false)
+			value, err = b.UI.UpdateValue(field, editionYearUsage, b.Metadata.EditionYear, false)
 		case languageField:
-			value, err = b.UI.UpdateValues(field, b.Metadata.Language, false)
+			value, err = b.UI.UpdateValue(field, languageUsage, b.Metadata.Language, false)
 		case categoryField:
-			value, err = b.UI.UpdateValues(field, b.Metadata.Category, false)
+			value, err = b.UI.UpdateValue(field, categoryUsage, b.Metadata.Category, false)
 		case typeField:
-			value, err = b.UI.UpdateValues(field, b.Metadata.Type, false)
+			value, err = b.UI.UpdateValue(field, typeUsage, b.Metadata.Type, false)
 		case genreField:
-			value, err = b.UI.UpdateValues(field, b.Metadata.Genre, false)
+			value, err = b.UI.UpdateValue(field, genreUsage, b.Metadata.Genre, false)
 		case isbnField:
-			value, err = b.UI.UpdateValues(field, b.Metadata.ISBN, false)
+			value, err = b.UI.UpdateValue(field, isbnUsage, b.Metadata.ISBN, false)
 		case titleField:
-			value, err = b.UI.UpdateValues(field, b.Metadata.BookTitle, false)
+			value, err = b.UI.UpdateValue(field, titleUsage, b.Metadata.BookTitle, false)
 		case descriptionField:
-			value, err = b.UI.UpdateValues(field, b.Metadata.Description, true)
+			value, err = b.UI.UpdateValue(field, descriptionUsage, b.Metadata.Description, true)
 		case publisherField:
-			value, err = b.UI.UpdateValues(field, b.Metadata.Publisher, false)
+			value, err = b.UI.UpdateValue(field, publisherUsage, b.Metadata.Publisher, false)
 		case progressField:
-			value, err = b.UI.UpdateValues(field, b.Progress, false)
+			value, err = b.UI.UpdateValue(field, progressUsage, b.Progress, false)
 		case readDateField:
-			value, err = b.UI.UpdateValues(field, b.ReadDate, false)
+			value, err = b.UI.UpdateValue(field, readDateUsage, b.ReadDate, false)
 		case ratingField:
-			value, err = b.UI.UpdateValues(field, b.Rating, false)
+			value, err = b.UI.UpdateValue(field, ratingUsage, b.Rating, false)
 		case reviewField:
-			value, err = b.UI.UpdateValues(field, b.Review, true)
+			value, err = b.UI.UpdateValue(field, reviewUsage, b.Review, true)
 		default:
 			b.UI.Debug("Unknown field: " + field)
 			return errors.New("Unknown field: " + field)

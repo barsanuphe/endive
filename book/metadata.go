@@ -27,6 +27,20 @@ const (
 	numPagesField      = "numpages"
 	averageRatingField = "averagerating"
 
+	authorUsage      = "Authors can be edited as a comma-separated list of strings."
+	categoryUsage    = "A book can be either fiction or nonfiction."
+	typeUsage        = "The nature of this book."
+	tagsUsage        = "Tags can be edited as a comma-separated list of strings."
+	seriesUsage      = "Series can be edited as a comma-separated list of 'series name:index' strings. Index can be empty, or a range."
+	yearUsage        = "The year in which the book was written."
+	editionYearUsage = "The year in which this edition was published."
+	publisherUsage   = "Publisher of this edition."
+	languageUsage    = "Language of this edition."
+	genreUsage       = "Main genre of this book."
+	isbnUsage        = "ISBN13 for this edition."
+	titleUsage       = "Title, without series information."
+	descriptionUsage = "Description for this edition."
+
 	unknownYear = "XXXX"
 	unknown     = "Unknown"
 
@@ -435,7 +449,7 @@ func (i *Metadata) MergeField(o *Metadata, field string, cfg e.Config, ui e.User
 	case typeField:
 		options = append(options, validTypes...)
 		e.CleanSliceAndTagEntries(i.Type, o.Type, &options, unknown)
-		userInput, err = ui.SelectOption(strings.Title(field), fmt.Sprintf("Valid values: %s", strings.Join(validTypes, "/")), options, false)
+		userInput, err = ui.SelectOption(strings.Title(field), typeUsage, options, false)
 	case genreField:
 		options := append(options, i.Genre, o.Genre)
 		e.CleanSliceAndTagEntries(i.Genre, o.Genre, &options, unknown)
