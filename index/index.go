@@ -111,7 +111,7 @@ func (i *Index) Query(queryString string) (resultsPaths []string, err error) {
 	}
 	defer index.Close()
 	if isNew {
-		return resultsPaths, errors.New("Index is empty")
+		return resultsPaths, errors.New(e.EmptyIndexError)
 	}
 
 	searchResults, err := index.Search(search)

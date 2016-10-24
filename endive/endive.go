@@ -8,14 +8,16 @@ It also contains functions that are used by other endive subpackages.
 */
 package endive
 
-// EpubExtension is the lowercase extension for all epubs.
-const EpubExtension = ".epub"
-
-// True as string
-const True = "true"
-
-// False as string
-const False = "false"
+const (
+	// EpubExtension is the lowercase extension for all epubs.
+	EpubExtension = ".epub"
+	// True as string
+	True = "true"
+	// False as string
+	False = "false"
+	// EmptyIndexError for Indexer
+	EmptyIndexError = "Index is empty"
+)
 
 // GenericBook interface for Books
 type GenericBook interface {

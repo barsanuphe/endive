@@ -3,9 +3,7 @@ Package book is a subpackage of Endive, that aims to manipulate epub files and t
 
 A Book can hold at most 2 epubs: a retail version and/or a non-retail version.
 
-It keeps two versions of metadata:
-	- EpubMetadata, which is read directly from the main epub file (retail if it exists, non-retail otherwise)
-	- Metadata, which starts with EpubMetadata, but holds additionnal information retrieved from online sources (ie, Goodreads).
+Book Metadata starts with epub Metadata, and holds additionnal information retrieved from online sources (ie, Goodreads).
 
 The Book struct controls where the files are and how they are named.
 */
@@ -443,12 +441,12 @@ func (b *Book) Refresh() (wasRenamed []bool, newName []string, err error) {
 }
 
 // HasRetail checks if a retail epub is available.
-func (b *Book) HasRetail() (hasRetail bool) {
+func (b *Book) HasRetail() bool {
 	return b.RetailEpub.Filename != ""
 }
 
 // HasNonRetail checks if a non-retail epub is available.
-func (b *Book) HasNonRetail() (hasNonRetail bool) {
+func (b *Book) HasNonRetail() bool {
 	return b.NonRetailEpub.Filename != ""
 }
 

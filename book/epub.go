@@ -32,10 +32,9 @@ func (e *Epub) FullPath() string {
 // GetHash calculates an epub's current hash
 func (e *Epub) GetHash() (err error) {
 	hash, err := en.CalculateSHA256(e.FullPath())
-	if err != nil {
-		return
+	if err == nil {
+		e.Hash = hash
 	}
-	e.Hash = hash
 	return
 }
 
