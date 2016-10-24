@@ -131,15 +131,13 @@ func (ui UI) UpdateValue(field, usage, oldValue string, longField bool) (newValu
 				choice, scanErr = ui.Edit(oldValue)
 			} else {
 				ui.Choice(enterNewValue)
-				choice, scanErr = ui.GetInput() // TODO add title to GetInput()?
+				choice, scanErr = ui.GetInput()
 			}
 			if scanErr != nil {
 				return newValue, scanErr
 			}
 			if choice == "" {
 				ui.Warning(emptyValue)
-			} else {
-				ui.Infof("New value:\n%s\n", choice)
 			}
 			if ui.Accept("Confirm") {
 				newValue = choice
