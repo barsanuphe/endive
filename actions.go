@@ -13,6 +13,14 @@ import (
 	"github.com/urfave/cli"
 )
 
+const (
+	parsingError      = "Error parsing arguments: %s"
+	exportAllBooks    = "Exporting everything to E-Reader..."
+	exportSelection   = "Exporting selection to E-Reader..."
+	exportBookError   = "Error exporting books to e-reader: %s"
+	exportFilterError = "Error filtering books for export to e-reader"
+)
+
 func checkArgsWithID(l l.Library, args []string) (book *b.Book, other []string, err error) {
 	if len(args) < 1 {
 		err = errors.New("Not enough arguments")
@@ -35,7 +43,7 @@ func checkArgsWithID(l l.Library, args []string) (book *b.Book, other []string, 
 func editMetadata(c *cli.Context, endive *Endive) {
 	book, args, err := checkArgsWithID(endive.Library, c.Args())
 	if err != nil {
-		endive.UI.Error("Error parsing arguments: " + err.Error())
+		endive.UI.Errorf(parsingError, err.Error())
 		return
 	}
 	endive.UI.Title("Editing metadata for " + book.String() + "\n")
@@ -53,7 +61,7 @@ func editMetadata(c *cli.Context, endive *Endive) {
 func refreshMetadata(c *cli.Context, endive *Endive) {
 	book, _, err := checkArgsWithID(endive.Library, c.Args())
 	if err != nil {
-		endive.UI.Error("Error parsing arguments: " + err.Error())
+		endive.UI.Errorf(parsingError, err.Error())
 		return
 	}
 	// is field specified?
@@ -94,7 +102,7 @@ func refreshMetadata(c *cli.Context, endive *Endive) {
 func setProgress(c *cli.Context, endive *Endive) {
 	book, args, err := checkArgsWithID(endive.Library, c.Args())
 	if err != nil {
-		endive.UI.Error("Error parsing arguments: " + err.Error())
+		endive.UI.Errorf(parsingError, err.Error())
 		return
 	}
 	if len(args) == 0 {
@@ -104,7 +112,8 @@ func setProgress(c *cli.Context, endive *Endive) {
 	}
 	if len(args) >= 1 {
 		// setting progress
-		if err := book.SetProgress(args[0]); err != nil {
+		err := book.Set("progress", args[0])
+		if err != nil {
 			endive.UI.Error("Progress must be among: unread/shortlisted/reading/read")
 			return
 		}
@@ -114,16 +123,18 @@ func setProgress(c *cli.Context, endive *Endive) {
 		}
 	}
 	if len(args) >= 2 {
-		// check rating format
-		rating, e := strconv.ParseFloat(args[1], 32)
-		if e != nil || rating < 0 || rating > 5 {
+		err := book.Set("rating", args[1])
+		if err != nil {
 			endive.UI.Error("Rating must be a number between 0 and 5.")
 			return
 		}
-		book.Rating = args[1]
 	}
 	if len(args) == 3 {
-		book.Review = args[2]
+		err := book.Set("review", args[2])
+		if err != nil {
+			endive.UI.Error("Could not add review.")
+			return
+		}
 	}
 	showInfo(c, endive)
 }
@@ -134,7 +145,7 @@ func showInfo(c *cli.Context, endive *Endive) {
 	} else {
 		book, _, err := checkArgsWithID(endive.Library, c.Args())
 		if err != nil {
-			endive.UI.Error("Error parsing arguments: " + err.Error())
+			endive.UI.Errorf(parsingError, err.Error())
 			return
 		}
 		fmt.Println(book.ShowInfo())
@@ -243,26 +254,26 @@ func importEpubs(endive *Endive, c *cli.Context, isRetail bool) {
 }
 
 func exportFilter(c *cli.Context, endive *Endive) {
-	endive.UI.Title("Exporting selection to E-Reader...")
+	endive.UI.Title(exportSelection)
 	query := strings.Join(c.Args(), " ")
-	var books e.Collection
 	var err error
+	var books e.Collection
 	books = &b.Books{}
 	books, err = endive.Library.Search(query, "default", -1, -1, books)
 	if err != nil {
-		endive.UI.Error("Error filtering books for export to e-reader")
+		endive.UI.Error(exportFilterError)
 		return
 	}
 	if err := endive.Library.ExportToEReader(books); err != nil {
-		endive.UI.Errorf("Error exporting books to e-reader: %s", err.Error())
+		endive.UI.Errorf(exportBookError, err.Error())
 	}
 }
 
 func exportAll(endive *Endive) {
-	endive.UI.Title("Exporting everything to E-Reader...")
+	endive.UI.Title(exportAllBooks)
 	err := endive.Library.ExportToEReader(endive.Library.Collection)
 	if err != nil {
-		endive.UI.Errorf("Error exporting books to e-reader: %s", err.Error())
+		endive.UI.Errorf(exportBookError, err.Error())
 	}
 }
 

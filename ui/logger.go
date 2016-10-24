@@ -45,7 +45,9 @@ func (ui *UI) getLogger(name string) (err error) {
 // CloseLog correctly ends logging.
 func (ui *UI) CloseLog() {
 	if ui.logFile != nil {
-		ui.logFile.Close()
+		if err := ui.logFile.Close(); err != nil {
+			ui.Error("Could not cleanly close log file.")
+		}
 	}
 }
 

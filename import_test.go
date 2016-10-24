@@ -44,7 +44,7 @@ func TestImportPaths(t *testing.T) {
 
 	fmt.Println("\n\t+ 1. import first nonretail")
 	// modifying mock UI output
-	importedFilename := filepath.Join(c.LibraryRoot, "Unknown - Beowulf - An Anglo-Saxon Epic Poem.epub")
+	importedFilename := filepath.Join(c.LibraryRoot, "unknown - Beowulf - An Anglo-Saxon Epic Poem.epub")
 	// importing
 	err = endive.ImportSpecific(false, "test/pg16328.epub")
 	assert.Nil(err, "import should be successful")
@@ -57,7 +57,7 @@ func TestImportPaths(t *testing.T) {
 	assert.Equal(1, book.ID(), "First book should have ID 1.")
 
 	fmt.Println("\n\t+ 2. import retail when nonretail exists")
-	importedFilename = filepath.Join(c.LibraryRoot, "Unknown - Beowulf - An Anglo-Saxon Epic Poem [retail].epub")
+	importedFilename = filepath.Join(c.LibraryRoot, "unknown - Beowulf - An Anglo-Saxon Epic Poem [retail].epub")
 	// importing
 	err = endive.ImportSpecific(true, "test/pg16328_empty.epub")
 	assert.Nil(err, "import should be successful")
@@ -97,7 +97,7 @@ func TestImportPaths(t *testing.T) {
 	_, err = endive.Refresh()
 	assert.Nil(err, "Error refreshing after removing retail epub")
 	// modifying mock UI output
-	ui.UpdateValuesResult = []string{"irrelevant"}
+	ui.UpdateValuesResult = "irrelevant"
 	importedFilename = filepath.Join(c.LibraryRoot, "2005 [retail].epub")
 	// testing file has been imported and renamed
 	_, err = en.FileExists(importedFilename)

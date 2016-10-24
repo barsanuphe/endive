@@ -3,11 +3,9 @@ Package library is a subpackage of Endive.
 
 Library tracks and manipulates all the Books known to Endive.
 It can:
-	- import books (retail and non-retail)
 	- build a database of said books and their metadata
 	- search this database
 	- organize the books according to the configuration file
-
 */
 package library
 
@@ -124,7 +122,6 @@ func (l *Library) markExported() error {
 			b.SetExported(true)
 		}
 	}
-
 	return nil
 }
 
@@ -137,8 +134,7 @@ func (l *Library) Search(query, sortBy string, limitFirst, limitLast int, in e.C
 
 	booksPaths, err := l.Index.Query(query)
 	if err != nil {
-		// TODO const error in endive package
-		if err.Error() == "Index is empty" {
+		if err.Error() == e.EmptyIndexError {
 			// rebuild index
 			if err := l.RebuildIndex(); err != nil {
 				return in, err

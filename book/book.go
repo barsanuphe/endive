@@ -3,9 +3,7 @@ Package book is a subpackage of Endive, that aims to manipulate epub files and t
 
 A Book can hold at most 2 epubs: a retail version and/or a non-retail version.
 
-It keeps two versions of metadata:
-	- EpubMetadata, which is read directly from the main epub file (retail if it exists, non-retail otherwise)
-	- Metadata, which starts with EpubMetadata, but holds additionnal information retrieved from online sources (ie, Goodreads).
+Book Metadata starts with epub Metadata, and holds additionnal information retrieved from online sources (ie, Goodreads).
 
 The Book struct controls where the files are and how they are named.
 */
@@ -35,7 +33,7 @@ const (
 	ratingField   = "rating"
 	reviewField   = "review"
 	versions      = "versions"
-	exported      = "exported"
+	exportedField = "exported"
 	// progress values
 	unread      = "unread"
 	read        = "read"
@@ -54,10 +52,18 @@ const (
 	poetry        = "poetry"
 )
 
+var bookFieldMap = map[string]string{
+	progressField: "Progress",
+	readDateField: "ReadDate",
+	ratingField:   "Rating",
+	reviewField:   "Review",
+	exportedField: "Exported",
+}
+
 var validProgress = []string{unread, read, reading, shortlisted}
 var validCategories = []string{fiction, nonfiction}
 var validTypes = []string{essay, biography, autobiography, novel, shortstory, anthology, poetry}
-var allFields = []string{idField, filenameField, authorField, titleField, yearField, editionYearField, publisherField, isbnField, descriptionField, numPagesField, languageField, categoryField, typeField, genreField, tagsField, seriesField, versions, progressField, readDateField, averageRatingField, ratingField, reviewField, exported}
+var allFields = []string{idField, filenameField, authorField, titleField, yearField, editionYearField, publisherField, isbnField, descriptionField, numPagesField, languageField, categoryField, typeField, genreField, tagsField, seriesField, versions, progressField, readDateField, averageRatingField, ratingField, reviewField, exportedField}
 
 // Book can manipulate a book.
 // A Book can have multiple epub files.
@@ -200,9 +206,9 @@ func (b *Book) ShowInfo(fields ...string) string {
 			if b.Review != "" {
 				rows = append(rows, []string{strings.Title(reviewField), b.Review})
 			}
-		case exported:
+		case exportedField:
 			if b.IsExported == e.True {
-				rows = append(rows, []string{strings.Title(exported), e.True})
+				rows = append(rows, []string{strings.Title(exportedField), e.True})
 			}
 		}
 	}
@@ -435,12 +441,12 @@ func (b *Book) Refresh() (wasRenamed []bool, newName []string, err error) {
 }
 
 // HasRetail checks if a retail epub is available.
-func (b *Book) HasRetail() (hasRetail bool) {
+func (b *Book) HasRetail() bool {
 	return b.RetailEpub.Filename != ""
 }
 
 // HasNonRetail checks if a non-retail epub is available.
-func (b *Book) HasNonRetail() (hasNonRetail bool) {
+func (b *Book) HasNonRetail() bool {
 	return b.NonRetailEpub.Filename != ""
 }
 

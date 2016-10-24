@@ -3,10 +3,70 @@ package book
 import (
 	"errors"
 	"fmt"
+	"reflect"
+	"strconv"
 	"strings"
 
 	e "github.com/barsanuphe/endive/endive"
 )
+
+const (
+	titleField         = "title"
+	descriptionField   = "description"
+	isbnField          = "isbn"
+	yearField          = "year"
+	editionYearField   = "edition_year"
+	authorField        = "author"
+	publisherField     = "publisher"
+	tagsField          = "tags"
+	seriesField        = "series"
+	languageField      = "language"
+	categoryField      = "category"
+	typeField          = "type"
+	genreField         = "genre"
+	numPagesField      = "numpages"
+	averageRatingField = "averagerating"
+
+	authorUsage      = "Authors can be edited as a comma-separated list of strings."
+	categoryUsage    = "A book can be either fiction or nonfiction."
+	typeUsage        = "The nature of this book."
+	tagsUsage        = "Tags can be edited as a comma-separated list of strings."
+	seriesUsage      = "Series can be edited as a comma-separated list of 'series name:index' strings. Index can be empty, or a range."
+	yearUsage        = "The year in which the book was written."
+	editionYearUsage = "The year in which this edition was published."
+	publisherUsage   = "Publisher of this edition."
+	languageUsage    = "Language of this edition."
+	genreUsage       = "Main genre of this book."
+	isbnUsage        = "ISBN13 for this edition."
+	titleUsage       = "Title, without series information."
+	descriptionUsage = "Description for this edition."
+
+	unknownYear = "XXXX"
+	unknown     = "Unknown"
+
+	localSource  = "Epub"
+	onlineSource = "Online"
+
+	cannotSetField = "Cannot set field %s"
+)
+
+// MetadataFieldNames is a list of valid field names
+var MetadataFieldNames = []string{authorField, titleField, yearField, editionYearField, publisherField, descriptionField, languageField, categoryField, typeField, genreField, tagsField, seriesField, isbnField}
+var metadataFieldMap = map[string]string{
+	authorField:      "Authors",
+	titleField:       "BookTitle",
+	yearField:        "OriginalYear",
+	editionYearField: "EditionYear",
+	publisherField:   "Publisher",
+	descriptionField: "Description",
+	languageField:    "Language",
+	categoryField:    "Category",
+	typeField:        "Type",
+	genreField:       "Genre",
+	tagsField:        "Tags",
+	seriesField:      "Series",
+	isbnField:        "ISBN",
+}
 
 // Metadata contains all of the known book metadata.
 type Metadata struct {
@@ -27,30 +87,6 @@ type Metadata struct {
 	Language      string   `json:"language" xml:"language_code"`
 	Publisher     string   `json:"publisher" xml:"publisher"`
 }
-
-const (
-	titleField         = "title"
-	descriptionField   = "description"
-	isbnField          = "isbn"
-	yearField          = "year"
-	editionYearField   = "edition_year"
-	authorField        = "author"
-	publisherField     = "publisher"
-	tagsField          = "tags"
-	seriesField        = "series"
-	languageField      = "language"
-	categoryField      = "category"
-	typeField          = "type"
-	genreField         = "genre"
-	numPagesField      = "numpages"
-	averageRatingField = "averagerating"
-
-	unknownYear = "XXXX"
-	unknown     = "Unknown"
-)
-
-// MetadataFieldNames is a list of valid field names
-var MetadataFieldNames = []string{authorField, titleField, yearField, editionYearField, publisherField, descriptionField, languageField, categoryField, typeField, genreField, tagsField, seriesField, isbnField}
 
 // String returns a representation of Metadata
 func (i *Metadata) String() string {
@@ -298,100 +334,154 @@ func (i *Metadata) Merge(o *Metadata, cfg e.Config, ui e.UserInterface) (err err
 	return
 }
 
-// MergeField with another Metadata.
-func (i *Metadata) MergeField(o *Metadata, field string, cfg e.Config, ui e.UserInterface) (err error) {
-	switch field {
+// Set Metadata field with a string value
+func (i *Metadata) Set(field, value string) error {
+	structFieldName := ""
+	publicFieldName := ""
+
+	// try to find struct name from public name
+	for k, v := range metadataFieldMap {
+		if v == field || k == field {
+			structFieldName = v
+			publicFieldName = k
+		}
+	}
+	if structFieldName == "" {
+		// nothing was found, invalid field
+		return errors.New("Invalid field " + field)
+	}
+
+	structField := reflect.ValueOf(i).Elem().FieldByName(structFieldName)
+	if !structField.IsValid() || !structField.CanSet() {
+		return fmt.Errorf(cannotSetField, field)
+	}
+	// set value
+	switch publicFieldName {
 	case tagsField:
-		help := "Tags can be edited as a comma-separated list of strings."
-		tagString, e := ui.Choose(strings.Title(field), help, i.Tags.String(), o.Tags.String(), false)
-		if e != nil {
-			return e
-		}
+		value = strings.ToLower(value)
 		i.Tags = Tags{}
-		i.Tags.AddFromNames(strings.Split(tagString, ",")...)
+		i.Tags.AddFromNames(strings.Split(value, ",")...)
 	case seriesField:
-		help := "Series can be edited as a comma-separated list of 'series name:index' strings. Index can be empty, or a range."
-		userInput, e := ui.Choose(strings.Title(seriesField), help, i.Series.rawString(), o.Series.rawString(), false)
-		if e != nil {
-			return e
-		}
 		i.Series = Series{}
-		userInput = strings.TrimSpace(userInput)
-		if userInput != "" {
-			for _, s := range strings.Split(userInput, ",") {
-				_, errAdding := i.Series.AddFromString(s)
-				if errAdding != nil {
-					ui.Warning("Could not add series " + s + " , " + errAdding.Error())
+		if value != "" {
+			for _, s := range strings.Split(value, ",") {
+				if _, err := i.Series.AddFromString(s); err != nil {
+					return err
 				}
 			}
 		}
 	case authorField:
-		help := "Authors can be edited as a comma-separated list of strings."
-		userInput, e := ui.Choose(strings.Title(field), help, i.Author(), o.Author(), false)
-		if e != nil {
-			return e
-		}
-		i.Authors = strings.Split(userInput, ",")
-		// trim spaces
+		i.Authors = strings.Split(value, ",")
 		for j := range i.Authors {
 			i.Authors[j] = strings.TrimSpace(i.Authors[j])
 		}
-	case yearField:
-		i.OriginalYear, err = ui.Choose("Original Publication year", "", i.OriginalYear, o.OriginalYear, false)
+	case yearField, editionYearField:
+		// check it's a correct year
+		_, err := strconv.Atoi(value)
 		if err != nil {
-			return
+			return errors.New("Invalid year value: " + value)
 		}
-	case editionYearField:
-		i.EditionYear, err = ui.Choose("Publication year", "", i.EditionYear, o.EditionYear, false)
-		if err != nil {
-			return
-		}
-	case publisherField:
-		i.Publisher, err = ui.Choose(strings.Title(field), "", i.Publisher, o.Publisher, false)
-		if err != nil {
-			return
-		}
-	case languageField:
-		i.Language, err = ui.Choose(strings.Title(field), "", cleanLanguage(i.Language), cleanLanguage(o.Language), false)
-		if err != nil {
-			return
-		}
-	case categoryField:
-		validValues := strings.Join(validCategories, "/")
-		i.Category, err = ui.Choose(strings.Title(field), fmt.Sprintf("Valid values: %s", validValues), i.Category, o.Category, false)
-		if err != nil {
-			return
-		}
-	case typeField:
-		validValues := strings.Join(validTypes, "/")
-		i.Type, err = ui.Choose(strings.Title(field), fmt.Sprintf("Valid values: %s", validValues), i.Type, o.Type, false)
-		if err != nil {
-			return
-		}
-	case genreField:
-		i.Genre, err = ui.Choose(strings.Title(field), "", i.Genre, o.Genre, false)
-		if err != nil {
-			return
-		}
+		structField.SetString(value)
 	case isbnField:
-		i.ISBN, err = ui.Choose(strings.Title(field), "ISBN13 for this epub.", i.ISBN, o.ISBN, false)
+		// check it's a correct isbn
+		isbn, err := e.CleanISBN(value)
 		if err != nil {
-			return
+			return err
 		}
-	case titleField:
-		chosenTitle, e := ui.Choose(strings.Title(field), "Title, without series information.", i.Title(), o.Title(), false)
-		if e != nil {
-			return e
+		structField.SetString(isbn)
+	case categoryField:
+		cleanCategory, err := cleanCategory(value)
+		if err != nil {
+			return err
 		}
-		i.BookTitle = chosenTitle
+		structField.SetString(cleanCategory)
+	case typeField:
+		value = strings.ToLower(value)
+		// check it's a valid type
+		if _, isIn := e.StringInSlice(value, validTypes); !isIn {
+			return errors.New("Invalid type: " + value)
+		}
+		structField.SetString(value)
 	case descriptionField:
-		i.Description, err = ui.Choose(strings.Title(field), "", cleanHTML(i.Description), cleanHTML(o.Description), true)
-		if err != nil {
-			return
-		}
+		structField.SetString(cleanHTML(value))
+	case languageField:
+		structField.SetString(cleanLanguage(value))
+	default:
+		structField.SetString(value)
+	}
+	return nil
+}
+
+// MergeField with another Metadata.
+func (i *Metadata) MergeField(o *Metadata, field string, cfg e.Config, ui e.UserInterface) (err error) {
+	userInput := ""
+	options := []string{}
+	switch field {
+	case tagsField:
+		options := append(options, i.Tags.String(), o.Tags.String())
+		e.CleanSliceAndTagEntries(i.Tags.String(), o.Tags.String(), &options, unknown)
+		userInput, err = ui.SelectOption(strings.Title(field), tagsUsage, options, false)
+	case seriesField:
+		options := append(options, i.Series.rawString(), o.Series.rawString())
+		e.CleanSliceAndTagEntries(i.Series.rawString(), o.Series.rawString(), &options, unknown)
+		userInput, err = ui.SelectOption(strings.Title(field), seriesUsage, options, false)
+	case authorField:
+		options := append(options, i.Author(), o.Author())
+		e.CleanSliceAndTagEntries(i.Author(), o.Author(), &options, unknown)
+		userInput, err = ui.SelectOption(strings.Title(field), authorUsage, options, false)
+	case yearField:
+		options := append(options, i.OriginalYear, o.OriginalYear)
+		e.CleanSliceAndTagEntries(i.OriginalYear, o.OriginalYear, &options, unknownYear)
+		userInput, err = ui.SelectOption("Original Publication year", yearUsage, options, false)
+	case editionYearField:
+		options := append(options, i.EditionYear, o.EditionYear)
+		e.CleanSliceAndTagEntries(i.EditionYear, o.EditionYear, &options, unknownYear)
+		userInput, err = ui.SelectOption("Publication year", editionYearUsage, options, false)
+	case publisherField:
+		options := append(options, i.Publisher, o.Publisher)
+		e.CleanSliceAndTagEntries(i.Publisher, o.Publisher, &options, unknown)
+		userInput, err = ui.SelectOption(strings.Title(field), publisherUsage, options, false)
+	case languageField:
+		options := append(options, cleanLanguage(i.Language), cleanLanguage(o.Language))
+		e.CleanSliceAndTagEntries(cleanLanguage(i.Language), cleanLanguage(o.Language), &options, unknown)
+		userInput, err = ui.SelectOption(strings.Title(field), languageUsage, options, false)
+	case categoryField:
+		options = append(options, validCategories...)
+		e.CleanSliceAndTagEntries(i.Category, o.Category, &options, unknown)
+		userInput, err = ui.SelectOption(strings.Title(field), categoryUsage, options, false)
+	case typeField:
+		options = append(options, validTypes...)
+		e.CleanSliceAndTagEntries(i.Type, o.Type, &options, unknown)
+		userInput, err = ui.SelectOption(strings.Title(field), typeUsage, options, false)
+	case genreField:
+		options := append(options, i.Genre, o.Genre)
+		e.CleanSliceAndTagEntries(i.Genre, o.Genre, &options, unknown)
+		userInput, err = ui.SelectOption(strings.Title(field), genreUsage, options, false)
+	case isbnField:
+		options := append(options, i.ISBN, o.ISBN)
+		e.CleanSliceAndTagEntries(i.ISBN, o.ISBN, &options, unknown)
+		userInput, err = ui.SelectOption(strings.Title(field), isbnUsage, options, false)
+	case titleField:
+		options := append(options, i.Title(), o.Title())
+		e.CleanSliceAndTagEntries(i.Title(), o.Title(), &options, unknown)
+		userInput, err = ui.SelectOption(strings.Title(field), titleUsage, options, false)
+	case descriptionField:
+		options := append(options, cleanHTML(i.Description), cleanHTML(o.Description))
+		e.CleanSliceAndTagEntries(cleanHTML(i.Description), cleanHTML(o.Description), &options, unknown)
+		userInput, err = ui.SelectOption(strings.Title(field), descriptionUsage, options, true)
 	default:
 		ui.Debug("Unknown field: " + field)
 		return errors.New("Unknown field: " + field)
+	}
+
+	// checking SelectOption err
+	if err != nil {
+		return
+	}
+	// set the field
+	err = i.Set(field, userInput)
+	if err != nil {
+		return
 	}
 	i.Clean(cfg)
 	return
@@ -443,7 +533,7 @@ func (i *Metadata) getOnlineMetadata(ui e.UserInterface, cfg e.Config) (*Metadat
 }
 
 // SearchOnline tries to find metadata from online sources.
-func (i *Metadata) SearchOnline(ui e.UserInterface, cfg e.Config) (err error) {
+func (i *Metadata) SearchOnline(ui e.UserInterface, cfg e.Config, fields ...string) (err error) {
 	onlineInfo, err := i.getOnlineMetadata(ui, cfg)
 	if err != nil {
 		ui.Debug(err.Error())
@@ -456,8 +546,8 @@ func (i *Metadata) SearchOnline(ui e.UserInterface, cfg e.Config) (err error) {
 	}
 
 	// show diff between epub and GR versions, then ask what to do.
-	fmt.Println(i.Diff(onlineInfo, "Epub Metadata", "GoodReads"))
-	ui.Choice("Choose: (1) Local version (2) Remote version (3) Edit (4) Abort : ")
+	fmt.Println(i.Diff(onlineInfo, localSource, onlineSource))
+	ui.Choice("[E]dit or [A]bort : ")
 	validChoice := false
 	errs := 0
 	for !validChoice {
@@ -465,22 +555,22 @@ func (i *Metadata) SearchOnline(ui e.UserInterface, cfg e.Config) (err error) {
 		if scanErr != nil {
 			return scanErr
 		}
-		switch choice {
-		case "4":
+		switch strings.ToLower(choice) {
+		case "a":
 			err = errors.New("Abort")
 			validChoice = true
-		case "3":
-			err = i.Merge(onlineInfo, cfg, ui)
-			if err != nil {
-				return err
+		case "e":
+			if len(fields) == 0 {
+				if err := i.Merge(onlineInfo, cfg, ui); err != nil {
+					return err
+				}
+			} else {
+				for _, f := range fields {
+					if err := i.MergeField(onlineInfo, f, cfg, ui); err != nil {
+						return err
+					}
+				}
 			}
-			validChoice = true
-		case "2":
-			ui.Info("Accepting online version.")
-			i = onlineInfo
-			validChoice = true
-		case "1":
-			ui.Info("Keeping epub version.")
 			validChoice = true
 		default:
 			fmt.Println("Invalid choice.")

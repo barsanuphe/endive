@@ -3,11 +3,13 @@ package mock
 import (
 	"fmt"
 	"strings"
+
+	"github.com/barsanuphe/endive/endive"
 )
 
 // UserInterface represents a mock implementation of endive.UserInterface.
 type UserInterface struct {
-	UpdateValuesResult []string
+	UpdateValuesResult string
 }
 
 // GetInput for mock UserInterface
@@ -22,16 +24,20 @@ func (u *UserInterface) Accept(a string) bool {
 	return true
 }
 
-// Choose for mock UserInterface
-func (u *UserInterface) Choose(a, b, c, d string, e bool) (string, error) {
-	fmt.Println("mock UserInterface: Choose " + a + ", " + b + ", " + c + ", " + d)
-	return c, nil
+// UpdateValue for mock UserInterface
+func (u *UserInterface) UpdateValue(a, b, c string, isLong bool) (string, error) {
+	fmt.Println("mock UserInterface: UpdateValues " + a + ", " + b + ", " + c)
+	return u.UpdateValuesResult, nil
 }
 
-// UpdateValues for mock UserInterface
-func (u *UserInterface) UpdateValues(a, b string, c []string, isLong bool) ([]string, error) {
-	fmt.Println("mock UserInterface: UpdateValues " + a + ", " + b + ", " + strings.Join(c, "|"))
-	return u.UpdateValuesResult, nil
+// SelectOption for mock UserInterface
+func (u *UserInterface) SelectOption(a, b string, c []string, isLong bool) (string, error) {
+	fmt.Println("mock UserInterface: SelectOption " + a + ", " + b + ", " + strings.Join(c, "|"))
+	if len(c) == 0 {
+		return "unknown", nil
+	}
+	// removing local or remote tags on options
+	return endive.CleanEntry(c[0]), nil
 }
 
 // Title for mock UserInterface

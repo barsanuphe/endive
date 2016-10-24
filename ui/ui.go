@@ -5,22 +5,25 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 
-	"io/ioutil"
-
 	"github.com/op/go-logging"
+
+	e "github.com/barsanuphe/endive/endive"
 )
 
 const (
-	editOrKeep    = "(1) Keep Value (2) Edit: "
-	chooseOrEdit  = "(1) Local version (2) Remote version (3) Edit (4) Abort: "
+	editOrKeep    = "[E]dit or [K]eep current value: "
 	enterNewValue = "Enter new value: "
 	invalidChoice = "Invalid choice."
 	emptyValue    = "Empty value detected."
 	notConfirmed  = "Manual entry not confirmed, trying again."
+	tooManyErrors = "Too many errors, giving up."
+	userAborted   = "User aborted."
 )
 
 // UI implements endive.UserInterface
@@ -31,86 +34,97 @@ type UI struct {
 	logFile *os.File
 }
 
-// Choose among two choices
-func (ui UI) Choose(title, help, local, remote string, longField bool) (string, error) {
+// SelectOption among several, or input a new one, and return user input.
+func (ui UI) SelectOption(title, usage string, options []string, longField bool) (string, error) {
 	ui.SubPart(title)
-	if help != "" {
-		fmt.Println(ui.Green(help))
+	if usage != "" {
+		fmt.Println(ui.Green(usage))
 	}
-	return ui.chooseVersion(local, remote, longField)
-}
 
-// chooseVersion displays a list of candidates and returns the user's pick
-func (ui UI) chooseVersion(localCandidate, remoteCandidate string, longField bool) (chosenOne string, err error) {
-	fmt.Printf("1. %s\n", localCandidate)
-	fmt.Printf("2. %s\n", remoteCandidate)
+	// remove duplicates from options and display them
+	e.RemoveDuplicates(&options)
+	for i, o := range options {
+		fmt.Printf("%d. %s\n", i+1, o)
+	}
 
-	validChoice := false
+	var choice string
 	errs := 0
+	validChoice := false
 	for !validChoice {
-		ui.Choice(chooseOrEdit)
+		if len(options) == 0 {
+			ui.Choice("Leave [B]lank, [E]dit manually, or [A]bort: ")
+		} else if len(options) > 1 {
+			ui.Choice("Choose option [1-%d], leave [B]lank, [E]dit manually, or [A]bort: ", len(options))
+		} else {
+			ui.Choice("Choose [1], leave [B]lank, [E]dit manually, or [A]bort: ")
+		}
 		choice, scanErr := ui.GetInput()
 		if scanErr != nil {
-			return chosenOne, scanErr
+			return "", scanErr
 		}
-		switch choice {
-		case "4":
-			err = errors.New("Abort")
-			validChoice = true
-		case "3":
-			var choice string
+
+		if strings.ToUpper(choice) == "E" {
+			var edited string
 			var scanErr error
 			if longField {
-				bothVersions := fmt.Sprintf("Local:\n%s\n\nRemote:\n%s\n", localCandidate, remoteCandidate)
-				choice, scanErr = ui.Edit(bothVersions)
+				allVersions := ""
+				for i, o := range options {
+					allVersions += fmt.Sprintf("--- %d ---\n%s\n", i+1, e.CleanEntry(o))
+				}
+				edited, scanErr = ui.Edit(allVersions)
 			} else {
 				ui.Choice(enterNewValue)
-				choice, scanErr = ui.GetInput()
+				edited, scanErr = ui.GetInput()
 			}
 			if scanErr != nil {
-				return chosenOne, scanErr
+				return "", scanErr
 			}
-			if choice == "" {
+			if edited == "" {
 				ui.Warning(emptyValue)
 			}
-			confirmed := ui.Accept("Confirm: " + choice)
+			confirmed := ui.Accept("Confirm: " + edited)
 			if confirmed {
-				chosenOne = choice
-				validChoice = true
-			} else {
-				fmt.Println(notConfirmed)
+				return edited, nil
 			}
-		case "2":
-			chosenOne = remoteCandidate
-			validChoice = true
-		case "1":
-			chosenOne = localCandidate
-			validChoice = true
-		default:
+			ui.Warning(notConfirmed)
+		} else if strings.ToUpper(choice) == "A" {
+			return "", errors.New(userAborted)
+		} else if strings.ToUpper(choice) == "B" {
+			return "", nil
+		} else if index, err := strconv.Atoi(choice); err == nil && 0 < index && index <= len(options) {
+			return e.CleanEntry(options[index-1]), nil
+		}
+
+		if !validChoice {
 			ui.Warning(invalidChoice)
 			errs++
 			if errs > 10 {
+				ui.Warning(tooManyErrors)
 				return "", errors.New(invalidChoice)
 			}
 		}
 	}
-	return
+	return choice, nil
 }
 
-// askForNewValue from user
-func (ui UI) updateValue(field, oldValue string, longField bool) (newValue string, err error) {
+// UpdateValue with user input
+func (ui UI) UpdateValue(field, usage, oldValue string, longField bool) (newValue string, err error) {
 	ui.SubPart("Modifying " + field)
+	if usage != "" {
+		ui.Info(ui.Green(usage)) // TODO ui.Info dans SelectOption aussi!
+	}
 	fmt.Printf("Current value: %s\n", oldValue)
-	ui.Choice(editOrKeep)
+
 	validChoice := false
 	errs := 0
 	for !validChoice {
+		ui.Choice(editOrKeep)
 		choice, scanErr := ui.GetInput()
 		if scanErr != nil {
 			return newValue, scanErr
 		}
-		switch choice {
-		case "2":
+		switch strings.ToLower(choice) {
+		case "e":
 			var choice string
 			var scanErr error
 			if longField {
@@ -124,46 +138,26 @@ func (ui UI) updateValue(field, oldValue string, longField bool) (newValue strin
 			}
 			if choice == "" {
 				ui.Warning(emptyValue)
-			} else {
-				fmt.Printf("New value:\n%s\n", choice)
 			}
-			confirmed := ui.Accept("Confirm")
-			if confirmed {
+			if ui.Accept("Confirm") {
 				newValue = choice
 				validChoice = true
 			} else {
-				fmt.Println(notConfirmed)
+				ui.Warning(notConfirmed)
 				ui.Choice(editOrKeep)
 			}
-		case "1":
+		case "k":
 			newValue = oldValue
 			validChoice = true
 		default:
 			ui.Warning(invalidChoice)
-			ui.Choice(editOrKeep)
 			errs++
 			if errs > 10 {
 				return "", errors.New(invalidChoice)
 			}
 		}
 	}
-	return
-}
-
-// UpdateValues from candidates or from user input
-func (ui UI) UpdateValues(field, oldValue string, candidates []string, longField bool) ([]string, error) {
-	if len(candidates) == 0 {
-		value, err := ui.updateValue(field, oldValue, longField)
-		if err != nil {
-			return []string{}, err
-		}
-		candidates = append(candidates, value)
-	}
-	// cleanup
-	for i := range candidates {
-		candidates[i] = strings.TrimSpace(candidates[i])
-	}
-	return candidates, nil
+	return strings.TrimSpace(newValue), nil
 }
 
 // GetInput from user

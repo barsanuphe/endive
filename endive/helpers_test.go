@@ -95,3 +95,69 @@ func TestEpubCleanISBN(t *testing.T) {
 		assert.Equal(t, c.expectedISBN, isbn, "Error cleaning isbn")
 	}
 }
+
+const (
+	option1              = "option1"
+	option2              = "option2"
+	option3              = "option3"
+	option4              = "option4"
+	option5              = "option5"
+	unexpectedOption     = "unexpected option label"
+	expectedOptionsCount = "should have %d element(s)"
+	expectedLocal        = "should be tagged local"
+	expectedRemote       = "should be tagged remote"
+)
+
+func TestOptions(t *testing.T) {
+	fmt.Println("+ Testing CleanSliceAndTagEntries/RemoveDuplicates()...")
+	assert := assert.New(t)
+
+	t1 := []string{option1, option1}
+	RemoveDuplicates(&t1)
+	assert.Equal(1, len(t1), fmt.Sprintf(expectedOptionsCount, 1))
+	assert.Equal(option1, t1[0], unexpectedOption)
+
+	t2 := []string{option1, option2, option3, option4, option5}
+	RemoveDuplicates(&t2)
+	assert.Equal(5, len(t2), fmt.Sprintf(expectedOptionsCount, 5))
+
+	t3 := []string{option1, option2, option3, option4, option5, option5}
+	RemoveDuplicates(&t3)
+	assert.Equal(5, len(t3), fmt.Sprintf(expectedOptionsCount, 5))
+
+	t4 := []string{option1, option1, option3, option4, option5, option5}
+	RemoveDuplicates(&t4)
+	assert.Equal(4, len(t4), fmt.Sprintf(expectedOptionsCount, 4))
+
+	t5 := []string{option1, option1, option3, option4, option5, option5}
+	CleanSliceAndTagEntries(option1, option3, &t5)
+	assert.Equal(4, len(t5), fmt.Sprintf(expectedOptionsCount, 4))
+	assert.Equal(LocalTag+option1, t5[0], expectedLocal)
+	assert.Equal(OnlineTag+option3, t5[1], expectedRemote)
+	assert.Equal(option4, t5[2], unexpectedOption)
+	assert.Equal(option5, t5[3], unexpectedOption)
+
+	t6 := []string{option1, option1, option3, option4, option5, option5}
+	CleanSliceAndTagEntries(option1, option1, &t6)
+	assert.Equal(4, len(t6), fmt.Sprintf(expectedOptionsCount, 4))
+	assert.Equal(LocalTag+OnlineTag+option1, t6[0], expectedLocal+" & "+expectedRemote)
+	assert.Equal(option3, t6[1], unexpectedOption)
+	assert.Equal(option4, t6[2], unexpectedOption)
+	assert.Equal(option5, t6[3], unexpectedOption)
+
+	// + one tag is not found
+	t7 := []string{option1, option1, option3, option4, option5, option5}
+	CleanSliceAndTagEntries(option1, option1+"_", &t7)
+	assert.Equal(4, len(t7), fmt.Sprintf(expectedOptionsCount, 4))
+	assert.Equal(LocalTag+option1, t7[0], expectedLocal)
+	assert.Equal(option3, t7[1], unexpectedOption)
+	assert.Equal(option4, t7[2], unexpectedOption)
+	assert.Equal(option5, t7[3], unexpectedOption)
+
+	t8 := []string{option1, option1, option3, option4, option5, option5}
+	CleanSliceAndTagEntries(option1, option1, &t8, option5)
+	assert.Equal(3, len(t8), fmt.Sprintf(expectedOptionsCount, 3))
+	assert.Equal(LocalTag+OnlineTag+option1, t8[0], expectedLocal+" & "+expectedRemote)
+	assert.Equal(option3, t8[1], unexpectedOption)
+	assert.Equal(option4, t8[2], unexpectedOption)
+}
