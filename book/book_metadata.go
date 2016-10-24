@@ -3,11 +3,10 @@ package book
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
-
-	"reflect"
 
 	e "github.com/barsanuphe/endive/endive"
 )
@@ -100,7 +99,8 @@ func (b *Book) ForceMetadataFieldRefresh(field string) (err error) {
 
 // EditField in current Metadata associated with the Book.
 func (b *Book) EditField(args ...string) error {
-	if len(args) == 0 {
+	switch len(args) {
+	case 0:
 		// completely interactive edit over all fields
 		atLeastOneWrong := false
 		for _, field := range allFields {
@@ -112,7 +112,10 @@ func (b *Book) EditField(args ...string) error {
 		if atLeastOneWrong {
 			return errors.New("Could not set at least one field.")
 		}
-	} else {
+		return nil
+	case 1:
+		return b.editSpecificField(strings.ToLower(args[0]), "")
+	case 2:
 		return b.editSpecificField(strings.ToLower(args[0]), args[1])
 	}
 	return nil
