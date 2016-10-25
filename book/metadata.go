@@ -570,6 +570,11 @@ func (i *Metadata) SearchOnline(ui e.UserInterface, cfg e.Config, fields ...stri
 						return err
 					}
 				}
+				// automatically fill fields usually not found in epubs.
+				i.ImageURL = getLargeGRUrl(onlineInfo.ImageURL)
+				i.NumPages = onlineInfo.NumPages
+				i.AverageRating = onlineInfo.AverageRating
+				i.Clean(cfg)
 			}
 			validChoice = true
 		default:
