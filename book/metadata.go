@@ -3,7 +3,6 @@ package book
 import (
 	"errors"
 	"fmt"
-	"reflect"
 	"strconv"
 	"strings"
 
@@ -342,9 +341,10 @@ func (i *Metadata) Get(field string) (string, error) {
 		return "", err
 	}
 	switch publicFieldName {
-	case seriesField, tagsField:
-		outputValue := structField.MethodByName("String").Call([]reflect.Value{})
-		return outputValue[0].String(), nil
+	case tagsField:
+		return i.Tags.String(), nil
+	case seriesField:
+		return i.Series.rawString(), nil
 	case authorField:
 		return i.Author(), nil
 	default:

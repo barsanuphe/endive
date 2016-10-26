@@ -11,9 +11,9 @@ type Tag struct {
 type Tags []Tag
 
 // String give a string representation of Tags.
-func (t *Tags) String() string {
+func (t Tags) String() string {
 	tagNames := []string{}
-	for _, tag := range *t {
+	for _, tag := range t {
 		tagNames = append(tagNames, tag.Name)
 	}
 	return strings.Join(tagNames, ", ")
