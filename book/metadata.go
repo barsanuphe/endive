@@ -430,52 +430,40 @@ func (i *Metadata) MergeField(o *Metadata, field string, cfg e.Config, ui e.User
 	if !ok {
 		usage = ""
 	}
+	currentValue, err := i.Get(field)
+	if err != nil {
+		return err
+	}
+	otherValue, err := o.Get(field)
+	if err != nil {
+		return err
+	}
 
 	switch field {
-	case tagsField:
-		listLocalAndRemoteOnly(ui, i.Tags.String(), o.Tags.String(), &options, unknown)
-		userInput, err = ui.SelectOption(strings.Title(field), usage, options, false)
-	case seriesField:
-		listLocalAndRemoteOnly(ui, i.Series.String(), o.Series.String(), &options, unknown)
-		userInput, err = ui.SelectOption(strings.Title(field), usage, options, false)
-	case authorField:
-		listLocalAndRemoteOnly(ui, i.Author(), o.Author(), &options, unknown)
-		userInput, err = ui.SelectOption(strings.Title(field), usage, options, false)
-	case yearField:
-		listLocalAndRemoteOnly(ui, i.OriginalYear, o.OriginalYear, &options, unknownYear)
-		userInput, err = ui.SelectOption("Original Publication year", usage, options, false)
-	case editionYearField:
-		listLocalAndRemoteOnly(ui, i.EditionYear, o.EditionYear, &options, unknownYear)
-		userInput, err = ui.SelectOption("Publication year", usage, options, false)
-	case publisherField:
-		listLocalAndRemoteOnly(ui, i.Publisher, o.Publisher, &options, unknown)
-		userInput, err = ui.SelectOption(strings.Title(field), usage, options, false)
+	case yearField, editionYearField:
+		listLocalAndRemoteOnly(ui, currentValue, otherValue, &options, unknownYear)
+		title := "Publication year"
+		if field == yearField {
+			title = "Original " + title
+		}
+		userInput, err = ui.SelectOption(title, usage, options, false)
 	case languageField:
 		listLocalAndRemoteOnly(ui, cleanLanguage(i.Language), cleanLanguage(o.Language), &options, unknown)
 		userInput, err = ui.SelectOption(strings.Title(field), usage, options, false)
 	case categoryField:
 		options = append(options, validCategories...)
-		CleanSliceAndTagEntries(ui, i.Category, o.Category, &options, unknown)
+		CleanSliceAndTagEntries(ui, currentValue, otherValue, &options, unknown)
 		userInput, err = ui.SelectOption(strings.Title(field), usage, options, false)
 	case typeField:
 		options = append(options, validTypes...)
-		CleanSliceAndTagEntries(ui, i.Type, o.Type, &options, unknown)
-		userInput, err = ui.SelectOption(strings.Title(field), usage, options, false)
-	case genreField:
-		listLocalAndRemoteOnly(ui, i.Genre, o.Genre, &options, unknown)
-		userInput, err = ui.SelectOption(strings.Title(field), usage, options, false)
-	case isbnField:
-		listLocalAndRemoteOnly(ui, i.ISBN, o.ISBN, &options, unknown)
-		userInput, err = ui.SelectOption(strings.Title(field), usage, options, false)
-	case titleField:
-		listLocalAndRemoteOnly(ui, i.BookTitle, o.BookTitle, &options, unknown)
+		CleanSliceAndTagEntries(ui, currentValue, otherValue, &options, unknown)
 		userInput, err = ui.SelectOption(strings.Title(field), usage, options, false)
 	case descriptionField:
 		listLocalAndRemoteOnly(ui, cleanHTML(i.Description), cleanHTML(o.Description), &options, unknown)
 		userInput, err = ui.SelectOption(strings.Title(field), usage, options, true)
 	default:
-		ui.Debug("Unknown field: " + field)
-		return errors.New("Unknown field: " + field)
+		listLocalAndRemoteOnly(ui, currentValue, otherValue, &options, unknown)
+		userInput, err = ui.SelectOption(strings.Title(field), usage, options, false)
 	}
 
 	// checking SelectOption err
