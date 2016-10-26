@@ -98,4 +98,8 @@ func TestBookSetGet(t *testing.T) {
 	err = e.EditField(typeField, "")
 	assert.Nil(err)
 	assert.Equal(novel, e.Metadata.Type)
+	ui.UpdateValuesResult = "ESSAY"
+	err = e.EditField(typeField)
+	assert.Nil(err)
+	assert.Equal(essay, e.Metadata.Type)
 }
