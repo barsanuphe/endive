@@ -412,38 +412,36 @@ func (i *Metadata) Set(field, value string) error {
 	return nil
 }
 
+func listLocalAndRemoteOnly(ui e.UserInterface, local, online string, options *[]string, thingsToClean ...string) {
+	*options = append(*options, local, online)
+	CleanSliceAndTagEntries(ui, local, online, options, thingsToClean...)
+}
+
 // MergeField with another Metadata.
 func (i *Metadata) MergeField(o *Metadata, field string, cfg e.Config, ui e.UserInterface) (err error) {
 	userInput := ""
 	options := []string{}
 	switch field {
 	case tagsField:
-		options := append(options, i.Tags.String(), o.Tags.String())
-		CleanSliceAndTagEntries(ui, i.Tags.String(), o.Tags.String(), &options, unknown)
+		listLocalAndRemoteOnly(ui, i.Tags.String(), o.Tags.String(), &options, unknown)
 		userInput, err = ui.SelectOption(strings.Title(field), tagsUsage, options, false)
 	case seriesField:
-		options := append(options, i.Series.rawString(), o.Series.rawString())
-		CleanSliceAndTagEntries(ui, i.Series.rawString(), o.Series.rawString(), &options, unknown)
+		listLocalAndRemoteOnly(ui, i.Series.String(), o.Series.String(), &options, unknown)
 		userInput, err = ui.SelectOption(strings.Title(field), seriesUsage, options, false)
 	case authorField:
-		options := append(options, i.Author(), o.Author())
-		CleanSliceAndTagEntries(ui, i.Author(), o.Author(), &options, unknown)
+		listLocalAndRemoteOnly(ui, i.Author(), o.Author(), &options, unknown)
 		userInput, err = ui.SelectOption(strings.Title(field), authorUsage, options, false)
 	case yearField:
-		options := append(options, i.OriginalYear, o.OriginalYear)
-		CleanSliceAndTagEntries(ui, i.OriginalYear, o.OriginalYear, &options, unknownYear)
+		listLocalAndRemoteOnly(ui, i.OriginalYear, o.OriginalYear, &options, unknownYear)
 		userInput, err = ui.SelectOption("Original Publication year", yearUsage, options, false)
 	case editionYearField:
-		options := append(options, i.EditionYear, o.EditionYear)
-		CleanSliceAndTagEntries(ui, i.EditionYear, o.EditionYear, &options, unknownYear)
+		listLocalAndRemoteOnly(ui, i.EditionYear, o.EditionYear, &options, unknownYear)
 		userInput, err = ui.SelectOption("Publication year", editionYearUsage, options, false)
 	case publisherField:
-		options := append(options, i.Publisher, o.Publisher)
-		CleanSliceAndTagEntries(ui, i.Publisher, o.Publisher, &options, unknown)
+		listLocalAndRemoteOnly(ui, i.Publisher, o.Publisher, &options, unknown)
 		userInput, err = ui.SelectOption(strings.Title(field), publisherUsage, options, false)
 	case languageField:
-		options := append(options, cleanLanguage(i.Language), cleanLanguage(o.Language))
-		CleanSliceAndTagEntries(ui, cleanLanguage(i.Language), cleanLanguage(o.Language), &options, unknown)
+		listLocalAndRemoteOnly(ui, cleanLanguage(i.Language), cleanLanguage(o.Language), &options, unknown)
 		userInput, err = ui.SelectOption(strings.Title(field), languageUsage, options, false)
 	case categoryField:
 		options = append(options, validCategories...)
@@ -454,20 +452,16 @@ func (i *Metadata) MergeField(o *Metadata, field string, cfg e.Config, ui e.User
 		CleanSliceAndTagEntries(ui, i.Type, o.Type, &options, unknown)
 		userInput, err = ui.SelectOption(strings.Title(field), typeUsage, options, false)
 	case genreField:
-		options := append(options, i.Genre, o.Genre)
-		CleanSliceAndTagEntries(ui, i.Genre, o.Genre, &options, unknown)
+		listLocalAndRemoteOnly(ui, i.Genre, o.Genre, &options, unknown)
 		userInput, err = ui.SelectOption(strings.Title(field), genreUsage, options, false)
 	case isbnField:
-		options := append(options, i.ISBN, o.ISBN)
-		CleanSliceAndTagEntries(ui, i.ISBN, o.ISBN, &options, unknown)
+		listLocalAndRemoteOnly(ui, i.ISBN, o.ISBN, &options, unknown)
 		userInput, err = ui.SelectOption(strings.Title(field), isbnUsage, options, false)
 	case titleField:
-		options := append(options, i.Title(), o.Title())
-		CleanSliceAndTagEntries(ui, i.Title(), o.Title(), &options, unknown)
+		listLocalAndRemoteOnly(ui, i.BookTitle, o.BookTitle, &options, unknown)
 		userInput, err = ui.SelectOption(strings.Title(field), titleUsage, options, false)
 	case descriptionField:
-		options := append(options, cleanHTML(i.Description), cleanHTML(o.Description))
-		CleanSliceAndTagEntries(ui, cleanHTML(i.Description), cleanHTML(o.Description), &options, unknown)
+		listLocalAndRemoteOnly(ui, cleanHTML(i.Description), cleanHTML(o.Description), &options, unknown)
 		userInput, err = ui.SelectOption(strings.Title(field), descriptionUsage, options, true)
 	default:
 		ui.Debug("Unknown field: " + field)
