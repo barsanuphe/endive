@@ -270,15 +270,15 @@ func (ui *UI) Edit(oldValue string) (string, error) {
 // Tag an entry local or online
 func (ui *UI) Tag(entry string, isLocal bool) string {
 	if isLocal {
-		return ui.BlueBold(LocalTag) + entry
+		return ui.CyanBold(LocalTag) + entry
 	}
-	return ui.GreenBold(OnlineTag) + entry
+	return ui.YellowBold(OnlineTag) + entry
 }
 
 // unTag strings tagged with Tag.
 func (ui *UI) unTag(option string) string {
 	out := option
-	out = strings.Replace(out, ui.BlueBold(LocalTag), "", -1)
-	out = strings.Replace(out, ui.GreenBold(OnlineTag), "", -1)
+	out = strings.Replace(out, ui.CyanBold(LocalTag), "", -1)
+	out = strings.Replace(out, ui.YellowBold(OnlineTag), "", -1)
 	return strings.TrimSpace(out)
 }

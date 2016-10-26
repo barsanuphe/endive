@@ -127,6 +127,11 @@ func (ui *UI) GreenBold(in string) string {
 	return chalk.Bold.TextStyle(chalk.Green.Color(in))
 }
 
+// CyanBold outputs a string in cyan bold.
+func (ui *UI) CyanBold(in string) string {
+	return chalk.Bold.TextStyle(chalk.Cyan.Color(in))
+}
+
 // Green outputs a string in green.
 func (ui *UI) Green(in string) string {
 	return chalk.Green.Color(in)
