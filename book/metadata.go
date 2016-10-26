@@ -424,7 +424,7 @@ func listLocalAndRemoteOnly(ui e.UserInterface, local, online string, options *[
 
 // MergeField with another Metadata.
 func (i *Metadata) MergeField(o *Metadata, field string, cfg e.Config, ui e.UserInterface) (err error) {
-	userInput := ""
+	var userInput string
 	options := []string{}
 	usage, ok := usageMap[field]
 	if !ok {

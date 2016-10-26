@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/barsanuphe/endive/mock"
 )
 
 const (
@@ -15,6 +17,7 @@ const (
 func TestBookSetGet(t *testing.T) {
 	fmt.Println("+ Testing Book.Set()/Get()...")
 	assert := assert.New(t)
+	ui = &mock.UserInterface{}
 	e := NewBook(ui, 0, epubs[0].filename, standardTestConfig, isRetail)
 
 	// set unknown field
@@ -82,4 +85,17 @@ func TestBookSetGet(t *testing.T) {
 	value, err = e.Get(descriptionField)
 	assert.Nil(err, validField)
 	assert.Equal(sampleString, value)
+
+	// editField
+	err = e.EditField(progressField, unread)
+	assert.Nil(err)
+	assert.Equal(unread, e.Progress)
+	err = e.EditField(categoryField, "non fiction")
+	assert.Nil(err)
+	assert.Equal(nonfiction, e.Metadata.Category)
+	// interactive editfield
+	ui.UpdateValuesResult = "NOVEL"
+	err = e.EditField(typeField, "")
+	assert.Nil(err)
+	assert.Equal(novel, e.Metadata.Type)
 }
