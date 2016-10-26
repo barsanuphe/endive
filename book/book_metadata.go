@@ -64,37 +64,13 @@ func (b *Book) ForceMetadataFieldRefresh(field string) (err error) {
 	if err != nil {
 		return err
 	}
-	switch field {
-	case tagsField:
-		b.Metadata.Tags = info.Tags
-	case seriesField:
-		b.Metadata.Series = info.Series
-	case authorField:
-		b.Metadata.Authors = info.Authors
-	case yearField:
-		b.Metadata.OriginalYear = info.OriginalYear
-	case editionYearField:
-		b.Metadata.EditionYear = info.EditionYear
-	case publisherField:
-		b.Metadata.Publisher = info.Publisher
-	case languageField:
-		b.Metadata.Language = info.Language
-	case categoryField:
-		b.Metadata.Category = info.Category
-	case typeField:
-		b.Metadata.Type = info.Type
-	case genreField:
-		b.Metadata.Genre = info.Genre
-	case isbnField:
-		b.Metadata.ISBN = info.ISBN
-	case titleField:
-		b.Metadata.BookTitle = info.BookTitle
-	case descriptionField:
-		b.Metadata.Description = info.Description
-	default:
-		return errors.New("Unknown field: " + field)
+	// get field value from info
+	value, err := info.Get(field)
+	if err != nil {
+		return err
 	}
-	return
+	// set value
+	return b.Metadata.Set(field, value)
 }
 
 // EditField in current Metadata associated with the Book.
@@ -121,29 +97,30 @@ func (b *Book) EditField(args ...string) error {
 	return nil
 }
 
+// Get Book field value
+func (b *Book) Get(field string) (value string, err error) {
+	var structField reflect.Value
+	value, err = b.Metadata.Get(field)
+	if err != nil {
+		_, structField, _, err = getField(b, bookFieldMap, field)
+		if err != nil {
+			return "", err
+		}
+		value = structField.String()
+	}
+	return value, nil
+}
+
 // Set a field value for Book or Metadata
 func (b *Book) Set(field, value string) error {
 	// try to set Metadata fields first
-	if err := b.Metadata.Set(field, value); err != nil {
-		// probably failed because field was not a Metadata field
-		// try to set Book fields
-		structFieldName := ""
-		publicFieldName := ""
-
-		// try to find struct name from public name
-		for k, v := range bookFieldMap {
-			if v == field || k == field {
-				structFieldName = v
-				publicFieldName = k
-			}
+	err := b.Metadata.Set(field, value)
+	if err != nil {
+		publicFieldName, structField, canBeSet, err := getField(b, bookFieldMap, field)
+		if err != nil {
+			return err
 		}
-		if structFieldName == "" {
-			// nothing was found, invalid field
-			return errors.New("Invalid field " + field)
-		}
-		// setting the field
-		structField := reflect.ValueOf(b).Elem().FieldByName(structFieldName)
-		if !structField.IsValid() || !structField.CanSet() {
+		if !canBeSet {
 			return fmt.Errorf(cannotSetField, field)
 		}
 

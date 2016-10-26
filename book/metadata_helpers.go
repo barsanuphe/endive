@@ -3,6 +3,7 @@ package book
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"regexp"
 	"strings"
 
@@ -91,30 +92,53 @@ func cleanTagName(tagName string) (cleanTagName string, err error) {
 	return
 }
 
-func cleanCategory(category string) (clean string, err error) {
-	cleanName, err := cleanTagName(category)
-	if err != nil {
-		return "", err
-	}
-	if _, isIn := e.StringInSlice(cleanName, validCategories); !isIn {
-		err = errors.New("Invalid category " + category)
-	} else {
-		clean = cleanName
-	}
-	return
+// categoryAliases replaces category tags with the canonical version
+var categoryAliases = map[string][]string{
+	fiction:    []string{"fiction"},
+	nonfiction: []string{"non fiction", "non-fiction", "nonfiction"},
 }
 
-func cleanType(bookType string) (clean string, err error) {
-	cleanName, err := cleanTagName(bookType)
-	if err != nil {
-		return "", err
+func cleanCategory(category string) (string, error) {
+	clean := strings.TrimSpace(strings.ToLower(category))
+	// reducing to main alias
+	for mainalias, aliasList := range categoryAliases {
+		if _, isIn := e.StringInSlice(clean, aliasList); isIn {
+			clean = mainalias
+			break
+		}
 	}
-	if _, isIn := e.StringInSlice(cleanName, validTypes); !isIn {
-		err = errors.New("Invalid type " + bookType)
-	} else {
-		clean = cleanName
+	// testing if valid
+	if _, isIn := e.StringInSlice(clean, validCategories); !isIn {
+		return "", errors.New("Invalid category " + category)
 	}
-	return
+	return clean, nil
+}
+
+// typeAliases replaces category tags with the canonical version
+var typeAliases = map[string][]string{
+	essay:         []string{"essay"},
+	biography:     []string{"biography"},
+	autobiography: []string{"autobiography"},
+	novel:         []string{"novel"},
+	shortstory:    []string{"shortstory", "short story", "short-story", "novella", "short-stories"},
+	anthology:     []string{"anthology", "anthologies"},
+	poetry:        []string{"poetry", "poems"},
+}
+
+func cleanType(typ string) (string, error) {
+	clean := strings.TrimSpace(strings.ToLower(typ))
+	// reducing to main alias
+	for mainalias, aliasList := range typeAliases {
+		if _, isIn := e.StringInSlice(clean, aliasList); isIn {
+			clean = mainalias
+			break
+		}
+	}
+	// testing if valid
+	if _, isIn := e.StringInSlice(clean, validTypes); !isIn {
+		return "", errors.New("Invalid type " + typ)
+	}
+	return clean, nil
 }
 
 func cleanHTML(desc string) string {
@@ -134,4 +158,28 @@ func CleanSliceAndTagEntries(ui e.UserInterface, local, remote string, options *
 			(*options)[i] = ui.Tag((*options)[i], true)
 		}
 	}
+}
+
+// return public field name, field, canbeset, error
+func getField(i interface{}, fieldMap map[string]string, name string) (string, reflect.Value, bool, error) {
+	structFieldName := ""
+	publicFieldName := ""
+
+	// try to find struct name from public name
+	for k, v := range fieldMap {
+		if v == name || k == name {
+			structFieldName = v
+			publicFieldName = k
+		}
+	}
+	if structFieldName == "" {
+		// nothing was found, invalid field
+		return "", reflect.Value{}, false, fmt.Errorf(invalidField, name)
+	}
+
+	structField := reflect.ValueOf(i).Elem().FieldByName(structFieldName)
+	if !structField.IsValid() {
+		return "", reflect.Value{}, false, fmt.Errorf(invalidField, name)
+	}
+	return publicFieldName, structField, structField.CanSet(), nil
 }

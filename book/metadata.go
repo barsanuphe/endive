@@ -47,6 +47,7 @@ const (
 	localSource  = "Epub"
 	onlineSource = "Online"
 
+	invalidField   = "Invalid field: %s"
 	cannotSetField = "Cannot set field %s"
 )
 
@@ -334,25 +335,30 @@ func (i *Metadata) Merge(o *Metadata, cfg e.Config, ui e.UserInterface) (err err
 	return
 }
 
+// Get Metadata field value
+func (i *Metadata) Get(field string) (string, error) {
+	publicFieldName, structField, _, err := getField(i, metadataFieldMap, field)
+	if err != nil {
+		return "", err
+	}
+	switch publicFieldName {
+	case seriesField, tagsField:
+		outputValue := structField.MethodByName("String").Call([]reflect.Value{})
+		return outputValue[0].String(), nil
+	case authorField:
+		return i.Author(), nil
+	default:
+		return structField.String(), nil
+	}
+}
+
 // Set Metadata field with a string value
 func (i *Metadata) Set(field, value string) error {
-	structFieldName := ""
-	publicFieldName := ""
-
-	// try to find struct name from public name
-	for k, v := range metadataFieldMap {
-		if v == field || k == field {
-			structFieldName = v
-			publicFieldName = k
-		}
+	publicFieldName, structField, canBeSet, err := getField(i, metadataFieldMap, field)
+	if err != nil {
+		return err
 	}
-	if structFieldName == "" {
-		// nothing was found, invalid field
-		return errors.New("Invalid field " + field)
-	}
-
-	structField := reflect.ValueOf(i).Elem().FieldByName(structFieldName)
-	if !structField.IsValid() || !structField.CanSet() {
+	if !canBeSet {
 		return fmt.Errorf(cannotSetField, field)
 	}
 	// set value
@@ -396,12 +402,11 @@ func (i *Metadata) Set(field, value string) error {
 		}
 		structField.SetString(cleanCategory)
 	case typeField:
-		value = strings.ToLower(value)
-		// check it's a valid type
-		if _, isIn := e.StringInSlice(value, validTypes); !isIn {
-			return errors.New("Invalid type: " + value)
+		cleanType, err := cleanType(value)
+		if err != nil {
+			return err
 		}
-		structField.SetString(value)
+		structField.SetString(cleanType)
 	case descriptionField:
 		structField.SetString(cleanHTML(value))
 	case languageField:

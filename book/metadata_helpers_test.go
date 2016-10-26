@@ -27,15 +27,21 @@ func TestEpubCleanLanguages(t *testing.T) {
 	}
 }
 
+const (
+	validCategory = "valid category entered"
+)
+
 func TestCleanCategory(t *testing.T) {
 	fmt.Println("+ Testing Info/TestCleanCategory()...")
 	assert := assert.New(t)
 	clean, err := cleanCategory(fiction)
-	assert.Nil(err, "valid category entered")
+	assert.Nil(err, validCategory)
 	assert.Equal(fiction, clean)
-	clean, err = cleanCategory(" " + nonfiction + "    ")
-	assert.Nil(err, "valid category entered")
-	assert.Equal(nonfiction, clean)
+	for _, nf := range []string{nonfiction, " " + nonfiction + "    ", "non fiction", "non-Fiction"} {
+		clean, err = cleanCategory(nf)
+		assert.Nil(err, validCategory)
+		assert.Equal(nonfiction, clean)
+	}
 	_, err = cleanCategory("invalid category")
 	assert.NotNil(err, "invalid category entered")
 }
@@ -53,6 +59,12 @@ func TestCleanType(t *testing.T) {
 	assert.Equal(essay, clean)
 	_, err = cleanType("invalid type")
 	assert.NotNil(err, "invalid category entered")
+	clean, err = cleanType("short-story")
+	assert.Nil(err, "valid type entered")
+	assert.Equal(shortstory, clean)
+	clean, err = cleanType("novella")
+	assert.Nil(err, "valid type entered")
+	assert.Equal(shortstory, clean)
 }
 
 func TestGetLargeImgURL(t *testing.T) {
