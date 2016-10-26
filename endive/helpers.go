@@ -14,13 +14,6 @@ import (
 	"github.com/tj/go-spin"
 )
 
-const (
-	// LocalTag an option to show it's the value in current database
-	LocalTag = "[local] "
-	// OnlineTag an option to show it's from GR
-	OnlineTag = "[online] "
-)
-
 // TimeTrack helps track the time taken by a function.
 func TimeTrack(ui UserInterface, start time.Time, name string) {
 	elapsed := time.Since(start)
@@ -53,29 +46,6 @@ func RemoveDuplicates(options *[]string, otherStringsToClean ...string) {
 		}
 	}
 	*options = (*options)[:j]
-}
-
-// CleanSliceAndTagEntries as remote or local among a list
-func CleanSliceAndTagEntries(local, remote string, options *[]string, otherStringsToClean ...string) {
-	RemoveDuplicates(options, otherStringsToClean...)
-	// NOTE: what to do is local or remote are not found?
-	// NOTE: for now, ignore that
-	for i, x := range *options {
-		if x == remote {
-			(*options)[i] = OnlineTag + (*options)[i]
-		}
-		if x == local {
-			(*options)[i] = LocalTag + (*options)[i]
-		}
-	}
-}
-
-// CleanEntry of tags added with CleanSliceAndTagEntries
-func CleanEntry(option string) string {
-	out := option
-	out = strings.Replace(out, LocalTag, "", -1)
-	out = strings.Replace(out, OnlineTag, "", -1)
-	return strings.TrimSpace(out)
 }
 
 // StringInSliceCaseInsensitive checks if a string is in a []string, regardless of case.

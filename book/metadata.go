@@ -3,7 +3,6 @@ package book
 import (
 	"errors"
 	"fmt"
-	"reflect"
 	"strconv"
 	"strings"
 
@@ -47,6 +46,7 @@ const (
 	localSource  = "Epub"
 	onlineSource = "Online"
 
+	invalidField   = "Invalid field: %s"
 	cannotSetField = "Cannot set field %s"
 )
 
@@ -334,25 +334,31 @@ func (i *Metadata) Merge(o *Metadata, cfg e.Config, ui e.UserInterface) (err err
 	return
 }
 
+// Get Metadata field value
+func (i *Metadata) Get(field string) (string, error) {
+	publicFieldName, structField, _, err := getField(i, metadataFieldMap, field)
+	if err != nil {
+		return "", err
+	}
+	switch publicFieldName {
+	case tagsField:
+		return i.Tags.String(), nil
+	case seriesField:
+		return i.Series.rawString(), nil
+	case authorField:
+		return i.Author(), nil
+	default:
+		return structField.String(), nil
+	}
+}
+
 // Set Metadata field with a string value
 func (i *Metadata) Set(field, value string) error {
-	structFieldName := ""
-	publicFieldName := ""
-
-	// try to find struct name from public name
-	for k, v := range metadataFieldMap {
-		if v == field || k == field {
-			structFieldName = v
-			publicFieldName = k
-		}
+	publicFieldName, structField, canBeSet, err := getField(i, metadataFieldMap, field)
+	if err != nil {
+		return err
 	}
-	if structFieldName == "" {
-		// nothing was found, invalid field
-		return errors.New("Invalid field " + field)
-	}
-
-	structField := reflect.ValueOf(i).Elem().FieldByName(structFieldName)
-	if !structField.IsValid() || !structField.CanSet() {
+	if !canBeSet {
 		return fmt.Errorf(cannotSetField, field)
 	}
 	// set value
@@ -396,12 +402,11 @@ func (i *Metadata) Set(field, value string) error {
 		}
 		structField.SetString(cleanCategory)
 	case typeField:
-		value = strings.ToLower(value)
-		// check it's a valid type
-		if _, isIn := e.StringInSlice(value, validTypes); !isIn {
-			return errors.New("Invalid type: " + value)
+		cleanType, err := cleanType(value)
+		if err != nil {
+			return err
 		}
-		structField.SetString(value)
+		structField.SetString(cleanType)
 	case descriptionField:
 		structField.SetString(cleanHTML(value))
 	case languageField:
@@ -412,66 +417,53 @@ func (i *Metadata) Set(field, value string) error {
 	return nil
 }
 
+func listLocalAndRemoteOnly(ui e.UserInterface, local, online string, options *[]string, thingsToClean ...string) {
+	*options = append(*options, local, online)
+	CleanSliceAndTagEntries(ui, local, online, options, thingsToClean...)
+}
+
 // MergeField with another Metadata.
 func (i *Metadata) MergeField(o *Metadata, field string, cfg e.Config, ui e.UserInterface) (err error) {
 	userInput := ""
 	options := []string{}
+	usage, ok := usageMap[field]
+	if !ok {
+		usage = ""
+	}
+	currentValue, err := i.Get(field)
+	if err != nil {
+		return err
+	}
+	otherValue, err := o.Get(field)
+	if err != nil {
+		return err
+	}
+
 	switch field {
-	case tagsField:
-		options := append(options, i.Tags.String(), o.Tags.String())
-		e.CleanSliceAndTagEntries(i.Tags.String(), o.Tags.String(), &options, unknown)
-		userInput, err = ui.SelectOption(strings.Title(field), tagsUsage, options, false)
-	case seriesField:
-		options := append(options, i.Series.rawString(), o.Series.rawString())
-		e.CleanSliceAndTagEntries(i.Series.rawString(), o.Series.rawString(), &options, unknown)
-		userInput, err = ui.SelectOption(strings.Title(field), seriesUsage, options, false)
-	case authorField:
-		options := append(options, i.Author(), o.Author())
-		e.CleanSliceAndTagEntries(i.Author(), o.Author(), &options, unknown)
-		userInput, err = ui.SelectOption(strings.Title(field), authorUsage, options, false)
-	case yearField:
-		options := append(options, i.OriginalYear, o.OriginalYear)
-		e.CleanSliceAndTagEntries(i.OriginalYear, o.OriginalYear, &options, unknownYear)
-		userInput, err = ui.SelectOption("Original Publication year", yearUsage, options, false)
-	case editionYearField:
-		options := append(options, i.EditionYear, o.EditionYear)
-		e.CleanSliceAndTagEntries(i.EditionYear, o.EditionYear, &options, unknownYear)
-		userInput, err = ui.SelectOption("Publication year", editionYearUsage, options, false)
-	case publisherField:
-		options := append(options, i.Publisher, o.Publisher)
-		e.CleanSliceAndTagEntries(i.Publisher, o.Publisher, &options, unknown)
-		userInput, err = ui.SelectOption(strings.Title(field), publisherUsage, options, false)
+	case yearField, editionYearField:
+		listLocalAndRemoteOnly(ui, currentValue, otherValue, &options, unknownYear)
+		title := "Publication year"
+		if field == yearField {
+			title = "Original " + title
+		}
+		userInput, err = ui.SelectOption(title, usage, options, false)
 	case languageField:
-		options := append(options, cleanLanguage(i.Language), cleanLanguage(o.Language))
-		e.CleanSliceAndTagEntries(cleanLanguage(i.Language), cleanLanguage(o.Language), &options, unknown)
-		userInput, err = ui.SelectOption(strings.Title(field), languageUsage, options, false)
+		listLocalAndRemoteOnly(ui, cleanLanguage(i.Language), cleanLanguage(o.Language), &options, unknown)
+		userInput, err = ui.SelectOption(strings.Title(field), usage, options, false)
 	case categoryField:
 		options = append(options, validCategories...)
-		e.CleanSliceAndTagEntries(i.Category, o.Category, &options, unknown)
-		userInput, err = ui.SelectOption(strings.Title(field), categoryUsage, options, false)
+		CleanSliceAndTagEntries(ui, currentValue, otherValue, &options, unknown)
+		userInput, err = ui.SelectOption(strings.Title(field), usage, options, false)
 	case typeField:
 		options = append(options, validTypes...)
-		e.CleanSliceAndTagEntries(i.Type, o.Type, &options, unknown)
-		userInput, err = ui.SelectOption(strings.Title(field), typeUsage, options, false)
-	case genreField:
-		options := append(options, i.Genre, o.Genre)
-		e.CleanSliceAndTagEntries(i.Genre, o.Genre, &options, unknown)
-		userInput, err = ui.SelectOption(strings.Title(field), genreUsage, options, false)
-	case isbnField:
-		options := append(options, i.ISBN, o.ISBN)
-		e.CleanSliceAndTagEntries(i.ISBN, o.ISBN, &options, unknown)
-		userInput, err = ui.SelectOption(strings.Title(field), isbnUsage, options, false)
-	case titleField:
-		options := append(options, i.Title(), o.Title())
-		e.CleanSliceAndTagEntries(i.Title(), o.Title(), &options, unknown)
-		userInput, err = ui.SelectOption(strings.Title(field), titleUsage, options, false)
+		CleanSliceAndTagEntries(ui, currentValue, otherValue, &options, unknown)
+		userInput, err = ui.SelectOption(strings.Title(field), usage, options, false)
 	case descriptionField:
-		options := append(options, cleanHTML(i.Description), cleanHTML(o.Description))
-		e.CleanSliceAndTagEntries(cleanHTML(i.Description), cleanHTML(o.Description), &options, unknown)
-		userInput, err = ui.SelectOption(strings.Title(field), descriptionUsage, options, true)
+		listLocalAndRemoteOnly(ui, cleanHTML(i.Description), cleanHTML(o.Description), &options, unknown)
+		userInput, err = ui.SelectOption(strings.Title(field), usage, options, true)
 	default:
-		ui.Debug("Unknown field: " + field)
-		return errors.New("Unknown field: " + field)
+		listLocalAndRemoteOnly(ui, currentValue, otherValue, &options, unknown)
+		userInput, err = ui.SelectOption(strings.Title(field), usage, options, false)
 	}
 
 	// checking SelectOption err

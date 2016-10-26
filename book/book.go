@@ -57,7 +57,7 @@ var bookFieldMap = map[string]string{
 	readDateField: "ReadDate",
 	ratingField:   "Rating",
 	reviewField:   "Review",
-	exportedField: "Exported",
+	exportedField: "IsExported",
 }
 
 var validProgress = []string{unread, read, reading, shortlisted}

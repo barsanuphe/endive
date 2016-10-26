@@ -193,7 +193,7 @@ func search(c *cli.Context, endive *Endive, firstNBooks, lastNBooks int, sortBy 
 		hits, err := endive.Library.SearchAndPrint(query, sortBy, firstNBooks, lastNBooks, results)
 		if err != nil {
 			endive.UI.Error(err.Error())
-			panic(err)
+			return
 		}
 		endive.UI.Display(hits)
 	}

@@ -18,6 +18,26 @@ const (
 	reviewUsage   = "Your review of this book."
 )
 
+var usageMap = map[string]string{
+	tagsField:        tagsUsage,
+	seriesField:      seriesUsage,
+	authorField:      authorUsage,
+	yearField:        yearUsage,
+	editionYearField: editionYearUsage,
+	languageField:    languageUsage,
+	categoryField:    categoryUsage,
+	typeField:        typeUsage,
+	genreField:       genreUsage,
+	isbnField:        isbnUsage,
+	titleField:       titleUsage,
+	descriptionField: descriptionUsage,
+	publisherField:   publisherUsage,
+	progressField:    progressUsage,
+	readDateField:    readDateUsage,
+	ratingField:      ratingUsage,
+	reviewField:      reviewUsage,
+}
+
 // ForceMetadataRefresh overwrites current Metadata
 func (b *Book) ForceMetadataRefresh() (err error) {
 	_, exists := e.FileExists(b.MainEpub().FullPath())
@@ -64,37 +84,13 @@ func (b *Book) ForceMetadataFieldRefresh(field string) (err error) {
 	if err != nil {
 		return err
 	}
-	switch field {
-	case tagsField:
-		b.Metadata.Tags = info.Tags
-	case seriesField:
-		b.Metadata.Series = info.Series
-	case authorField:
-		b.Metadata.Authors = info.Authors
-	case yearField:
-		b.Metadata.OriginalYear = info.OriginalYear
-	case editionYearField:
-		b.Metadata.EditionYear = info.EditionYear
-	case publisherField:
-		b.Metadata.Publisher = info.Publisher
-	case languageField:
-		b.Metadata.Language = info.Language
-	case categoryField:
-		b.Metadata.Category = info.Category
-	case typeField:
-		b.Metadata.Type = info.Type
-	case genreField:
-		b.Metadata.Genre = info.Genre
-	case isbnField:
-		b.Metadata.ISBN = info.ISBN
-	case titleField:
-		b.Metadata.BookTitle = info.BookTitle
-	case descriptionField:
-		b.Metadata.Description = info.Description
-	default:
-		return errors.New("Unknown field: " + field)
+	// get field value from info
+	value, err := info.Get(field)
+	if err != nil {
+		return err
 	}
-	return
+	// set value
+	return b.Metadata.Set(field, value)
 }
 
 // EditField in current Metadata associated with the Book.
@@ -121,29 +117,30 @@ func (b *Book) EditField(args ...string) error {
 	return nil
 }
 
+// Get Book field value
+func (b *Book) Get(field string) (value string, err error) {
+	var structField reflect.Value
+	value, err = b.Metadata.Get(field)
+	if err != nil {
+		_, structField, _, err = getField(b, bookFieldMap, field)
+		if err != nil {
+			return "", err
+		}
+		value = structField.String()
+	}
+	return value, nil
+}
+
 // Set a field value for Book or Metadata
 func (b *Book) Set(field, value string) error {
 	// try to set Metadata fields first
-	if err := b.Metadata.Set(field, value); err != nil {
-		// probably failed because field was not a Metadata field
-		// try to set Book fields
-		structFieldName := ""
-		publicFieldName := ""
-
-		// try to find struct name from public name
-		for k, v := range bookFieldMap {
-			if v == field || k == field {
-				structFieldName = v
-				publicFieldName = k
-			}
+	err := b.Metadata.Set(field, value)
+	if err != nil {
+		publicFieldName, structField, canBeSet, err := getField(b, bookFieldMap, field)
+		if err != nil {
+			return err
 		}
-		if structFieldName == "" {
-			// nothing was found, invalid field
-			return errors.New("Invalid field " + field)
-		}
-		// setting the field
-		structField := reflect.ValueOf(b).Elem().FieldByName(structFieldName)
-		if !structField.IsValid() || !structField.CanSet() {
+		if !canBeSet {
 			return fmt.Errorf(cannotSetField, field)
 		}
 
@@ -176,56 +173,28 @@ func (b *Book) Set(field, value string) error {
 
 func (b *Book) editSpecificField(field string, value string) (err error) {
 	if value == "" {
-		switch field {
-		case tagsField:
-			value, err = b.UI.UpdateValue(field, tagsUsage, b.Metadata.Tags.String(), false)
-		case seriesField:
-			value, err = b.UI.UpdateValue(field, seriesUsage, b.Metadata.Series.rawString(), false)
-		case authorField:
-			value, err = b.UI.UpdateValue(field, authorUsage, b.Metadata.Author(), false)
-		case yearField:
-			value, err = b.UI.UpdateValue(field, yearUsage, b.Metadata.OriginalYear, false)
-		case editionYearField:
-			value, err = b.UI.UpdateValue(field, editionYearUsage, b.Metadata.EditionYear, false)
-		case languageField:
-			value, err = b.UI.UpdateValue(field, languageUsage, b.Metadata.Language, false)
-		case categoryField:
-			value, err = b.UI.UpdateValue(field, categoryUsage, b.Metadata.Category, false)
-		case typeField:
-			value, err = b.UI.UpdateValue(field, typeUsage, b.Metadata.Type, false)
-		case genreField:
-			value, err = b.UI.UpdateValue(field, genreUsage, b.Metadata.Genre, false)
-		case isbnField:
-			value, err = b.UI.UpdateValue(field, isbnUsage, b.Metadata.ISBN, false)
-		case titleField:
-			value, err = b.UI.UpdateValue(field, titleUsage, b.Metadata.BookTitle, false)
-		case descriptionField:
-			value, err = b.UI.UpdateValue(field, descriptionUsage, b.Metadata.Description, true)
-		case publisherField:
-			value, err = b.UI.UpdateValue(field, publisherUsage, b.Metadata.Publisher, false)
-		case progressField:
-			value, err = b.UI.UpdateValue(field, progressUsage, b.Progress, false)
-		case readDateField:
-			value, err = b.UI.UpdateValue(field, readDateUsage, b.ReadDate, false)
-		case ratingField:
-			value, err = b.UI.UpdateValue(field, ratingUsage, b.Rating, false)
-		case reviewField:
-			value, err = b.UI.UpdateValue(field, reviewUsage, b.Review, true)
-		default:
-			b.UI.Debug("Unknown field: " + field)
-			return errors.New("Unknown field: " + field)
+		currentValue, err := b.Get(field)
+		if err != nil {
+			return err
 		}
+		usage, ok := usageMap[field]
+		if !ok {
+			usage = ""
+		}
+		longField := false
+		if field == reviewField || field == descriptionField {
+			longField = true
+		}
+		value, err = b.UI.UpdateValue(field, usage, currentValue, longField)
 		if err != nil {
 			return err
 		}
 	}
-
 	// set the field
 	err = b.Set(field, value)
 	if err != nil {
 		return
 	}
-
 	// cleaning all metadata
 	b.Metadata.Clean(b.Config)
 	return
