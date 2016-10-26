@@ -419,55 +419,55 @@ func (i *Metadata) MergeField(o *Metadata, field string, cfg e.Config, ui e.User
 	switch field {
 	case tagsField:
 		options := append(options, i.Tags.String(), o.Tags.String())
-		e.CleanSliceAndTagEntries(i.Tags.String(), o.Tags.String(), &options, unknown)
+		CleanSliceAndTagEntries(ui, i.Tags.String(), o.Tags.String(), &options, unknown)
 		userInput, err = ui.SelectOption(strings.Title(field), tagsUsage, options, false)
 	case seriesField:
 		options := append(options, i.Series.rawString(), o.Series.rawString())
-		e.CleanSliceAndTagEntries(i.Series.rawString(), o.Series.rawString(), &options, unknown)
+		CleanSliceAndTagEntries(ui, i.Series.rawString(), o.Series.rawString(), &options, unknown)
 		userInput, err = ui.SelectOption(strings.Title(field), seriesUsage, options, false)
 	case authorField:
 		options := append(options, i.Author(), o.Author())
-		e.CleanSliceAndTagEntries(i.Author(), o.Author(), &options, unknown)
+		CleanSliceAndTagEntries(ui, i.Author(), o.Author(), &options, unknown)
 		userInput, err = ui.SelectOption(strings.Title(field), authorUsage, options, false)
 	case yearField:
 		options := append(options, i.OriginalYear, o.OriginalYear)
-		e.CleanSliceAndTagEntries(i.OriginalYear, o.OriginalYear, &options, unknownYear)
+		CleanSliceAndTagEntries(ui, i.OriginalYear, o.OriginalYear, &options, unknownYear)
 		userInput, err = ui.SelectOption("Original Publication year", yearUsage, options, false)
 	case editionYearField:
 		options := append(options, i.EditionYear, o.EditionYear)
-		e.CleanSliceAndTagEntries(i.EditionYear, o.EditionYear, &options, unknownYear)
+		CleanSliceAndTagEntries(ui, i.EditionYear, o.EditionYear, &options, unknownYear)
 		userInput, err = ui.SelectOption("Publication year", editionYearUsage, options, false)
 	case publisherField:
 		options := append(options, i.Publisher, o.Publisher)
-		e.CleanSliceAndTagEntries(i.Publisher, o.Publisher, &options, unknown)
+		CleanSliceAndTagEntries(ui, i.Publisher, o.Publisher, &options, unknown)
 		userInput, err = ui.SelectOption(strings.Title(field), publisherUsage, options, false)
 	case languageField:
 		options := append(options, cleanLanguage(i.Language), cleanLanguage(o.Language))
-		e.CleanSliceAndTagEntries(cleanLanguage(i.Language), cleanLanguage(o.Language), &options, unknown)
+		CleanSliceAndTagEntries(ui, cleanLanguage(i.Language), cleanLanguage(o.Language), &options, unknown)
 		userInput, err = ui.SelectOption(strings.Title(field), languageUsage, options, false)
 	case categoryField:
 		options = append(options, validCategories...)
-		e.CleanSliceAndTagEntries(i.Category, o.Category, &options, unknown)
+		CleanSliceAndTagEntries(ui, i.Category, o.Category, &options, unknown)
 		userInput, err = ui.SelectOption(strings.Title(field), categoryUsage, options, false)
 	case typeField:
 		options = append(options, validTypes...)
-		e.CleanSliceAndTagEntries(i.Type, o.Type, &options, unknown)
+		CleanSliceAndTagEntries(ui, i.Type, o.Type, &options, unknown)
 		userInput, err = ui.SelectOption(strings.Title(field), typeUsage, options, false)
 	case genreField:
 		options := append(options, i.Genre, o.Genre)
-		e.CleanSliceAndTagEntries(i.Genre, o.Genre, &options, unknown)
+		CleanSliceAndTagEntries(ui, i.Genre, o.Genre, &options, unknown)
 		userInput, err = ui.SelectOption(strings.Title(field), genreUsage, options, false)
 	case isbnField:
 		options := append(options, i.ISBN, o.ISBN)
-		e.CleanSliceAndTagEntries(i.ISBN, o.ISBN, &options, unknown)
+		CleanSliceAndTagEntries(ui, i.ISBN, o.ISBN, &options, unknown)
 		userInput, err = ui.SelectOption(strings.Title(field), isbnUsage, options, false)
 	case titleField:
 		options := append(options, i.Title(), o.Title())
-		e.CleanSliceAndTagEntries(i.Title(), o.Title(), &options, unknown)
+		CleanSliceAndTagEntries(ui, i.Title(), o.Title(), &options, unknown)
 		userInput, err = ui.SelectOption(strings.Title(field), titleUsage, options, false)
 	case descriptionField:
 		options := append(options, cleanHTML(i.Description), cleanHTML(o.Description))
-		e.CleanSliceAndTagEntries(cleanHTML(i.Description), cleanHTML(o.Description), &options, unknown)
+		CleanSliceAndTagEntries(ui, cleanHTML(i.Description), cleanHTML(o.Description), &options, unknown)
 		userInput, err = ui.SelectOption(strings.Title(field), descriptionUsage, options, true)
 	default:
 		ui.Debug("Unknown field: " + field)

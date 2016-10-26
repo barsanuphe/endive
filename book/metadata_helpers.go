@@ -120,3 +120,18 @@ func cleanType(bookType string) (clean string, err error) {
 func cleanHTML(desc string) string {
 	return sanitize.HTML(desc)
 }
+
+// CleanSliceAndTagEntries as remote or local among a list
+func CleanSliceAndTagEntries(ui e.UserInterface, local, remote string, options *[]string, otherStringsToClean ...string) {
+	e.RemoveDuplicates(options, otherStringsToClean...)
+	// NOTE: what to do is local or remote are not found?
+	// NOTE: for now, ignore that
+	for i, x := range *options {
+		if x == remote {
+			(*options)[i] = ui.Tag((*options)[i], false)
+		}
+		if x == local {
+			(*options)[i] = ui.Tag((*options)[i], true)
+		}
+	}
+}

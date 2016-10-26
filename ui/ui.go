@@ -24,6 +24,11 @@ const (
 	notConfirmed  = "Manual entry not confirmed, trying again."
 	tooManyErrors = "Too many errors, giving up."
 	userAborted   = "User aborted."
+
+	// LocalTag an option to show it's the value in current database
+	LocalTag = "[local] "
+	// OnlineTag an option to show it's from GR
+	OnlineTag = "[online] "
 )
 
 // UI implements endive.UserInterface
@@ -69,7 +74,7 @@ func (ui UI) SelectOption(title, usage string, options []string, longField bool)
 			if longField {
 				allVersions := ""
 				for i, o := range options {
-					allVersions += fmt.Sprintf("--- %d ---\n%s\n", i+1, e.CleanEntry(o))
+					allVersions += fmt.Sprintf("--- %d ---\n%s\n", i+1, ui.unTag(o))
 				}
 				edited, scanErr = ui.Edit(allVersions)
 			} else {
@@ -92,7 +97,7 @@ func (ui UI) SelectOption(title, usage string, options []string, longField bool)
 		} else if strings.ToUpper(choice) == "B" {
 			return "", nil
 		} else if index, err := strconv.Atoi(choice); err == nil && 0 < index && index <= len(options) {
-			return e.CleanEntry(options[index-1]), nil
+			return ui.unTag(options[index-1]), nil
 		}
 
 		if !validChoice {
@@ -260,4 +265,20 @@ func (ui *UI) Edit(oldValue string) (string, error) {
 		return oldValue, err
 	}
 	return strings.TrimSpace(string(newContent)), nil
+}
+
+// Tag an entry local or online
+func (ui *UI) Tag(entry string, isLocal bool) string {
+	if isLocal {
+		return ui.BlueBold(LocalTag) + entry
+	}
+	return ui.GreenBold(OnlineTag) + entry
+}
+
+// unTag strings tagged with Tag.
+func (ui *UI) unTag(option string) string {
+	out := option
+	out = strings.Replace(out, ui.BlueBold(LocalTag), "", -1)
+	out = strings.Replace(out, ui.GreenBold(OnlineTag), "", -1)
+	return strings.TrimSpace(out)
 }

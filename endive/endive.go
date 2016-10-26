@@ -99,6 +99,7 @@ type UserInterface interface {
 	SubPart(string, ...interface{})
 	Choice(string, ...interface{})
 	Display(string)
+	Tag(string, bool) string
 	// log
 	InitLogger(string) error
 	CloseLog()
