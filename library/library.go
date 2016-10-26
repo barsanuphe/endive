@@ -176,6 +176,9 @@ func (l *Library) Search(query, sortBy string, limitFirst, limitLast int, in e.C
 // SearchAndPrint results to a query
 func (l *Library) SearchAndPrint(query, sortBy string, limitFirst, limitLast int, results e.Collection) (string, error) {
 	results, err := l.Search(query, sortBy, limitFirst, limitLast, results)
+	if results == nil {
+		return "Nothing found.", err
+	}
 	return results.Table(), err
 }
 
