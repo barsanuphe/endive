@@ -18,6 +18,26 @@ const (
 	reviewUsage   = "Your review of this book."
 )
 
+var usageMap = map[string]string{
+	tagsField:        tagsUsage,
+	seriesField:      seriesUsage,
+	authorField:      authorUsage,
+	yearField:        yearUsage,
+	editionYearField: editionYearUsage,
+	languageField:    languageUsage,
+	categoryField:    categoryUsage,
+	typeField:        typeUsage,
+	genreField:       genreUsage,
+	isbnField:        isbnUsage,
+	titleField:       titleUsage,
+	descriptionField: descriptionUsage,
+	publisherField:   publisherUsage,
+	progressField:    progressUsage,
+	readDateField:    readDateUsage,
+	ratingField:      ratingUsage,
+	reviewField:      reviewUsage,
+}
+
 // ForceMetadataRefresh overwrites current Metadata
 func (b *Book) ForceMetadataRefresh() (err error) {
 	_, exists := e.FileExists(b.MainEpub().FullPath())
@@ -153,56 +173,28 @@ func (b *Book) Set(field, value string) error {
 
 func (b *Book) editSpecificField(field string, value string) (err error) {
 	if value == "" {
-		switch field {
-		case tagsField:
-			value, err = b.UI.UpdateValue(field, tagsUsage, b.Metadata.Tags.String(), false)
-		case seriesField:
-			value, err = b.UI.UpdateValue(field, seriesUsage, b.Metadata.Series.rawString(), false)
-		case authorField:
-			value, err = b.UI.UpdateValue(field, authorUsage, b.Metadata.Author(), false)
-		case yearField:
-			value, err = b.UI.UpdateValue(field, yearUsage, b.Metadata.OriginalYear, false)
-		case editionYearField:
-			value, err = b.UI.UpdateValue(field, editionYearUsage, b.Metadata.EditionYear, false)
-		case languageField:
-			value, err = b.UI.UpdateValue(field, languageUsage, b.Metadata.Language, false)
-		case categoryField:
-			value, err = b.UI.UpdateValue(field, categoryUsage, b.Metadata.Category, false)
-		case typeField:
-			value, err = b.UI.UpdateValue(field, typeUsage, b.Metadata.Type, false)
-		case genreField:
-			value, err = b.UI.UpdateValue(field, genreUsage, b.Metadata.Genre, false)
-		case isbnField:
-			value, err = b.UI.UpdateValue(field, isbnUsage, b.Metadata.ISBN, false)
-		case titleField:
-			value, err = b.UI.UpdateValue(field, titleUsage, b.Metadata.BookTitle, false)
-		case descriptionField:
-			value, err = b.UI.UpdateValue(field, descriptionUsage, b.Metadata.Description, true)
-		case publisherField:
-			value, err = b.UI.UpdateValue(field, publisherUsage, b.Metadata.Publisher, false)
-		case progressField:
-			value, err = b.UI.UpdateValue(field, progressUsage, b.Progress, false)
-		case readDateField:
-			value, err = b.UI.UpdateValue(field, readDateUsage, b.ReadDate, false)
-		case ratingField:
-			value, err = b.UI.UpdateValue(field, ratingUsage, b.Rating, false)
-		case reviewField:
-			value, err = b.UI.UpdateValue(field, reviewUsage, b.Review, true)
-		default:
-			b.UI.Debug("Unknown field: " + field)
-			return errors.New("Unknown field: " + field)
+		currentValue, err := b.Get(field)
+		if err != nil {
+			return err
 		}
+		usage, ok := usageMap[field]
+		if !ok {
+			usage = ""
+		}
+		longField := false
+		if field == reviewField || field == descriptionField {
+			longField = true
+		}
+		value, err = b.UI.UpdateValue(field, usage, currentValue, longField)
 		if err != nil {
 			return err
 		}
 	}
-
 	// set the field
 	err = b.Set(field, value)
 	if err != nil {
 		return
 	}
-
 	// cleaning all metadata
 	b.Metadata.Clean(b.Config)
 	return
