@@ -50,6 +50,8 @@ const (
 	shortstory    = "shortstory"
 	anthology     = "anthology"
 	poetry        = "poetry"
+
+	couldNotRetrieveValue = "Could not retrieve value."
 )
 
 var bookFieldMap = map[string]string{
@@ -137,39 +139,9 @@ func (b *Book) ShowInfo(fields ...string) string {
 			rows = append(rows, []string{"ID", strconv.Itoa(b.BookID)})
 		case filenameField:
 			rows = append(rows, []string{strings.Title(filenameField), b.MainEpub().Filename})
-		case authorField:
-			rows = append(rows, []string{strings.Title(authorField), b.Metadata.Author()})
-		case titleField:
-			rows = append(rows, []string{strings.Title(titleField), b.Metadata.Title()})
-		case yearField:
-			rows = append(rows, []string{"Original Publication Year", b.Metadata.OriginalYear})
-		case editionYearField:
-			rows = append(rows, []string{"Publication Year", b.Metadata.EditionYear})
-		case publisherField:
-			rows = append(rows, []string{strings.Title(publisherField), b.Metadata.Publisher})
-		case isbnField:
-			rows = append(rows, []string{strings.Title(isbnField), b.Metadata.ISBN})
-		case descriptionField:
-			rows = append(rows, []string{strings.Title(descriptionField), b.Metadata.Description})
 		case numPagesField:
 			if b.Metadata.NumPages != "" {
 				rows = append(rows, []string{"Number of pages", b.Metadata.NumPages})
-			}
-		case languageField:
-			rows = append(rows, []string{strings.Title(languageField), b.Metadata.Language})
-		case categoryField:
-			rows = append(rows, []string{strings.Title(categoryField), b.Metadata.Category})
-		case typeField:
-			rows = append(rows, []string{strings.Title(typeField), b.Metadata.Type})
-		case genreField:
-			rows = append(rows, []string{strings.Title(genreField), b.Metadata.Genre})
-		case tagsField:
-			if len(b.Metadata.Tags) != 0 {
-				rows = append(rows, []string{strings.Title(tagsField), b.Metadata.Tags.String()})
-			}
-		case seriesField:
-			if len(b.Metadata.Series) != 0 {
-				rows = append(rows, []string{strings.Title(seriesField), b.Metadata.Series.String()})
 			}
 		case versions:
 			available := ""
@@ -188,28 +160,30 @@ func (b *Book) ShowInfo(fields ...string) string {
 				}
 			}
 			rows = append(rows, []string{"Available versions", available})
-		case progressField:
-			rows = append(rows, []string{strings.Title(progressField), b.Progress})
-		case readDateField:
-			if b.ReadDate != "" {
-				rows = append(rows, []string{"Read Date", b.ReadDate})
-			}
 		case averageRatingField:
 			if b.Metadata.AverageRating != "" {
 				rows = append(rows, []string{"Average Rating", b.Metadata.AverageRating})
-			}
-		case ratingField:
-			if b.Rating != "" {
-				rows = append(rows, []string{strings.Title(ratingField), b.Rating})
-			}
-		case reviewField:
-			if b.Review != "" {
-				rows = append(rows, []string{strings.Title(reviewField), b.Review})
 			}
 		case exportedField:
 			if b.IsExported == e.True {
 				rows = append(rows, []string{strings.Title(exportedField), e.True})
 			}
+		case yearField, editionYearField:
+			value, err := b.Get(field)
+			if err != nil {
+				value = couldNotRetrieveValue
+			}
+			title := "Publication Year"
+			if field == yearField {
+				title = "Original " + title
+			}
+			rows = append(rows, []string{title, value})
+		default:
+			value, err := b.Get(field)
+			if err != nil {
+				value = couldNotRetrieveValue
+			}
+			rows = append(rows, []string{strings.Title(field), value})
 		}
 	}
 	return e.TabulateRows(rows, "Info", "Book")

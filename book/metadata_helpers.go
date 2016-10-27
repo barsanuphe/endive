@@ -95,7 +95,7 @@ func cleanTagName(tagName string) (cleanTagName string, err error) {
 // categoryAliases replaces category tags with the canonical version
 var categoryAliases = map[string][]string{
 	fiction:    []string{"fiction"},
-	nonfiction: []string{"non fiction", "non-fiction", "nonfiction"},
+	nonfiction: []string{"non fiction", "non-fiction", "nonfiction", "nonfic"},
 }
 
 func cleanCategory(category string) (string, error) {

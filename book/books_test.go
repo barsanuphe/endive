@@ -113,6 +113,21 @@ func TestBooks(t *testing.T) {
 	assert.True(ok, "tag should be in map")
 	assert.Equal(1, num, "tag belongs to 1 book")
 
+	// test incomplete, both test epubs should be
+	incomplete := books.Incomplete()
+	assert.Equal(2, len(incomplete.Books()))
+	// test Tags
+	tagsMap := books.Tags()
+	assert.Equal(7, len(tagsMap))
+	// test Series
+	seriesMap := books.Series()
+	assert.Equal(0, len(seriesMap))
+	// test publishers
+	publishersMap := books.Publishers()
+	assert.Equal(1, len(publishersMap))
+	// test epubs have no publishers (gutenberg)
+	assert.Equal(2, publishersMap["Unknown"])
+
 	// RemoveByID()
 	err = books.RemoveByID(-1)
 	assert.NotNil(err, badInput)
