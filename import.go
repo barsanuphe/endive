@@ -73,12 +73,15 @@ func (e *Endive) ImportSpecific(isRetail bool, paths ...string) error {
 
 // ImportEpubs files that are retail, or not.
 func (e *Endive) ImportEpubs(candidates []en.EpubCandidate, isRetail bool) (err error) {
+	if len(candidates) == 0 {
+		err = errors.New("Nothing to import, epubs already in library")
+	}
+
 	// force reload if it has changed
 	err = e.hashes.Load()
 	if err != nil {
 		return
 	}
-
 	newEpubs := 0
 	// importing what is necessary
 	for i, candidate := range candidates {
@@ -168,8 +171,5 @@ func (e *Endive) ImportEpubs(candidates []en.EpubCandidate, isRetail bool) (err 
 		}
 	}
 	e.UI.Debugf("Imported %d epubs (retail: %t).\n", newEpubs, isRetail)
-	if newEpubs == 0 {
-		err = errors.New("Nothing to import, epubs already in library")
-	}
 	return
 }
