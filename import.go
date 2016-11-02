@@ -74,7 +74,7 @@ func (e *Endive) ImportSpecific(isRetail bool, paths ...string) error {
 // ImportEpubs files that are retail, or not.
 func (e *Endive) ImportEpubs(candidates []en.EpubCandidate, isRetail bool) (err error) {
 	if len(candidates) == 0 {
-		err = errors.New("Nothing to import, epubs already in library")
+		return errors.New("Nothing to import, epubs already in library")
 	}
 
 	// force reload if it has changed

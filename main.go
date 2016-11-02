@@ -37,6 +37,7 @@ const (
 		"       'author:XX -title:YY' will give results satifsying the first condition excluding the second.\n"
 
 	IncorrectIDValue = "Incorrect ID: %s"
+	IncorrectFlag = "--first and --last only support integer values"
 	InvalidID        = -1
 	EndiveVersion    = "Endive -- CLI Epub collection manager -- v1.0."
 	EndiveUsage      = `
@@ -127,7 +128,8 @@ func main() {
 	if args["<ID>"] != nil {
 		id, err = strconv.Atoi(args["<ID>"].(string))
 		if err != nil {
-			return fmt.Errorf(IncorrectIDValue, args["<ID>"].(string))
+			e.UI.Errorf(IncorrectIDValue, args["<ID>"].(string))
+			return
 		}
 	}
 	// checking other common flags
@@ -136,13 +138,15 @@ func main() {
 	if args["--first"] != nil {
 		firstNBooks, err = strconv.Atoi(args["--first"].(string))
 		if err != nil {
-			fmt.Println("BAD FIRST")
+			e.UI.Error(IncorrectFlag)
+			return
 		}
 	}
 	if args["--last"] != nil {
 		lastNBooks, err = strconv.Atoi(args["--last"].(string))
 		if err != nil {
-			fmt.Println("BAD LAST")
+			e.UI.Error(IncorrectFlag)
+			return
 		}
 	}
 	sortBy := args["--sort"].(string)
@@ -151,7 +155,7 @@ func main() {
 	if args["config"].(bool) {
 		e.UI.Display(e.Config.String())
 	}
-	
+
 	if args["collection"].(bool) {
 		if args["check"].(bool) {
 			if err := e.Library.Check(); err != nil {

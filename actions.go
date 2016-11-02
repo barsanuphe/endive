@@ -3,14 +3,10 @@ package main
 import (
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 
 	b "github.com/barsanuphe/endive/book"
 	e "github.com/barsanuphe/endive/endive"
-	l "github.com/barsanuphe/endive/library"
-
-	"github.com/urfave/cli"
 )
 
 const (
@@ -21,10 +17,9 @@ const (
 	exportFilterError = "Error filtering books for export to e-reader"
 )
 
-
-func editMetadata(endive *Endive, id int, args ...string) {
+func editMetadata(endive *Endive, id int, args ...string) error {
 	// if ID, list tags of ID
-	bk, err := e.Collection.FindByID(id)
+	bk, err := endive.Library.Collection.FindByID(id)
 	if err != nil {
 		return err
 	}
@@ -33,16 +28,16 @@ func editMetadata(endive *Endive, id int, args ...string) {
 	if err := book.EditField(args...); err != nil {
 		endive.UI.Errorf("Error editing metadata for book ID#%d\n", book.ID())
 	}
-	_, _, err = book.Refresh()
-	if err != nil {
+	if _, _, err := book.Refresh(); err != nil {
 		endive.UI.Errorf("Error refreshing book ID#%d\n", book.ID())
-		return
+		return err
 	}
 	showInfo(endive, id)
+	return nil
 }
 
-func refreshMetadata(endive *Endive, id int, args ...string) {
-	bk, err := e.Collection.FindByID(id)
+func refreshMetadata(endive *Endive, id int, args ...string) error {
+	bk, err := endive.Library.Collection.FindByID(id)
 	if err != nil {
 		return err
 	}
@@ -52,9 +47,9 @@ func refreshMetadata(endive *Endive, id int, args ...string) {
 	case 0:
 		// refresh all metadata
 		if endive.UI.Accept("Confirm refreshing metadata for " + book.String()) {
-			err := book.ForceMetadataRefresh()
-			if err != nil {
+			if err := book.ForceMetadataRefresh(); err != nil {
 				endive.UI.Errorf("Error reinitializing metadata for book ID#%d\n", book.ID())
+				return err
 			}
 		}
 	case 1:
@@ -64,7 +59,7 @@ func refreshMetadata(endive *Endive, id int, args ...string) {
 		_, isIn := e.StringInSlice(strings.ToLower(field), b.MetadataFieldNames)
 		if !isIn {
 			endive.UI.Error("Invalid metadata field " + field)
-			return
+			return errors.New("Invalid metadata field")
 		}
 		// ask for confirmation
 		if endive.UI.Accept("Confirm refreshing metadata field " + field + " for " + book.String()) {
@@ -72,20 +67,21 @@ func refreshMetadata(endive *Endive, id int, args ...string) {
 			if err != nil {
 				endive.UI.Errorf("Error reinitializing metadata field "+field+" for book ID#%d", book.ID)
 				endive.UI.Error(err.Error())
+				return err
 			}
 		}
 	}
-	_, _, err = book.Refresh()
-	if err != nil {
+	if _, _, err = book.Refresh(); err != nil {
 		endive.UI.Errorf("Error refreshing book ID#%d\n", book.ID())
-		return
+		return err
 	}
 	showInfo(endive, id)
+	return nil
 }
 
 func setProgress(endive *Endive, id int, progress, rating, review string) error {
 	// if ID, list tags of ID
-	bk, err := e.Collection.FindByID(id)
+	bk, err := endive.Library.Collection.FindByID(id)
 	if err != nil {
 		return err
 	}
@@ -94,7 +90,7 @@ func setProgress(endive *Endive, id int, progress, rating, review string) error 
 	// setting progress
 	if err := book.Set("progress", progress); err != nil {
 		endive.UI.Error("Progress must be among: unread/shortlisted/reading/read")
-		return
+		return err
 	}
 	// if first time set as read, set date too.
 	if book.Progress == "read" && book.ReadDate == "" {
@@ -116,10 +112,10 @@ func setProgress(endive *Endive, id int, progress, rating, review string) error 
 	return nil
 }
 
-func showInfo(endive *Endive, id int) {
+func showInfo(endive *Endive, id int) error {
 	if id != InvalidID {
 		// if ID, list tags of ID
-		bk, err := e.Collection.FindByID(id)
+		bk, err := endive.Library.Collection.FindByID(id)
 		if err != nil {
 			return err
 		}
@@ -128,12 +124,13 @@ func showInfo(endive *Endive, id int) {
 	} else {
 		fmt.Println(endive.Library.ShowInfo())
 	}
+	return nil
 }
 
 func listTags(endive *Endive, id int) error {
 	if id != InvalidID {
 		// if ID, list tags of ID
-		bk, err := e.Collection.FindByID(id)
+		bk, err := endive.Library.Collection.FindByID(id)
 		if err != nil {
 			return err
 		}
@@ -152,7 +149,7 @@ func listTags(endive *Endive, id int) error {
 func listSeries(endive *Endive, id int) error {
 	if id != InvalidID {
 		// if ID, list series of ID
-		bk, err := e.Collection.FindByID(id)
+		bk, err := endive.Library.Collection.FindByID(id)
 		if err != nil {
 			return err
 		}
