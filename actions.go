@@ -3,76 +3,62 @@ package main
 import (
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 
 	b "github.com/barsanuphe/endive/book"
 	e "github.com/barsanuphe/endive/endive"
-	l "github.com/barsanuphe/endive/library"
-
-	"github.com/urfave/cli"
 )
 
 const (
-	parsingError      = "Error parsing arguments: %s"
 	exportAllBooks    = "Exporting everything to E-Reader..."
 	exportSelection   = "Exporting selection to E-Reader..."
 	exportBookError   = "Error exporting books to e-reader: %s"
 	exportFilterError = "Error filtering books for export to e-reader"
 )
 
-func checkArgsWithID(l l.Library, args []string) (book *b.Book, other []string, err error) {
-	if len(args) < 1 {
-		err = errors.New("Not enough arguments")
-		return
-	}
-	id, err := strconv.Atoi(args[0])
+func editMetadata(endive *Endive, id int, args ...string) error {
+	// if ID, list tags of ID
+	bk, err := endive.Library.Collection.FindByID(id)
 	if err != nil {
-		return
+		return err
 	}
-	// get book from ID
-	bk, err := l.Collection.FindByID(id)
-	if err != nil {
-		return nil, args[1:], err
-	}
-	book = bk.(*b.Book)
-	other = args[1:]
-	return
-}
-
-func editMetadata(c *cli.Context, endive *Endive) {
-	book, args, err := checkArgsWithID(endive.Library, c.Args())
-	if err != nil {
-		endive.UI.Errorf(parsingError, err.Error())
-		return
-	}
+	book := bk.(*b.Book)
 	endive.UI.Title("Editing metadata for " + book.String() + "\n")
 	if err := book.EditField(args...); err != nil {
 		endive.UI.Errorf("Error editing metadata for book ID#%d\n", book.ID())
 	}
-	_, _, err = book.Refresh()
-	if err != nil {
+	if _, _, err := book.Refresh(); err != nil {
 		endive.UI.Errorf("Error refreshing book ID#%d\n", book.ID())
-		return
+		return err
 	}
-	showInfo(c, endive)
+	showInfo(endive, id)
+	return nil
 }
 
-func refreshMetadata(c *cli.Context, endive *Endive) {
-	book, _, err := checkArgsWithID(endive.Library, c.Args())
+func refreshMetadata(endive *Endive, id int, args ...string) error {
+	bk, err := endive.Library.Collection.FindByID(id)
 	if err != nil {
-		endive.UI.Errorf(parsingError, err.Error())
-		return
+		return err
 	}
-	// is field specified?
-	// TODO take list of fields as arguments?
-	if len(c.Args()) == 2 {
-		field := c.Args()[1]
+	book := bk.(*b.Book)
+
+	switch len(args) {
+	case 0:
+		// refresh all metadata
+		if endive.UI.Accept("Confirm refreshing metadata for " + book.String()) {
+			if err := book.ForceMetadataRefresh(); err != nil {
+				endive.UI.Errorf("Error reinitializing metadata for book ID#%d\n", book.ID())
+				return err
+			}
+		}
+	case 1:
+		// field is specified
+		field := args[0]
 		// check if valid field name
 		_, isIn := e.StringInSlice(strings.ToLower(field), b.MetadataFieldNames)
 		if !isIn {
 			endive.UI.Error("Invalid metadata field " + field)
-			return
+			return errors.New("Invalid metadata field")
 		}
 		// ask for confirmation
 		if endive.UI.Accept("Confirm refreshing metadata field " + field + " for " + book.String()) {
@@ -80,126 +66,118 @@ func refreshMetadata(c *cli.Context, endive *Endive) {
 			if err != nil {
 				endive.UI.Errorf("Error reinitializing metadata field "+field+" for book ID#%d", book.ID)
 				endive.UI.Error(err.Error())
-			}
-		}
-	} else if len(c.Args()) == 1 {
-		// ask for confirmation
-		if endive.UI.Accept("Confirm refreshing metadata for " + book.String()) {
-			err := book.ForceMetadataRefresh()
-			if err != nil {
-				endive.UI.Errorf("Error reinitializing metadata for book ID#%d\n", book.ID())
+				return err
 			}
 		}
 	}
-	_, _, err = book.Refresh()
-	if err != nil {
+	if _, _, err = book.Refresh(); err != nil {
 		endive.UI.Errorf("Error refreshing book ID#%d\n", book.ID())
-		return
+		return err
 	}
-	showInfo(c, endive)
+	showInfo(endive, id)
+	return nil
 }
 
-func setProgress(c *cli.Context, endive *Endive) {
-	book, args, err := checkArgsWithID(endive.Library, c.Args())
+func setProgress(endive *Endive, id int, progress, rating, review string) error {
+	// if ID, list tags of ID
+	bk, err := endive.Library.Collection.FindByID(id)
 	if err != nil {
-		endive.UI.Errorf(parsingError, err.Error())
-		return
+		return err
 	}
-	if len(args) == 0 {
-		// TODO or interactive mode?
-		endive.UI.Error("Missing arguments. See help.")
-		return
+	book := bk.(*b.Book)
+
+	// setting progress
+	if err := book.Set("progress", progress); err != nil {
+		endive.UI.Error("Progress must be among: unread/shortlisted/reading/read")
+		return err
 	}
-	if len(args) >= 1 {
-		// setting progress
-		err := book.Set("progress", args[0])
-		if err != nil {
-			endive.UI.Error("Progress must be among: unread/shortlisted/reading/read")
-			return
-		}
-		// if first time set as read, set date too.
-		if book.Progress == "read" && book.ReadDate == "" {
-			book.SetReadDateToday()
-		}
+	// if first time set as read, set date too.
+	if book.Progress == "read" && book.ReadDate == "" {
+		book.SetReadDateToday()
 	}
-	if len(args) >= 2 {
-		err := book.Set("rating", args[1])
-		if err != nil {
+	if rating != "" {
+		if err := book.Set("rating", rating); err != nil {
 			endive.UI.Error("Rating must be a number between 0 and 5.")
-			return
+			return err
 		}
 	}
-	if len(args) == 3 {
-		err := book.Set("review", args[2])
-		if err != nil {
+	if review != "" {
+		if err := book.Set("review", review); err != nil {
 			endive.UI.Error("Could not add review.")
-			return
+			return err
 		}
 	}
-	showInfo(c, endive)
+	showInfo(endive, id)
+	return nil
 }
 
-func showInfo(c *cli.Context, endive *Endive) {
-	if c.NArg() == 0 {
-		fmt.Println(endive.Library.ShowInfo())
-	} else {
-		book, _, err := checkArgsWithID(endive.Library, c.Args())
-		if err != nil {
-			endive.UI.Errorf(parsingError, err.Error())
-			return
-		}
-		fmt.Println(book.ShowInfo())
-	}
-}
-
-func listTags(c *cli.Context, endive *Endive) (err error) {
-	book, _, err := checkArgsWithID(endive.Library, c.Args())
-	if err != nil {
-		// list all tags
-		tags := endive.Library.Collection.Tags()
-		endive.UI.Display(e.TabulateMap(tags, "Tag", "# of Books"))
-	} else {
+func showInfo(endive *Endive, id int) error {
+	if id != invalidID {
 		// if ID, list tags of ID
+		bk, err := endive.Library.Collection.FindByID(id)
+		if err != nil {
+			return err
+		}
+		book := bk.(*b.Book)
+		fmt.Println(book.ShowInfo())
+	} else {
+		fmt.Println(endive.Library.ShowInfo())
+	}
+	return nil
+}
+
+func listTags(endive *Endive, id int) error {
+	if id != invalidID {
+		// if ID, list tags of ID
+		bk, err := endive.Library.Collection.FindByID(id)
+		if err != nil {
+			return err
+		}
+		book := bk.(*b.Book)
 		var rows [][]string
 		rows = append(rows, []string{book.String(), book.Metadata.Tags.String()})
 		endive.UI.Display(e.TabulateRows(rows, "Book", "Tags"))
+	} else {
+		// list all tags
+		tags := endive.Library.Collection.Tags()
+		endive.UI.Display(e.TabulateMap(tags, "Tag", "# of Books"))
 	}
-	return
+	return nil
 }
 
-func listSeries(c *cli.Context, endive *Endive) {
-	book, _, err := checkArgsWithID(endive.Library, c.Args())
-	if err != nil {
-		// list all series
-		series := endive.Library.Collection.Series()
-		endive.UI.Display(e.TabulateMap(series, "Series", "# of Books"))
-	} else {
+func listSeries(endive *Endive, id int) error {
+	if id != invalidID {
 		// if ID, list series of ID
+		bk, err := endive.Library.Collection.FindByID(id)
+		if err != nil {
+			return err
+		}
+		book := bk.(*b.Book)
 		var rows [][]string
 		rows = append(rows, []string{book.String(), book.Metadata.Series.String()})
 		endive.UI.Display(e.TabulateRows(rows, "Book", "Series"))
-	}
-	return
-}
-
-func search(c *cli.Context, endive *Endive, firstNBooks, lastNBooks int, sortBy string) {
-	if c.NArg() == 0 {
-		fmt.Println("No query found!")
 	} else {
-		query := strings.Join(c.Args(), " ")
-		endive.UI.Debug("Searching for '" + query + "'...")
-		var results e.Collection
-		results = &b.Books{}
-		hits, err := endive.Library.SearchAndPrint(query, sortBy, firstNBooks, lastNBooks, results)
-		if err != nil {
-			endive.UI.Error(err.Error())
-			return
-		}
-		endive.UI.Display(hits)
+		// list all tags
+		tags := endive.Library.Collection.Series()
+		endive.UI.Display(e.TabulateMap(tags, "Series", "# of Books"))
 	}
+	return nil
 }
 
-func listImportableEpubs(endive *Endive, c *cli.Context, isRetail bool) {
+func search(endive *Endive, parts []string, firstNBooks, lastNBooks int, sortBy string) {
+	query := strings.Join(parts, " ")
+	endive.UI.Debug("Searching for '" + query + "'...")
+	var results e.Collection
+	results = &b.Books{}
+	hits, err := endive.Library.SearchAndPrint(query, sortBy, firstNBooks, lastNBooks, results)
+	if err != nil {
+		endive.UI.Error(err.Error())
+		return
+	}
+	endive.UI.Display(hits)
+}
+
+func listImportableEpubs(endive *Endive, isRetail bool) {
 	var candidates e.EpubCandidates
 	var err error
 	var txt string
@@ -225,10 +203,10 @@ func listImportableEpubs(endive *Endive, c *cli.Context, isRetail bool) {
 	}
 }
 
-func importEpubs(endive *Endive, c *cli.Context, isRetail bool) {
-	if len(c.Args()) >= 1 {
+func importEpubs(endive *Endive, epubs []string, isRetail bool) {
+	if len(epubs) >= 1 {
 		// import valid paths
-		if err := endive.ImportSpecific(isRetail, c.Args()...); err != nil {
+		if err := endive.ImportSpecific(isRetail, epubs...); err != nil {
 			endive.UI.Error(err.Error())
 			return
 		}
@@ -253,9 +231,9 @@ func importEpubs(endive *Endive, c *cli.Context, isRetail bool) {
 	}
 }
 
-func exportFilter(c *cli.Context, endive *Endive) {
+func exportFilter(endive *Endive, parts []string) {
 	endive.UI.Title(exportSelection)
-	query := strings.Join(c.Args(), " ")
+	query := strings.Join(parts, " ")
 	var err error
 	var books e.Collection
 	books = &b.Books{}
