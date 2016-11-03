@@ -10,7 +10,6 @@ import (
 )
 
 const (
-	parsingError      = "Error parsing arguments: %s"
 	exportAllBooks    = "Exporting everything to E-Reader..."
 	exportSelection   = "Exporting selection to E-Reader..."
 	exportBookError   = "Error exporting books to e-reader: %s"
@@ -113,7 +112,7 @@ func setProgress(endive *Endive, id int, progress, rating, review string) error 
 }
 
 func showInfo(endive *Endive, id int) error {
-	if id != InvalidID {
+	if id != invalidID {
 		// if ID, list tags of ID
 		bk, err := endive.Library.Collection.FindByID(id)
 		if err != nil {
@@ -128,7 +127,7 @@ func showInfo(endive *Endive, id int) error {
 }
 
 func listTags(endive *Endive, id int) error {
-	if id != InvalidID {
+	if id != invalidID {
 		// if ID, list tags of ID
 		bk, err := endive.Library.Collection.FindByID(id)
 		if err != nil {
@@ -147,7 +146,7 @@ func listTags(endive *Endive, id int) error {
 }
 
 func listSeries(endive *Endive, id int) error {
-	if id != InvalidID {
+	if id != invalidID {
 		// if ID, list series of ID
 		bk, err := endive.Library.Collection.FindByID(id)
 		if err != nil {

@@ -23,24 +23,11 @@ import (
 )
 
 const (
-	metadataRefreshDescription = "Refreshes metadata by reading again from Epub and retrieving metadata from Goodreads.\n" +
-		"   Note: the values currently in the database will be lost.\n\n" +
-		"   If no further argument is given all the metadata fields will be refreshed.\n" +
-		"   If a valid field name is given, only it will be refreshed."
-	configDescription = "Displays the contents of the configuration file in a table."
-	searchDescription = "A list of strings can be given as input to search for books.\n" +
-		"   It is also possible to restrict a value to a specific field: field:value.\n" +
-		"   Valid fields are: author, title, year, language, series, tag, publisher, category, type, genre, description, exported, progress, review.\n\n" +
-		"   Examples: \n\n" +
-		"       'author:XX title:YY' will give results satifsying any of the two conditions.\n" +
-		"       'author:XX +title:YY' will give results satifsying both conditions.\n" +
-		"       'author:XX -title:YY' will give results satifsying the first condition excluding the second.\n"
-
-	IncorrectIDValue = "Incorrect ID: %s"
-	IncorrectFlag = "--first and --last only support integer values"
-	InvalidID        = -1
-	EndiveVersion    = "Endive -- CLI Epub collection manager -- v1.0."
-	EndiveUsage      = `
+	incorrectIDValue = "Incorrect ID: %s"
+	incorrectFlag    = "--first and --last only support integer values"
+	invalidID        = -1
+	endiveVersion    = "Endive -- CLI Epub collection manager -- v1.0."
+	endiveUsage      = `
 Endive.
 This is an epub collection manager.
 
@@ -54,6 +41,17 @@ The main commands are:
 	progress, p	Set book reading progress
 	list, ls	List books
 	search, s	Search for specific books
+
+Searching / Exporting:
+	A list of strings can be given as input to search for books.
+	It is also possible to restrict a value to a specific field: field:value.
+	Valid fields are:
+		author, title, year, language, series, tag, publisher, category,
+		type, genre, description, exported, progress, review.
+	Examples:
+		'author:XX title:YY' will give results satifsying any of the two conditions.
+		'author:XX +title:YY' will give results satifsying both conditions.
+		'author:XX -title:YY' will give results satifsying the first condition excluding the second.
 
 Usage:
 	endive config
@@ -113,7 +111,7 @@ func main() {
 		os.Exit(1)
 	}()
 
-	args, err := docopt.Parse(EndiveUsage, nil, true, EndiveVersion, false, false)
+	args, err := docopt.Parse(endiveUsage, nil, true, endiveVersion, false, false)
 	if err != nil {
 		fmt.Println("ERR" + err.Error())
 		return
@@ -124,11 +122,11 @@ func main() {
 	}
 
 	// checking if ID was given and validating
-	id := InvalidID
+	id := invalidID
 	if args["<ID>"] != nil {
 		id, err = strconv.Atoi(args["<ID>"].(string))
 		if err != nil {
-			e.UI.Errorf(IncorrectIDValue, args["<ID>"].(string))
+			e.UI.Errorf(incorrectIDValue, args["<ID>"].(string))
 			return
 		}
 	}
@@ -138,14 +136,14 @@ func main() {
 	if args["--first"] != nil {
 		firstNBooks, err = strconv.Atoi(args["--first"].(string))
 		if err != nil {
-			e.UI.Error(IncorrectFlag)
+			e.UI.Error(incorrectFlag)
 			return
 		}
 	}
 	if args["--last"] != nil {
 		lastNBooks, err = strconv.Atoi(args["--last"].(string))
 		if err != nil {
-			e.UI.Error(IncorrectFlag)
+			e.UI.Error(incorrectFlag)
 			return
 		}
 	}
