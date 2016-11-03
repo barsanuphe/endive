@@ -2,7 +2,6 @@ package book
 
 import (
 	"sort"
-	"strings"
 
 	e "github.com/barsanuphe/endive/endive"
 )
@@ -12,7 +11,7 @@ var validSortOrder = []string{idField, authorField, titleField, seriesField, gen
 
 // CheckValidSortOrder checks if a sorting field is valid.
 func CheckValidSortOrder(sortBy string) (valid bool) {
-	_, valid = e.StringInSlice(strings.ToLower(sortBy), validSortOrder)
+	_, valid = e.StringInSlice(sortBy, validSortOrder)
 	return
 }
 

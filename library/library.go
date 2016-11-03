@@ -214,8 +214,6 @@ func (l *Library) ShowInfo() string {
 	rows = append(rows, []string{"Number of tags", fmt.Sprintf("%d", len(infoMap))})
 	infoMap = l.Collection.Series()
 	rows = append(rows, []string{"Number of series", fmt.Sprintf("%d", len(infoMap))})
-	bks = l.Collection.Untagged().Books()
-	rows = append(rows, []string{"Number of untagged books", fmt.Sprintf("%d", len(bks))})
 	bks = l.Collection.Progress("read").Books()
 	rows = append(rows, []string{"Number of read books", fmt.Sprintf("%d", len(bks))})
 	bks = l.Collection.Progress("reading").Books()

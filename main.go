@@ -14,20 +14,25 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 
 	"github.com/docopt/docopt-go"
 	"github.com/ttacon/chalk"
 
+	b "github.com/barsanuphe/endive/book"
 	en "github.com/barsanuphe/endive/endive"
 )
 
 const (
-	incorrectIDValue = "Incorrect ID: %s"
-	incorrectFlag    = "--first and --last only support integer values"
-	invalidID        = -1
-	endiveVersion    = "Endive -- CLI Epub collection manager -- v1.0."
-	endiveUsage      = `
+	incorrectInput      = "Incorrect input, check endive -h for complete help."
+	incorrectIDValue    = "Incorrect ID: %s"
+	noBookFound         = "Book with ID %d cannot be found"
+	numberOfBooksHeader = "# of Books"
+	incorrectFlag       = "--first and --last only support integer values"
+	invalidLimit        = -1
+	endiveVersion       = "Endive -- CLI Epub collection manager -- v1.0."
+	endiveUsage         = `
 Endive.
 This is an epub collection manager.
 
@@ -61,7 +66,7 @@ Usage:
 	endive info [tags|series|authors|publishers] [<ID>]
 	endive edit <ID> [<field> [--refresh|<value>]]
 	endive (progress|p) <ID> (unread|read|reading|shortlisted) [<rating> [<review>]]
-	endive (list|ls) [--untagged|--incomplete|--nonretail|--retail] [--first=N] [--last=N] [--sort=SORT]
+	endive (list|ls) [--incomplete|--nonretail|--retail] [--first=N] [--last=N] [--sort=SORT]
 	endive (search|s) <search-criteria>... [--first=N] [--last=N] [--sort=SORT]
 	endive -h | --help
 	endive --version
@@ -72,7 +77,7 @@ Options:
 	--list               List importable epubs only.
 	-f N --first=N       Filter only the n first books
 	-l N --last=N        Filter only the n last books
-	-s SORT --sort=SORT  Sort results [default: ID]
+	-s SORT --sort=SORT  Sort results [default: id]
 	--untagged           Filter books with no tags
 	--incomplete         Filter books with incomplete metadata
 	--retail             Only show retail books
@@ -111,9 +116,10 @@ func main() {
 		os.Exit(1)
 	}()
 
+	// parse arguments and options
 	args, err := docopt.Parse(endiveUsage, nil, true, endiveVersion, false, false)
 	if err != nil {
-		fmt.Println("ERR" + err.Error())
+		fmt.Println(incorrectInput)
 		return
 	}
 	if len(args) == 0 {
@@ -121,18 +127,24 @@ func main() {
 		return
 	}
 
-	// checking if ID was given and validating
-	id := invalidID
+	// checking if ID was given, getting relevant *Book
+	var book *b.Book
 	if args["<ID>"] != nil {
-		id, err = strconv.Atoi(args["<ID>"].(string))
+		id, err := strconv.Atoi(args["<ID>"].(string))
 		if err != nil {
 			e.UI.Errorf(incorrectIDValue, args["<ID>"].(string))
 			return
 		}
+		bk, err := e.Library.Collection.FindByID(id)
+		if err != nil {
+			e.UI.Errorf(noBookFound, id)
+			return
+		}
+		book = bk.(*b.Book)
 	}
+
 	// checking other common flags
-	firstNBooks := -1
-	lastNBooks := -1
+	firstNBooks := invalidLimit
 	if args["--first"] != nil {
 		firstNBooks, err = strconv.Atoi(args["--first"].(string))
 		if err != nil {
@@ -140,6 +152,7 @@ func main() {
 			return
 		}
 	}
+	lastNBooks := invalidLimit
 	if args["--last"] != nil {
 		lastNBooks, err = strconv.Atoi(args["--last"].(string))
 		if err != nil {
@@ -147,7 +160,7 @@ func main() {
 			return
 		}
 	}
-	sortBy := args["--sort"].(string)
+	sortBy := strings.ToLower(args["--sort"].(string))
 
 	// now dealing with commands
 	if args["config"].(bool) {
@@ -157,16 +170,16 @@ func main() {
 	if args["collection"].(bool) {
 		if args["check"].(bool) {
 			if err := e.Library.Check(); err != nil {
-				e.UI.Error("Check found errors! " + err.Error())
+				e.UI.Error("Check found modified files since import! " + err.Error())
 			} else {
-				e.UI.Info("No errors found.")
+				e.UI.Info("All epubs checked successfully.")
 			}
 		} else if args["refresh"].(bool) {
 			e.UI.Display("Refreshing library...")
 			if renamed, err := e.Refresh(); err == nil {
 				e.UI.Display("Refresh done, renamed " + strconv.Itoa(renamed) + " epubs.")
 			} else {
-				e.UI.Error("Could not refresh collection")
+				e.UI.Error("Could not refresh collection.")
 			}
 		} else if args["rebuild-index"].(bool) {
 			if err := e.Library.RebuildIndex(); err != nil {
@@ -180,10 +193,9 @@ func main() {
 	}
 
 	if args["import"].(bool) || args["i"].(bool) {
-		listOnly := args["--list"].(bool)
 		epubs := args["<epub>"].([]string)
 		retail := args["retail"].(bool) || args["r"].(bool)
-		if listOnly {
+		if args["--list"].(bool) {
 			listImportableEpubs(e, retail)
 		} else {
 			importEpubs(e, epubs, retail)
@@ -200,17 +212,15 @@ func main() {
 
 	if args["info"].(bool) {
 		if args["tags"].(bool) {
-			listTags(e, id)
+			e.UI.Display(en.TabulateMap(e.Library.Collection.Tags(), "Tag", numberOfBooksHeader))
 		} else if args["series"].(bool) {
-			listSeries(e, id)
+			e.UI.Display(en.TabulateMap(e.Library.Collection.Series(), "Series", numberOfBooksHeader))
 		} else if args["authors"].(bool) {
-			authors := e.Library.Collection.Authors()
-			e.UI.Display(en.TabulateMap(authors, "Author", "# of Books"))
+			e.UI.Display(en.TabulateMap(e.Library.Collection.Authors(), "Author", numberOfBooksHeader))
 		} else if args["publishers"].(bool) {
-			publishers := e.Library.Collection.Publishers()
-			e.UI.Display(en.TabulateMap(publishers, "Publisher", "# of Books"))
+			e.UI.Display(en.TabulateMap(e.Library.Collection.Publishers(), "Publisher", numberOfBooksHeader))
 		} else {
-			showInfo(e, id)
+			showInfo(e, book)
 		}
 	}
 
@@ -223,9 +233,9 @@ func main() {
 			}
 		}
 		if args["--refresh"].(bool) {
-			refreshMetadata(e, id, editArgs...)
+			refreshMetadata(e, book, editArgs...)
 		} else {
-			editMetadata(e, id, editArgs...)
+			editMetadata(e, book, editArgs...)
 		}
 	}
 
@@ -247,7 +257,7 @@ func main() {
 		} else if args["shortlisted"].(bool) {
 			progress = "shortlisted"
 		}
-		setProgress(e, id, progress, rating, review)
+		setProgress(e, book, progress, rating, review)
 	}
 
 	if args["search"].(bool) || args["s"].(bool) {
@@ -257,16 +267,14 @@ func main() {
 	}
 
 	if args["list"].(bool) || args["ls"].(bool) {
-		if args["--untagged"].(bool) {
-			displayBooks(e.UI, e.Library.Collection.Untagged(), firstNBooks, lastNBooks, sortBy)
-		} else if args["--incomplete"].(bool) {
-			displayBooks(e.UI, e.Library.Collection.Incomplete(), firstNBooks, lastNBooks, sortBy)
+		collection := e.Library.Collection
+		if args["--incomplete"].(bool) {
+			collection = collection.Incomplete()
 		} else if args["--retail"].(bool) {
-			displayBooks(e.UI, e.Library.Collection.Retail(), firstNBooks, lastNBooks, sortBy)
+			collection = collection.Retail()
 		} else if args["--nonretail"].(bool) {
-			displayBooks(e.UI, e.Library.Collection.NonRetailOnly(), firstNBooks, lastNBooks, sortBy)
-		} else {
-			displayBooks(e.UI, e.Library.Collection, firstNBooks, lastNBooks, sortBy)
+			collection = collection.NonRetailOnly()
 		}
+		displayBooks(e.UI, collection, firstNBooks, lastNBooks, sortBy)
 	}
 }

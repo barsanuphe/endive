@@ -61,7 +61,6 @@ type Collection interface {
 	Retail() Collection
 	NonRetailOnly() Collection
 	Exported() Collection
-	Untagged() Collection
 	Progress(string) Collection
 	Incomplete() Collection
 	Authors() map[string]int

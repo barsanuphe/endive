@@ -16,13 +16,7 @@ const (
 	exportFilterError = "Error filtering books for export to e-reader"
 )
 
-func editMetadata(endive *Endive, id int, args ...string) error {
-	// if ID, list tags of ID
-	bk, err := endive.Library.Collection.FindByID(id)
-	if err != nil {
-		return err
-	}
-	book := bk.(*b.Book)
+func editMetadata(endive *Endive, book *b.Book, args ...string) error {
 	endive.UI.Title("Editing metadata for " + book.String() + "\n")
 	if err := book.EditField(args...); err != nil {
 		endive.UI.Errorf("Error editing metadata for book ID#%d\n", book.ID())
@@ -31,17 +25,11 @@ func editMetadata(endive *Endive, id int, args ...string) error {
 		endive.UI.Errorf("Error refreshing book ID#%d\n", book.ID())
 		return err
 	}
-	showInfo(endive, id)
+	showInfo(endive, book)
 	return nil
 }
 
-func refreshMetadata(endive *Endive, id int, args ...string) error {
-	bk, err := endive.Library.Collection.FindByID(id)
-	if err != nil {
-		return err
-	}
-	book := bk.(*b.Book)
-
+func refreshMetadata(endive *Endive, book *b.Book, args ...string) error {
 	switch len(args) {
 	case 0:
 		// refresh all metadata
@@ -70,22 +58,15 @@ func refreshMetadata(endive *Endive, id int, args ...string) error {
 			}
 		}
 	}
-	if _, _, err = book.Refresh(); err != nil {
+	if _, _, err := book.Refresh(); err != nil {
 		endive.UI.Errorf("Error refreshing book ID#%d\n", book.ID())
 		return err
 	}
-	showInfo(endive, id)
+	showInfo(endive, book)
 	return nil
 }
 
-func setProgress(endive *Endive, id int, progress, rating, review string) error {
-	// if ID, list tags of ID
-	bk, err := endive.Library.Collection.FindByID(id)
-	if err != nil {
-		return err
-	}
-	book := bk.(*b.Book)
-
+func setProgress(endive *Endive, book *b.Book, progress, rating, review string) error {
 	// setting progress
 	if err := book.Set("progress", progress); err != nil {
 		endive.UI.Error("Progress must be among: unread/shortlisted/reading/read")
@@ -107,61 +88,16 @@ func setProgress(endive *Endive, id int, progress, rating, review string) error 
 			return err
 		}
 	}
-	showInfo(endive, id)
+	showInfo(endive, book)
 	return nil
 }
 
-func showInfo(endive *Endive, id int) error {
-	if id != invalidID {
-		// if ID, list tags of ID
-		bk, err := endive.Library.Collection.FindByID(id)
-		if err != nil {
-			return err
-		}
-		book := bk.(*b.Book)
+func showInfo(endive *Endive, book *b.Book) {
+	if book != nil {
 		fmt.Println(book.ShowInfo())
 	} else {
 		fmt.Println(endive.Library.ShowInfo())
 	}
-	return nil
-}
-
-func listTags(endive *Endive, id int) error {
-	if id != invalidID {
-		// if ID, list tags of ID
-		bk, err := endive.Library.Collection.FindByID(id)
-		if err != nil {
-			return err
-		}
-		book := bk.(*b.Book)
-		var rows [][]string
-		rows = append(rows, []string{book.String(), book.Metadata.Tags.String()})
-		endive.UI.Display(e.TabulateRows(rows, "Book", "Tags"))
-	} else {
-		// list all tags
-		tags := endive.Library.Collection.Tags()
-		endive.UI.Display(e.TabulateMap(tags, "Tag", "# of Books"))
-	}
-	return nil
-}
-
-func listSeries(endive *Endive, id int) error {
-	if id != invalidID {
-		// if ID, list series of ID
-		bk, err := endive.Library.Collection.FindByID(id)
-		if err != nil {
-			return err
-		}
-		book := bk.(*b.Book)
-		var rows [][]string
-		rows = append(rows, []string{book.String(), book.Metadata.Series.String()})
-		endive.UI.Display(e.TabulateRows(rows, "Book", "Series"))
-	} else {
-		// list all tags
-		tags := endive.Library.Collection.Series()
-		endive.UI.Display(e.TabulateMap(tags, "Series", "# of Books"))
-	}
-	return nil
 }
 
 func search(endive *Endive, parts []string, firstNBooks, lastNBooks int, sortBy string) {
@@ -259,10 +195,10 @@ func displayBooks(ui e.UserInterface, books e.Collection, firstNBooks, lastNBook
 	if sortBy != "" {
 		books.Sort(sortBy)
 	}
-	if firstNBooks != -1 {
+	if firstNBooks != invalidLimit {
 		books = books.First(firstNBooks)
 	}
-	if lastNBooks != -1 {
+	if lastNBooks != invalidLimit {
 		books = books.Last(lastNBooks)
 	}
 	ui.Display(books.Table())

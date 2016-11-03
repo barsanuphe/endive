@@ -116,12 +116,6 @@ func (c *Collection) Series() map[string]int {
 	return nil
 }
 
-// Untagged implementation for tests
-func (c *Collection) Untagged() endive.Collection {
-	fmt.Println("mock Collection: Untagged")
-	return nil
-}
-
 // Table implementation for tests
 func (c *Collection) Table() string {
 	fmt.Println("mock Collection: Table")

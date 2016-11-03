@@ -85,14 +85,6 @@ func (bks *Books) Progress(progress string) e.Collection {
 	return res
 }
 
-// Untagged among Books.
-func (bks *Books) Untagged() e.Collection {
-	untagged := bks.filter(func(b *Book) bool { return !b.Metadata.Tags.HasAny() })
-	var res e.Collection
-	res = &untagged
-	return res
-}
-
 // Retail among Books.
 func (bks *Books) Retail() e.Collection {
 	retail := bks.filter(func(b *Book) bool { return b.HasRetail() })
