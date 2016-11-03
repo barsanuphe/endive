@@ -114,27 +114,27 @@ Show info about a book with a specific *ID*:
 
 Edit title for book with specific *ID*:
 
-    $ endive metadata edit *ID* title "New Title"
+    $ endive edit *ID* title "New Title"
 
 Refresh library after configuration changes:
 
-    $ endive refresh
+    $ endive collection refresh
 
 List all books:
 
-    $ endive list books
+    $ endive list
 
 List all books that do not have a retail version:
 
-    $ endive list nonretail
+    $ endive list --nonretail
 
 Sorting all books by author:
 
-    $ endive list books --sort author
+    $ endive list --sort author
 
 Sorting all books by year, limit to first 10 results:
 
-    $ endive list books --sort year --first 10
+    $ endive list --sort year --first 10
 
 For other commands, see:
 
@@ -205,11 +205,11 @@ own Goodreads API key.
 | --------------- |:-------------:|
 | Epub parser     | [github.com/barsanuphe/epubgo](https://github.com/barsanuphe/epubgo), forked from [github.com/meskio/epubgo](https://github.com/meskio/epubgo)             |
 | Search          | [github.com/blevesearch/bleve](https://github.com/blevesearch/bleve) |
-| CLI             | [github.com/codegangsta/cli](https://github.com/codegangsta/cli)     |
+| CLI             | [github.com/docopt/docopt-go](https://github.com/docopt/docopt-go)     |
 | Color output    | [github.com/ttacon/chalk](https://github.com/ttacon/chalk)           |
 | Tables output   | [github.com/barsanuphe/gotabulate](https://github.com/barsanuphe/gotabulate), forked from [github.com/bndr/gotabulate](https://github.com/bndr/gotabulate) |
 | XDG directories | [launchpad.net/go-xdg](https://launchpad.net/go-xdg)                 |
-| YAML Parser     | [github.com/spf13/viper](https://github.com/spf13/viper)             |
+| YAML Parser     | [gopkg.in/yaml.v2](https://github.com/go-yaml/yaml)             |
 | ISBN validator  | [github.com/moraes/isbn](https://github.com/moraes/isbn)             |
 | Spinner         | [github.com/tj/go-spin](https://github.com/tj/go-spin)               |
 | Diff            | [github.com/kylelemons/godebug/pretty](https://github.com/kylelemons/godebug/pretty)               |
