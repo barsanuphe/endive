@@ -199,3 +199,35 @@ func (b *Book) editSpecificField(field string, value string) (err error) {
 	b.Metadata.Clean(b.Config)
 	return
 }
+
+// OutputDiffTable returns differences between Books.
+func (b *Book) OutputDiffTable(o *Book, diffOnly bool) [][]string {
+	var rows [][]string
+	if !diffOnly {
+		rows = append(rows, []string{b.String(), o.String()})
+	}
+	for _, field := range allFields {
+		iValue, err := b.Get(field)
+		if err != nil {
+			iValue = couldNotRetrieveValue
+		}
+		oValue, err := o.Get(field)
+		if err != nil {
+			oValue = couldNotRetrieveValue
+		}
+		if !diffOnly || iValue != oValue {
+			rows = append(rows, []string{iValue, oValue})
+		}
+	}
+	return rows
+}
+
+// AddIDToDiff returns a DiffTable with ID
+func (b *Book) AddIDToDiff(rowsIn [][]string) [][]string {
+	var rows [][]string
+	for _, row := range rowsIn {
+		newRow := append([]string{fmt.Sprintf("%d", b.ID())}, row...)
+		rows = append(rows, newRow)
+	}
+	return rows
+}

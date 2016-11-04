@@ -298,23 +298,30 @@ func (i *Metadata) IsSimilar(o Metadata) bool {
 	return false
 }
 
+// OutputDiffTable returns differences between Metadatas.
+func (i *Metadata) OutputDiffTable(o *Metadata, diffOnly bool) [][]string {
+	var rows [][]string
+	for _, field := range MetadataFieldNames {
+		iValue, err := i.Get(field)
+		if err != nil {
+			iValue = couldNotRetrieveValue
+		}
+		oValue, err := o.Get(field)
+		if err != nil {
+			oValue = couldNotRetrieveValue
+		}
+		if !diffOnly || iValue != oValue {
+			rows = append(rows, []string{iValue, oValue})
+		}
+	}
+	return rows
+}
+
 // Diff returns differences between Metadatas.
 func (i *Metadata) Diff(o *Metadata, firstHeader, secondHeader string) string {
 	var rows [][]string
 	rows = append(rows, []string{i.String(), o.String()})
-	rows = append(rows, []string{i.Author(), o.Author()})
-	rows = append(rows, []string{i.Title(), o.Title()})
-	rows = append(rows, []string{i.OriginalYear, o.OriginalYear})
-	rows = append(rows, []string{i.EditionYear, o.EditionYear})
-	rows = append(rows, []string{i.Publisher, o.Publisher})
-	rows = append(rows, []string{i.Description, o.Description})
-	rows = append(rows, []string{i.Category, o.Category})
-	rows = append(rows, []string{i.Type, o.Type})
-	rows = append(rows, []string{i.Genre, o.Genre})
-	rows = append(rows, []string{i.Tags.String(), o.Tags.String()})
-	rows = append(rows, []string{i.Series.String(), o.Series.String()})
-	rows = append(rows, []string{i.Language, o.Language})
-	rows = append(rows, []string{i.ISBN, o.ISBN})
+	rows = append(rows, i.OutputDiffTable(o, false)...)
 	return e.TabulateRows(rows, firstHeader, secondHeader)
 }
 
