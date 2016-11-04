@@ -114,7 +114,15 @@ Show info about a book with a specific *ID*:
 
 Edit title for book with specific *ID*:
 
-    $ endive edit *ID* title "New Title"
+    $ endive set field title "New Title" *ID*
+    
+Set type for several books: 
+
+    $ endive set field type novel *ID1* *ID2* *ID3*
+    
+Mark a book as shortlisted for reading:
+
+    $ endive set shortlisted *ID*
 
 Refresh library after configuration changes:
 
@@ -138,7 +146,7 @@ Sorting all books by year, limit to first 10 results:
 
 For other commands, see:
 
-    $ endive help
+    $ endive --help
 
 
 ## Configuration
