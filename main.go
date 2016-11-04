@@ -62,12 +62,14 @@ Usage:
 	endive config
 	endive collection (check|refresh|rebuild-index|check-index)
 	endive (import|i) ((retail|r)|(nonretail|nr)) [--list] [<epub>...]
-	endive (export|x) (all|<search-criteria>...)
+	endive (export|x) (all|(id <ID>...)|<search-criteria>...)
 	endive info [tags|series|authors|publishers] [<ID>]
-	endive edit <ID> [<field> [--refresh|<value>]]
-	endive (progress|p) <ID> (unread|read|reading|shortlisted) [<rating> [<review>]]
 	endive (list|ls) [--incomplete|--nonretail|--retail] [--first=N] [--last=N] [--sort=SORT]
 	endive (search|s) <search-criteria>... [--first=N] [--last=N] [--sort=SORT]
+	endive review <ID> <rating> [<review>]
+	endive set (unread|read|reading|shortlisted|(field <field> <value>)) <ID>...
+	endive edit [(field <field_name>)] <ID>...
+	endive reset [(field <field_name>)] <ID>...
 	endive -h | --help
 	endive --version
 
@@ -75,14 +77,12 @@ Options:
 	-h --help            Show this screen.
 	--version            Show version.
 	--list               List importable epubs only.
-	-f N --first=N       Filter only the n first books
-	-l N --last=N        Filter only the n last books
-	-s SORT --sort=SORT  Sort results [default: id]
-	--untagged           Filter books with no tags
-	--incomplete         Filter books with incomplete metadata
-	--retail             Only show retail books
-	--nonretail          Only show non-retail books
-	--refresh            Refresh value from GR.`
+	-f N --first=N       Filter only the n first books.
+	-l N --last=N        Filter only the n last books.
+	-s SORT --sort=SORT  Sort results [default: id].
+	--incomplete         Filter books with incomplete metadata.
+	--retail             Only show retail books.
+	--nonretail          Only show non-retail books.`
 )
 
 func main() {
@@ -127,20 +127,53 @@ func main() {
 		return
 	}
 
-	// checking if ID was given, getting relevant *Book
-	var book *b.Book
+	// checking if IDs were given, getting relevant *Book-s
+	var books []*b.Book
 	if args["<ID>"] != nil {
-		id, err := strconv.Atoi(args["<ID>"].(string))
-		if err != nil {
-			e.UI.Errorf(incorrectIDValue, args["<ID>"].(string))
-			return
+		idsString := []string{}
+		// test if string or []string
+		idS, ok := args["<ID>"].(string)
+		if ok {
+			idsString = append(idsString, idS)
+		} else {
+			idsString, ok = args["<ID>"].([]string)
+			if !ok {
+				fmt.Println(incorrectInput)
+				return
+			}
 		}
-		bk, err := e.Library.Collection.FindByID(id)
-		if err != nil {
-			e.UI.Errorf(noBookFound, id)
-			return
+		// if [<ID>], idsString can be an empty slice
+		if len(idsString) != 0 {
+			// convert to int
+			ids := []int{}
+			for _, i := range idsString {
+				id, err := strconv.Atoi(i)
+				if err != nil {
+					e.UI.Errorf(incorrectIDValue, i)
+					return
+				} else {
+					ids = append(ids, id)
+				}
+			}
+			if len(ids) == 0 {
+				fmt.Println("No valid ID found.")
+				return
+			}
+			// get the relevant Books
+			for _, id := range ids {
+				bk, err := e.Library.Collection.FindByID(id)
+				if err != nil {
+					e.UI.Errorf(noBookFound, id)
+					return
+				} else {
+					books = append(books, bk.(*b.Book))
+				}
+			}
+			if len(books) == 0 {
+				fmt.Println("No valid book found.")
+				return
+			}
 		}
-		book = bk.(*b.Book)
 	}
 
 	// checking other common flags
@@ -204,7 +237,14 @@ func main() {
 
 	if args["export"].(bool) || args["x"].(bool) {
 		if args["all"].(bool) {
-			exportAll(e)
+			exportCollection(e, e.Library.Collection)
+		} else if args["id"].(bool) {
+			var c en.Collection
+			c = &b.Books{}
+			for _, bp := range books {
+				c.Add(bp)
+			}
+			exportCollection(e, c)
 		} else {
 			exportFilter(e, args["<search-criteria>"].([]string))
 		}
@@ -220,44 +260,55 @@ func main() {
 		} else if args["publishers"].(bool) {
 			e.UI.Display(en.TabulateMap(e.Library.Collection.Publishers(), "Publisher", numberOfBooksHeader))
 		} else {
-			showInfo(e, book)
+			if len(books) != 0 {
+				showInfo(e, books[0])
+			} else {
+				showInfo(e, nil)
+			}
 		}
+	}
+
+	if args["review"].(bool) {
+		var review string
+		if args["<review>"] != nil {
+			review = args["<review>"].(string)
+		}
+		reviewBook(e, books[0], args["<rating>"].(string), review)
 	}
 
 	if args["edit"].(bool) {
-		editArgs := []string{}
-		if args["<field>"] != nil {
-			editArgs = append(editArgs, args["<field>"].(string))
-			if args["<value>"] != nil {
-				editArgs = append(editArgs, args["<value>"].(string))
-			}
-		}
-		if args["--refresh"].(bool) {
-			refreshMetadata(e, book, editArgs...)
+		if args["field"].(bool) {
+			fieldName := args["<field_name>"].(string)
+			editMetadata(e, books, fieldName)
 		} else {
-			editMetadata(e, book, editArgs...)
+			editMetadata(e, books)
 		}
 	}
 
-	if args["progress"].(bool) || args["p"].(bool) {
-		// TODO validate progress with Book package
-		var progress, rating, review string
-		if args["unread"].(bool) {
-			progress = "unread"
-		} else if args["read"].(bool) {
-			progress = "read"
-			if args["<rating>"] != nil {
-				rating = args["<rating>"].(string)
-			}
-			if args["<review>"] != nil {
-				review = args["<review>"].(string)
-			}
-		} else if args["reading"].(bool) {
-			progress = "reading"
-		} else if args["shortlisted"].(bool) {
-			progress = "shortlisted"
+	if args["reset"].(bool) {
+		if args["field"].(bool) {
+			fieldName := args["<field_name>"].(string)
+			refreshMetadata(e, books, fieldName)
+		} else {
+			refreshMetadata(e, books)
 		}
-		setProgress(e, book, progress, rating, review)
+	}
+
+	if args["set"].(bool) {
+		if args["field"].(bool) {
+			editMetadata(e, books, args["<field>"].(string), args["<value>"].(string))
+		} else {
+			progress := ""
+			for _, p := range []string{"unread", "read", "reading", "shortlisted"} {
+				if args[p].(bool) {
+					progress = p
+					break
+				}
+			}
+			if progress != "" {
+				setProgress(e, books, progress)
+			}
+		}
 	}
 
 	if args["search"].(bool) || args["s"].(bool) {
