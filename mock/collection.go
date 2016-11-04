@@ -92,6 +92,12 @@ func (c *Collection) Incomplete() endive.Collection {
 	return nil
 }
 
+// WithID implementation for tests
+func (c *Collection) WithID() endive.Collection {
+	fmt.Println("mock Collection: WithID")
+	return nil
+}
+
 // Authors implementation for tests
 func (c *Collection) Authors() map[string]int {
 	fmt.Println("mock Collection: Authors")

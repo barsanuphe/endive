@@ -69,6 +69,24 @@ func (bks *Books) findUnique(f func(*Book) bool) *Book {
 	return &Book{}
 }
 
+// IDIsIn checks if an id is known
+func IDIsIn(a int, known []int) bool {
+	for _, b := range known {
+		if b == a {
+			return true
+		}
+	}
+	return false
+}
+
+// WithID among Books.
+func (bks *Books) WithID(ids ...int) e.Collection {
+	withID := bks.filter(func(b *Book) bool { return IDIsIn(b.ID(), ids) })
+	var res e.Collection
+	res = &withID
+	return res
+}
+
 // Incomplete among Books.
 func (bks *Books) Incomplete() e.Collection {
 	incomplete := bks.filter(func(b *Book) bool { return !b.Metadata.IsComplete() })

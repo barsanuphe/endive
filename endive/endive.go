@@ -63,6 +63,7 @@ type Collection interface {
 	Exported() Collection
 	Progress(string) Collection
 	Incomplete() Collection
+	WithID(...int) Collection
 	Authors() map[string]int
 	Publishers() map[string]int
 	Tags() map[string]int
