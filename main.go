@@ -65,47 +65,40 @@ func main() {
 	// now dealing with commands
 	if cli.showConfig {
 		e.UI.Display(e.Config.String())
-	}
-	if cli.checkCollection {
+	} else if cli.checkCollection {
 		if err := e.Library.Check(); err != nil {
 			e.UI.Error("Check found modified files since import! " + err.Error())
 		} else {
 			e.UI.Info("All epubs checked successfully.")
 		}
-	}
-	if cli.refreshCollection {
+	} else if cli.refreshCollection {
 		e.UI.Display("Refreshing library...")
 		if renamed, err := e.Refresh(); err == nil {
 			e.UI.Display("Refresh done, renamed " + strconv.Itoa(renamed) + " epubs.")
 		} else {
 			e.UI.Error("Could not refresh collection.")
 		}
-	}
-	if cli.rebuildIndex {
+	} else if cli.rebuildIndex {
 		if err := e.Library.RebuildIndex(); err != nil {
 			e.UI.Error(err.Error())
 		}
-	}
-	if cli.checkIndex {
+	} else if cli.checkIndex {
 		if err := e.Library.CheckIndex(); err != nil {
 			e.UI.Error(err.Error())
 		}
-	}
-	if cli.importEpubs {
+	} else if cli.importEpubs {
 		if cli.listImport {
 			listImportableEpubs(e, cli.importRetail)
 		} else {
 			importEpubs(e, cli.epubs, cli.importRetail)
 		}
-	}
-	if cli.export {
+	} else if cli.export {
 		if len(cli.searchTerms) == 0 {
 			exportCollection(e, cli.collection)
 		} else {
 			exportFilter(e, cli.searchTerms)
 		}
-	}
-	if cli.info != "" {
+	} else if cli.info != "" {
 		switch cli.info {
 		case infoGeneral:
 			showInfo(e, nil)
@@ -114,36 +107,30 @@ func main() {
 		default:
 			e.UI.Display(en.TabulateMap(cli.collectionMap, cli.info, numberOfBooksHeader))
 		}
-	}
-	if cli.review {
+	} else if cli.review {
 		reviewBook(e, cli.books[0], cli.rating, cli.reviewText)
-	}
-	if cli.edit {
+	} else if cli.edit {
 		if cli.field != "" {
 			editMetadata(e, cli.books, cli.field)
 		} else {
 			editMetadata(e, cli.books)
 		}
-	}
-	if cli.reset {
+	} else if cli.reset {
 		if cli.field != "" {
 			refreshMetadata(e, cli.books, cli.field)
 		} else {
 			refreshMetadata(e, cli.books)
 		}
-	}
-	if cli.set {
+	} else if cli.set {
 		if cli.field != "" {
 			editMetadata(e, cli.books, cli.field, cli.value)
 		} else {
 			setProgress(e, cli.books, cli.progress)
 		}
 
-	}
-	if cli.search {
+	} else if cli.search {
 		search(e, cli.searchTerms, cli.firstN, cli.lastN, cli.sortBy)
-	}
-	if cli.list {
+	} else if cli.list {
 		displayBooks(e.UI, cli.collection, cli.firstN, cli.lastN, cli.sortBy)
 	}
 }
