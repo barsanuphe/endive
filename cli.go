@@ -8,8 +8,8 @@ import (
 
 	docopt "github.com/docopt/docopt-go"
 
-	en "github.com/barsanuphe/endive/endive"
 	b "github.com/barsanuphe/endive/book"
+	en "github.com/barsanuphe/endive/endive"
 )
 
 const (
@@ -19,8 +19,15 @@ const (
 	numberOfBooksHeader = "# of Books"
 	incorrectFlag       = "--first and --last only support integer values"
 	invalidLimit        = -1
-	endiveVersion       = "Endive -- CLI Epub collection manager -- v1.0."
-	endiveUsage         = `
+	infoTags            = "Tags"
+	infoSeries          = "Series"
+	infoPublishers      = "Publishers"
+	infoAuthors         = "Authors"
+	infoBook            = "Book"
+	infoGeneral         = "General"
+
+	endiveVersion = "Endive -- CLI Epub collection manager -- v1.0."
+	endiveUsage   = `
 Endive.
 This is an epub collection manager.
 
@@ -52,8 +59,8 @@ Usage:
 	endive (import|i) ((retail|r)|(nonretail|nr)) [--list] [<epub>...]
 	endive (export|x) (all|(id <ID>...)|<search-criteria>...)
 	endive info [tags|series|authors|publishers] [<ID>]
-	endive (list|ls) [--incomplete|--nonretail|--retail] [--first=N] [--last=N] [--sort=SORT]
-	endive (search|s) <search-criteria>... [--first=N] [--last=N] [--sort=SORT]
+	endive (list|ls) [--incomplete|--nonretail|--retail] [--first=N|--last=N] [--sort=SORT]
+	endive (search|s) <search-criteria>... [--first=N|--last=N] [--sort=SORT]
 	endive review <ID> <rating> [<review>]
 	endive set (unread|read|reading|shortlisted|(field <field_name> <value>)) <ID>...
 	endive edit [(field <field_name>)] <ID>...
@@ -73,6 +80,7 @@ Options:
 	--nonretail          Only show non-retail books.`
 )
 
+// CLI sorts and checks user input
 type CLI struct {
 	builtInCommand bool
 	// argument values
@@ -160,7 +168,7 @@ func (o *CLI) parseArgs(e *Endive, osArgs []string) error {
 			}
 			// get the relevant Books
 			for _, id := range ids {
-				bk, err := e.Library.Collection.FindByID(id)
+				bk, err := o.collection.FindByID(id)
 				if err != nil {
 					return fmt.Errorf(noBookFound, id)
 				}
@@ -230,31 +238,29 @@ func (o *CLI) parseArgs(e *Endive, osArgs []string) error {
 
 	if args["export"].(bool) || args["x"].(bool) {
 		o.export = true
-		if args["all"].(bool) {
-			o.collection = e.Library.Collection
-		}
+		// if all: o.collection is set to complete collection by default
 		// if ids: o.collection is already set
 		// if search: same for o.searchTerms
 	}
 
 	if args["info"].(bool) {
 		if args["tags"].(bool) {
-			o.info = "Tags"
+			o.info = infoTags
 			o.collectionMap = o.collection.Tags()
 		} else if args["series"].(bool) {
-			o.info = "Series"
+			o.info = infoSeries
 			o.collectionMap = o.collection.Series()
 		} else if args["authors"].(bool) {
-			o.info = "Authors"
+			o.info = infoAuthors
 			o.collectionMap = o.collection.Authors()
 		} else if args["publishers"].(bool) {
-			o.info = "Publishers"
+			o.info = infoPublishers
 			o.collectionMap = o.collection.Publishers()
 		} else {
 			if len(o.books) != 0 {
-				o.info = "Book"
+				o.info = infoBook
 			} else {
-				o.info = "General"
+				o.info = infoGeneral
 			}
 		}
 	}
@@ -283,8 +289,12 @@ func (o *CLI) parseArgs(e *Endive, osArgs []string) error {
 	}
 
 	if args["<field_name>"] != nil {
-		o.field = args["<field_name>"].(string)
-		// TODO check it's valid
+		o.field = strings.ToLower(args["<field_name>"].(string))
+		// check it's a valid field name
+		if !b.CheckValidField(o.field) {
+			return errors.New("Invalid field!")
+		}
+
 	}
 	if args["<value>"] != nil {
 		o.value = args["<value>"].(string)

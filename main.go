@@ -107,9 +107,9 @@ func main() {
 	}
 	if cli.info != "" {
 		switch cli.info {
-		case "General":
+		case infoGeneral:
 			showInfo(e, nil)
-		case "Book":
+		case infoBook:
 			showInfo(e, cli.books[0])
 		default:
 			e.UI.Display(en.TabulateMap(cli.collectionMap, cli.info, numberOfBooksHeader))

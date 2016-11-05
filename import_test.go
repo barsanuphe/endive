@@ -16,6 +16,7 @@ import (
 )
 
 func TestImportPaths(t *testing.T) {
+	fmt.Println("\n --- Testing Importing. ---")
 	var book en.GenericBook
 	assert := assert.New(t)
 
