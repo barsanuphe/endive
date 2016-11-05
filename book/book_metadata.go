@@ -158,7 +158,7 @@ func (b *Book) Set(field, value string) error {
 			}
 			structField.SetString(value)
 		case ratingField:
-			// checking rating is between 0 and 10
+			// checking rating is between 0 and 5
 			val, err := strconv.ParseFloat(value, 32)
 			if err != nil || val > 5 || val < 0 {
 				return errors.New("Rating must be between 0 and 5.")

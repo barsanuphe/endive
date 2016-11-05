@@ -67,6 +67,12 @@ var validCategories = []string{fiction, nonfiction}
 var validTypes = []string{essay, biography, autobiography, novel, shortstory, anthology, poetry}
 var allFields = []string{idField, filenameField, authorField, titleField, yearField, editionYearField, publisherField, isbnField, descriptionField, numPagesField, languageField, categoryField, typeField, genreField, tagsField, seriesField, versions, progressField, readDateField, averageRatingField, ratingField, reviewField, exportedField}
 
+// CheckValidField checks if a field is valid.
+func CheckValidField(field string) (valid bool) {
+	_, valid = e.StringInSlice(field, allFields)
+	return
+}
+
 // Book can manipulate a book.
 // A Book can have multiple epub files.
 type Book struct {

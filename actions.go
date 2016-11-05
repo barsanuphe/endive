@@ -92,7 +92,6 @@ func setProgress(endive *Endive, books []*b.Book, progress string) error {
 	for _, book := range books {
 		// setting progress
 		if err := book.Set("progress", progress); err != nil {
-			endive.UI.Error("Progress must be among: unread/shortlisted/reading/read")
 			return err
 		}
 		endive.UI.Title("%s set as %s.\n", book.String(), progress)
