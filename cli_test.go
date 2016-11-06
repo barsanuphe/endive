@@ -39,11 +39,19 @@ func TestCLI(t *testing.T) {
 	assert.Nil(err, "Error loading epubs from database")
 	endive := &Endive{Config: c, UI: ui, Library: lib}
 
-	// testing config
+	// testing help
 	fmt.Println(" + Testing config subcommand")
 	cli := CLI{}
+	err = cli.parseArgs(endive, []string{"-h"})
+	assert.Nil(err)
+	assert.True(cli.builtInCommand)
+
+	// testing config
+	fmt.Println(" + Testing config subcommand")
+	cli = CLI{}
 	err = cli.parseArgs(endive, []string{"config"})
 	assert.Nil(err)
+	assert.False(cli.builtInCommand)
 	assert.True(cli.showConfig)
 
 	// testing collection

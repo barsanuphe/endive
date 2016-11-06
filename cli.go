@@ -143,14 +143,9 @@ func (o *CLI) parseArgs(e *Endive, osArgs []string) error {
 	if args["<ID>"] != nil {
 		idsString := []string{}
 		// test if string or []string
-		idS, ok := args["<ID>"].(string)
-		if ok {
-			idsString = append(idsString, idS)
-		} else {
-			idsString, ok = args["<ID>"].([]string)
-			if !ok {
-				return errors.New(incorrectInput)
-			}
+		idsString, ok := args["<ID>"].([]string)
+		if !ok {
+			return errors.New(incorrectInput)
 		}
 		// if [<ID>], idsString can be an empty slice
 		if len(idsString) != 0 {
