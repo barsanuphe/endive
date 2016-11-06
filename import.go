@@ -141,7 +141,7 @@ func (e *Endive) ImportEpubs(candidates []en.EpubCandidate, isRetail bool) (err 
 				e.Library.Collection.Add(bk)
 				e.UI.SubTitle("Added epub %s to new book with ID %d", bk.String(), bk.ID())
 			} else {
-				e.UI.Title("\nAdding epub to existing book %s with ID %d\n",  knownBook.String(), knownBook.ID())
+				e.UI.Title("\nAdding epub to existing book %s with ID %d\n", knownBook.String(), knownBook.ID())
 				e.UI.SubTitle("Showing differences with current values")
 				// merging metadata
 				bk := knownBook.(*b.Book)

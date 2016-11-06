@@ -167,6 +167,7 @@ func (i *Metadata) Clean(cfg e.Config) {
 	}
 	if cat, err := cleanCategory(i.Category); err == nil {
 		i.Category = cat
+		i.Tags.RemoveFromNames(cat)
 	}
 
 	// autofill type
@@ -185,12 +186,12 @@ func (i *Metadata) Clean(cfg e.Config) {
 	}
 	if tp, err := cleanType(i.Type); err == nil {
 		i.Type = tp
+		i.Tags.RemoveFromNames(tp)
 	}
 
 	// MainGenre
 	if i.Genre == "" && len(i.Tags) != 0 {
-		cleanName, err := cleanTagName(i.Tags[0].Name)
-		if err == nil {
+		if cleanName, err := cleanTagName(i.Tags[0].Name); err == nil {
 			i.Genre = cleanName
 			i.Tags.RemoveFromNames(i.Genre)
 		}
@@ -198,9 +199,6 @@ func (i *Metadata) Clean(cfg e.Config) {
 	// if nothing valid found...
 	if i.Genre == "" {
 		i.Genre = unknown
-	}
-	if main, err := cleanTagName(i.Genre); err == nil {
-		i.Genre = main
 	}
 
 	// clean series
