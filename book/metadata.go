@@ -326,9 +326,9 @@ func (i *Metadata) Diff(o *Metadata, firstHeader, secondHeader string) string {
 }
 
 // Merge with another Metadata.
-func (i *Metadata) Merge(o *Metadata, cfg e.Config, ui e.UserInterface) (err error) {
+func (i *Metadata) Merge(o *Metadata, cfg e.Config, ui e.UserInterface, diffOnly bool) (err error) {
 	for _, field := range MetadataFieldNames {
-		err = i.MergeField(o, field, cfg, ui)
+		err = i.MergeField(o, field, cfg, ui, diffOnly)
 		if err != nil {
 			return
 		}
@@ -430,7 +430,7 @@ func listLocalAndRemoteOnly(ui e.UserInterface, local, online string, options *[
 }
 
 // MergeField with another Metadata.
-func (i *Metadata) MergeField(o *Metadata, field string, cfg e.Config, ui e.UserInterface) (err error) {
+func (i *Metadata) MergeField(o *Metadata, field string, cfg e.Config, ui e.UserInterface, diffOnly bool) (err error) {
 	var userInput string
 	options := []string{}
 	usage, ok := usageMap[field]
@@ -444,6 +444,10 @@ func (i *Metadata) MergeField(o *Metadata, field string, cfg e.Config, ui e.User
 	otherValue, err := o.Get(field)
 	if err != nil {
 		return err
+	}
+	// if only merging the differences and values are the same, just return
+	if diffOnly && currentValue == otherValue {
+		return nil
 	}
 
 	switch field {
@@ -537,7 +541,7 @@ func (i *Metadata) SearchOnline(ui e.UserInterface, cfg e.Config, fields ...stri
 	if err != nil {
 		ui.Debug(err.Error())
 		ui.Warning("Could not retrieve information from GoodReads. Manual review.")
-		err = i.Merge(&Metadata{}, cfg, ui)
+		err = i.Merge(&Metadata{}, cfg, ui, false)
 		if err != nil {
 			ui.Error(err.Error())
 		}
@@ -560,12 +564,12 @@ func (i *Metadata) SearchOnline(ui e.UserInterface, cfg e.Config, fields ...stri
 			validChoice = true
 		case "e":
 			if len(fields) == 0 {
-				if err := i.Merge(onlineInfo, cfg, ui); err != nil {
+				if err := i.Merge(onlineInfo, cfg, ui, false); err != nil {
 					return err
 				}
 			} else {
 				for _, f := range fields {
-					if err := i.MergeField(onlineInfo, f, cfg, ui); err != nil {
+					if err := i.MergeField(onlineInfo, f, cfg, ui, false); err != nil {
 						return err
 					}
 				}

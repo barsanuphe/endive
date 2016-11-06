@@ -80,7 +80,7 @@ func (b *Book) ForceMetadataFieldRefresh(field string) (err error) {
 		return err
 	}
 	// merge field
-	err = info.MergeField(onlineInfo, field, b.Config, b.UI)
+	err = info.MergeField(onlineInfo, field, b.Config, b.UI, false)
 	if err != nil {
 		return err
 	}

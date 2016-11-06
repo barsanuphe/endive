@@ -141,7 +141,6 @@ func (o *CLI) parseArgs(e *Endive, osArgs []string) error {
 	o.collection = e.Library.Collection
 	// checking if IDs were given, getting relevant *Book-s
 	if args["<ID>"] != nil {
-		idsString := []string{}
 		// test if string or []string
 		idsString, ok := args["<ID>"].([]string)
 		if !ok {

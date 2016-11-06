@@ -49,15 +49,13 @@ func refreshMetadata(endive *Endive, books []*b.Book, args ...string) error {
 			// field is specified
 			field := args[0]
 			// check if valid field name
-			_, isIn := e.StringInSlice(strings.ToLower(field), b.MetadataFieldNames)
-			if !isIn {
+			if _, isIn := e.StringInSlice(strings.ToLower(field), b.MetadataFieldNames); !isIn {
 				endive.UI.Error("Invalid metadata field " + field)
 				return errors.New("Invalid metadata field")
 			}
 			// ask for confirmation
 			if endive.UI.Accept("Confirm refreshing metadata field " + field + " for " + book.String()) {
-				err := book.ForceMetadataFieldRefresh(field)
-				if err != nil {
+				if err := book.ForceMetadataFieldRefresh(field); err != nil {
 					endive.UI.Errorf("Error reinitializing metadata field "+field+" for book ID#%d", book.ID)
 					endive.UI.Error(err.Error())
 					return err

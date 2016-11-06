@@ -11,8 +11,6 @@ import (
 	en "github.com/barsanuphe/endive/endive"
 )
 
-//------------------------------------
-
 // importFromSource all detected epubs, tagging them as retail or non-retail as requested.
 func (e *Endive) importFromSource(sources []string, retail bool) error {
 	defer en.TimeTrack(e.UI, time.Now(), "Imported")
@@ -143,7 +141,17 @@ func (e *Endive) ImportEpubs(candidates []en.EpubCandidate, isRetail bool) (err 
 				e.Library.Collection.Add(bk)
 				e.UI.SubTitle("Added epub %s to new book with ID %d", bk.String(), bk.ID())
 			} else {
-				e.UI.Debug("Adding epub to " + knownBook.String())
+				e.UI.Title("\nAdding epub to existing book %s with ID %d\n",  knownBook.String(), knownBook.ID())
+				e.UI.SubTitle("Showing differences with current values")
+				// merging metadata
+				bk := knownBook.(*b.Book)
+				fmt.Println(en.TabulateRows(bk.Metadata.OutputDiffTable(&info, true), "Current Value", "Value from new Epub"))
+				e.UI.SubTitle("Merging the differences between the known metadata and metadata from the new epub")
+				if err := bk.Metadata.Merge(&info, e.Config, e.UI, true); err != nil {
+					e.UI.Error("Error merging metadata with trumping version.")
+					return err
+				}
+				// adding epub file
 				imported, err = knownBook.AddEpub(candidate.Filename, isRetail, candidate.Hash)
 				if err != nil {
 					return err
