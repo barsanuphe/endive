@@ -78,7 +78,7 @@ func TestDBBackup(t *testing.T) {
 	databaseFile := "../test/library/endive_test.json"
 
 	db := JSONDB{}
-	db.SetPath(filepath.Base(databaseFile))
+	db.SetPath(databaseFile)
 
 	// makedirs c.LibraryRoot + defer removing all test files
 	assert.Nil(os.MkdirAll(libraryRoot, 0777))

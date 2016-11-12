@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/libgit2/git2go"
@@ -99,7 +100,7 @@ func (db *JSONDB) Backup(path string) error {
 	if err != nil {
 		return err
 	}
-	if err := index.AddByPath(db.path); err != nil {
+	if err := index.AddByPath(filepath.Base(db.path)); err != nil {
 		return err
 	}
 	treeID, err := index.WriteTree()
