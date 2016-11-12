@@ -12,12 +12,7 @@ import (
 // Backup current database.
 func (l *Library) backup() (err error) {
 	l.UI.Debug("Backup up database...")
-	// generate archive filename with date.
-	archiveName, err := e.GetArchiveUniqueName(l.DB.Path())
-	if err != nil {
-		return
-	}
-	return l.DB.Backup(archiveName)
+	return l.DB.Backup(l.Config.LibraryRoot)
 }
 
 // Load current DB
