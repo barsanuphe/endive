@@ -1,12 +1,14 @@
 language: go
-sudo: false
-
+sudo: required
+dist: trusty
 go:
   - 1.6
   - 1.7
-#  - tip
+  - tip
 
 before_install:
+  - git clone https://github.com/libgit2/git2go $HOME/git2go
+  - $HOME/git2go/script/install-libgit2.sh
   - go get github.com/axw/gocov/gocov
   - go get github.com/golang/lint/golint
   - go get github.com/stretchr/testify

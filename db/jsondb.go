@@ -8,9 +8,12 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+	"path/filepath"
+	"time"
+
+	"github.com/libgit2/git2go"
 
 	"github.com/barsanuphe/endive/endive"
-	"github.com/jhoonb/archivex"
 )
 
 // JSONDB implements endive.Database with a JSON backend.
@@ -83,15 +86,53 @@ func (db *JSONDB) Save(bks endive.Collection) (hasSaved bool, err error) {
 
 // Backup database
 func (db *JSONDB) Backup(path string) error {
-	// TODO check path does not exist, but parent dirs do
+	// use git
+	firstCommit := false
+	repo, err := git.OpenRepository(path)
+	if err != nil {
+		repo, err = git.InitRepository(path, false)
+		if err != nil {
+			return err
+		}
+		firstCommit = true
+	}
+	index, err := repo.Index()
+	if err != nil {
+		return err
+	}
+	if err := index.AddByPath(filepath.Base(db.path)); err != nil {
+		return err
+	}
+	treeID, err := index.WriteTree()
+	if err != nil {
+		return err
+	}
+	if err := index.Write(); err != nil {
+		return err
+	}
+	tree, err := repo.LookupTree(treeID)
+	if err != nil {
+		return err
+	}
 
-	// creating tarball
-	tar := new(archivex.TarFile)
-	if err := tar.Create(path); err != nil {
-		return err
+	signature := &git.Signature{
+		Name:  "endive",
+		Email: "endive@endive.com",
+		When:  time.Now(),
 	}
-	if err := tar.AddFile(db.path); err != nil {
-		return err
+	message := "endive automatic commit."
+	if firstCommit {
+		_, err = repo.CreateCommit("HEAD", signature, signature, message, tree)
+	} else {
+		head, err := repo.Head()
+		if err != nil {
+			return err
+		}
+		headCommit, err := repo.LookupCommit(head.Target())
+		if err != nil {
+			return err
+		}
+		_, err = repo.CreateCommit("HEAD", signature, signature, message, tree, headCommit)
 	}
-	return tar.Close()
+	return err
 }

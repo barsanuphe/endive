@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -13,7 +14,6 @@ import (
 	"github.com/op/go-logging"
 
 	e "github.com/barsanuphe/endive/endive"
-	"io"
 )
 
 const (
