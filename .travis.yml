@@ -1,5 +1,5 @@
 language: go
-sudo: false
+sudo: required
 dist: trusty
 go:
   - 1.6
@@ -7,8 +7,8 @@ go:
   - tip
 
 before_install:
-  - go get github.com/libgit2/git2go
-  - $GOPATH/src/github.com/libgit2/git2go/script/install-libgit2.sh
+  - git clone github.com/libgit2/git2go $HOME/git2go
+  - $HOME/git2go/script/install-libgit2.sh
   - go get github.com/axw/gocov/gocov
   - go get github.com/golang/lint/golint
   - go get github.com/stretchr/testify
