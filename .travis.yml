@@ -7,7 +7,7 @@ go:
   - tip
 
 before_install:
-  - git clone github.com/libgit2/git2go $HOME/git2go
+  - git clone https://github.com/libgit2/git2go $HOME/git2go
   - $HOME/git2go/script/install-libgit2.sh
   - go get github.com/axw/gocov/gocov
   - go get github.com/golang/lint/golint
