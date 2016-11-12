@@ -80,6 +80,9 @@ everywhere.
 distributions, and maybe elsewhere, provided `less` and `$EDITOR` are 
 recognized.
 
+**Endive** also uses `libgit2` to automatically version your library database, 
+make sure it is installed on your system.
+
 ## Usage
 
 Import from retail sources:
@@ -221,3 +224,4 @@ own Goodreads API key.
 | ISBN validator  | [github.com/moraes/isbn](https://github.com/moraes/isbn)             |
 | Spinner         | [github.com/tj/go-spin](https://github.com/tj/go-spin)               |
 | Diff            | [github.com/kylelemons/godebug/pretty](https://github.com/kylelemons/godebug/pretty)               |
+| Versioning      | [github.com/libgit2/git2go](https://github.com/libgit2/git2go)               |
