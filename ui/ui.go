@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -14,6 +13,7 @@ import (
 	"github.com/op/go-logging"
 
 	e "github.com/barsanuphe/endive/endive"
+	"io"
 )
 
 const (
@@ -26,9 +26,9 @@ const (
 	userAborted   = "User aborted."
 
 	// LocalTag an option to show it's the value in current database
-	LocalTag = "[local] "
+	LocalTag = "[endive] "
 	// OnlineTag an option to show it's from GR
-	OnlineTag = "[online] "
+	OnlineTag = "[online/new] "
 )
 
 // UI implements endive.UserInterface
@@ -191,37 +191,48 @@ func (ui UI) Display(output string) {
 	// -F or --quit-if-one-screen  Causes less to automatically exit if the entire file can be displayed on the first screen.
 	// -Q Causes totally "quiet" operation: the terminal bell is never rung.
 	// -X or --no-init Disables sending the termcap initialization and deinitialization strings to the terminal. This is sometimes desirable if the deinitialization string does something unnecessary, like clearing the screen.
-	cmd := exec.Command("less", "-e", "-F", "-Q", "-X")
+	cmd := exec.Command("less", "-e", "-F", "-Q", "-X", "--buffers=-1")
+	if err := runCommand(cmd, output); err != nil {
+		ui.Error(err.Error())
+	}
+}
+
+func runCommand(cmd *exec.Cmd, output string) error {
 	r, stdin := io.Pipe()
 	cmd.Stdin = r
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-
-	// create a blocking chan, Run the pager and unblock once it is finished
-	c := make(chan struct{})
+	// create a blocking chan, run the pager and unblock once it is finished
+	c := make(chan error)
 	go func() {
 		defer close(c)
-		err := cmd.Run()
+		c <- cmd.Run()
+	}()
+	// create a channel to write output to less, because for large amounts of
+	// lines, it's blocking until less displays what was already sent
+	d := make(chan error)
+	go func() {
+		defer close(d)
+		_, err := io.WriteString(stdin, output)
 		if err != nil {
-			ui.Error(err.Error())
 			return
 		}
+		d <- err
 	}()
-
-	// send through less
-	_, err := fmt.Fprintf(stdin, output)
-	if err != nil {
-		ui.Error(err.Error())
-		return
+	// either wait for write to finish or for user to quit less
+	select {
+	case <-d:
+		// if write is finished, wait for user to quit
+	case <-c:
+		// if user quits first, stop writing
+		close(d)
 	}
-	// close stdin (result in pager to exit)
-	err = stdin.Close()
-	if err != nil {
-		ui.Error(err.Error())
-		return
+	// close stdin
+	if err := stdin.Close(); err != nil {
+		return err
 	}
 	// wait for the pager to be finished
-	<-c
+	return <-c
 }
 
 // Edit long value using external $EDITOR

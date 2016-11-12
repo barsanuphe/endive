@@ -139,6 +139,7 @@ func (o *CLI) parseArgs(e *Endive, osArgs []string) error {
 
 	// init
 	o.collection = e.Library.Collection
+	var ok bool
 	// checking if IDs were given, getting relevant *Book-s
 	if args["<ID>"] != nil {
 		// test if string or []string
@@ -223,19 +224,15 @@ func (o *CLI) parseArgs(e *Endive, osArgs []string) error {
 	}
 
 	o.search = args["search"].(bool) || args["s"].(bool)
-	if args["<search-criteria>"] != nil {
-		o.searchTerms = args["<search-criteria>"].([]string)
-		if o.search && len(o.searchTerms) == 0 {
-			return errors.New("No search terms found.")
-		}
+	o.searchTerms, ok = args["<search-criteria>"].([]string)
+	if ok && o.search && len(o.searchTerms) == 0 {
+		return errors.New("No search terms found.")
 	}
 
-	if args["export"].(bool) || args["x"].(bool) {
-		o.export = true
-		// if all: o.collection is set to complete collection by default
-		// if ids: o.collection is already set
-		// if search: same for o.searchTerms
-	}
+	// if export all: o.collection is set to complete collection by default
+	// if export ids: o.collection is already set
+	// if export search: same for o.searchTerms
+	o.export = args["export"].(bool) || args["x"].(bool)
 
 	if args["info"].(bool) {
 		if args["tags"].(bool) {
@@ -260,16 +257,14 @@ func (o *CLI) parseArgs(e *Endive, osArgs []string) error {
 	}
 
 	o.review = args["review"].(bool)
-	if args["<rating>"] != nil {
-		o.rating = args["<rating>"].(string)
+	o.rating, ok = args["<rating>"].(string)
+	if ok {
 		// checking rating is between 0 and 5
 		if r, err := strconv.ParseFloat(o.rating, 32); err != nil || r > 5 || r < 0 {
 			return errors.New("Rating must be between 0 and 5.")
 		}
 	}
-	if args["<review>"] != nil {
-		o.reviewText = args["<review>"].(string)
-	}
+	o.reviewText, _ = args["<review>"].(string)
 
 	o.list = args["list"].(bool) || args["ls"].(bool)
 	if args["--incomplete"].(bool) {
@@ -282,17 +277,16 @@ func (o *CLI) parseArgs(e *Endive, osArgs []string) error {
 		o.collection = o.collection.NonRetailOnly()
 	}
 
-	if args["<field_name>"] != nil {
-		o.field = strings.ToLower(args["<field_name>"].(string))
-		// check it's a valid field name
-		if !b.CheckValidField(o.field) {
-			return errors.New("Invalid field!")
-		}
+	o.field, ok = args["<field_name>"].(string)
+	if ok {
+		o.field = strings.ToLower(o.field)
+	}
+	// check it's a valid field name
+	if ok && !b.CheckValidField(o.field) {
+		return errors.New("Invalid field!")
+	}
+	o.value, _ = args["<value>"].(string)
 
-	}
-	if args["<value>"] != nil {
-		o.value = args["<value>"].(string)
-	}
 	o.edit = args["edit"].(bool)
 	o.reset = args["reset"].(bool)
 	o.set = args["set"].(bool)
