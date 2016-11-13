@@ -160,7 +160,7 @@ For other commands, see:
 
 ## Configuration
 
-**Endive** uses a YAML configuration file, in the configuration XDG directory
+*endive* uses a YAML configuration file, in the configuration XDG directory
 (which should be `/home/user/.config/endive/`):
 
     # library location and database filename
@@ -215,8 +215,6 @@ own Goodreads API key.
 
 
 ## Third party libraries
-
-**Endive** uses:
 
 |                 | Library       |
 | --------------- |:-------------:|
