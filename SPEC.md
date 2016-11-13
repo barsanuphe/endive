@@ -50,14 +50,14 @@ it from the wishlist.
 ### Epub metadata
 
 - [x] endive must read epub metadata, including: author, title, year of
-publication, publisher, language, description, ISBN.
+publication, publisher, language, description, ISBN, type, category.
 - [x] if an ISBN10 number is found, convert to ISBN13.
 - [x] endive can get additional metadata from Goodreads, in case the epub
 metadata is incomplete.
 
 ### Database
 
-- [x] endive can keep track of progression: unread, reading, read, in shortlist.
+- [x] endive can keep track of progression: unread, reading, read, shortlisted.
 - [x] one or several series can be associated with an epub.
 - [x] epubs can be flagged as needing replacement.
 - [x] retail epubs are identified as such.
@@ -65,6 +65,7 @@ metadata is incomplete.
 - [x] the hash of retail epubs can be checked to detect unwanted modifications.
 - [x] tags can be added to epubs.
 - [x] the database must be easily exportable and searchable (JSON).
+- [x] the database is automatically backed up if modified (versioned with git).
 - [x] the database can contain the date when the epub was read.
 - [x] when a metadata field is defined in both the epub metadata and the
 database, endive must use the database version.
@@ -99,6 +100,7 @@ the configuration files or of epub metadata.
 ## E-reader synchronization
 
 - [x] endive can synchronize selected epubs with a USB-mounted KOBO e-reader.
+- [x] endive can keep track of which books are exported.
 - [ ] **TBC** endive can synchronize KOBO collections, especially regarding
 reading progress.
 

@@ -10,7 +10,7 @@ import (
 )
 
 // Backup current database.
-func (l *Library) backup() (err error) {
+func (l *Library) backup() error {
 	l.UI.Debug("Backup up database...")
 	return l.DB.Backup(l.Config.LibraryRoot)
 }

@@ -6,35 +6,37 @@
 [![GPLv3](https://img.shields.io/badge/license-GPLv3-blue.svg)](http://www.gnu.org/licenses/gpl-3.0.en.html)
 [![Go Report Card](https://goreportcard.com/badge/github.com/barsanuphe/endive)](https://goreportcard.com/report/github.com/barsanuphe/endive)
 
-## Current state
-
-Not stable yet. The database format may change again, and you should only feed 
-**endive** files you've already backed up somewhere.
-
 ## What it is
 
-**Endive** is an epub collection organizer.
+*endive* is a CLI epub collection manager, allowing you to: 
 
-It can import epub ebooks, rename them from metadata, and sort them in a folder
-structure derived from metadata.
+- **Centralize metadata**: 
+*endive* retrieves metadata from the epub file itself, and also from Goodreads, 
+to make sure all the relevant and correct information about your books is 
+centralized in its database. 
+This includes user metadata such as reading status, rating, or review.
+- **Carefully import books**: 
+importing makes sure that relevant metadata is always collected for any new
+book in the collection. The user can define special folders as retail or 
+non-retail sources for epubs, or point directly to epub files.
+- **Easily manage the collection**:
+with a simple but powerful CLI, to search/modify the database with minimal pain. 
+- **Organize from metadata**: 
+epub files are organized and named automatically from the metadata, according 
+to a user-defined pattern. 
+- **Take good care of the books**: 
+the library can be checked for changes, allowing you to make sure retail epubs 
+have not been modified since import. 
+Retail epubs always trump non-retail versions. 
+- **Easily export to e-readers**:
+once your e-reader is locally mounted, *endive* allows exporting a subset of 
+the collection with the same queries used for searching. It also keeps track of 
+which books have already been sent to your device.
 
-**Endive** uses Goodreads to retrieve additional metadata, to compensate for the
-fact that in general, the embedded metadata is awful and incomplete.
+## Current state
 
-It keeps track of other information, such as:
-
-- if the epub is retail or not. 
-**Endive** does not modify the contents of the epubs it manages.
-In fact, it can check and report if retail epubs have changed since they were
-imported.
-
-- if the book is fiction/nonfiction, a novel/essay/anthology/..., which series 
-it belongs to, which tags apply, and other things. 
-
-- its reading status, and when it was read. 
-
-It also allows exporting epubs to your locally mounted e-reader, and will keep
-track of which books are there.
+Not stable yet. The database format may change, and you should only feed 
+*endive* files you've already backed up somewhere.
 
 ## Table of Contents
 
@@ -47,13 +49,13 @@ track of which books are there.
 
 ## Prerequisites
 
-Retail epubs have awful metadata.
-Publishers do not spare the embedded OPF file much love.
+Publishers do not seem to lose much sleep over retail epubs having incomplete
+metadata.
 This means: missing information, wildly different ways to include vital
 information such as ISBN number (if it is included at all, or correctly
 included).
 
-To get as faithful as possible information about epub files, **endive** relies
+To get as faithful as possible information about epub files, *endive* relies
 on getting information from Goodreads.
 Since this means using the Goodreads API, you must have an account and request
 [an API Key](https://www.goodreads.com/api/keys)
@@ -69,19 +71,19 @@ run:
     $ go get -u github.com/barsanuphe/endive
     $ go install ...endive
 
-Note that **endive** uses `less` do display information, so it will only work
+*endive* uses `libgit2` to automatically version your library database, make 
+sure it is installed on your system.
+
+Note that *endive* uses `less` do display information, so it will only work
 where *less* is available.
 
-For editing long fields (such as book description), **endive** fires up 
+For editing long fields (such as book description), *endive* fires up 
 `$EDITOR` and falls back to `nano` if nothing is defined, because `nano` is 
 everywhere.
 
-**Endive** is a *Works On My Machine* project, but it should work on all Linux
+*endive* is a *Works On My Machine* project, but it should work on all Linux
 distributions, and maybe elsewhere, provided `less` and `$EDITOR` are 
 recognized.
-
-**Endive** also uses `libgit2` to automatically version your library database, 
-make sure it is installed on your system.
 
 ## Usage
 
@@ -146,6 +148,10 @@ Sorting all books by author:
 Sorting all books by year, limit to first 10 results:
 
     $ endive list --sort year --first 10
+    
+Exporting shortlisted books to a mounted e-reader:
+
+    $ endive export progress:shortlisted
 
 For other commands, see:
 

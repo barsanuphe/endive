@@ -1,5 +1,13 @@
 /*
 Package db is the endive subpackage that implements the Database interface.
+
+The current implementation saves all Book information as a simple JSON file.
+
+That makes it:
+- easy to index with bleve
+- easy to check and, if desperate, edit for a human being
+- easy to version with git
+
 */
 package db
 
@@ -45,7 +53,7 @@ func (db *JSONDB) Equals(o endive.Database) bool {
 	return bytes.Equal(jsonContent, ojsonContent)
 }
 
-// Load database
+// Load database into a Collection
 func (db *JSONDB) Load(bks endive.Collection) error {
 	jsonContent, err := ioutil.ReadFile(db.path)
 	if err != nil {
@@ -60,7 +68,7 @@ func (db *JSONDB) Load(bks endive.Collection) error {
 	return json.Unmarshal(jsonContent, bks)
 }
 
-// Save database
+// Save database as a JSON file
 func (db *JSONDB) Save(bks endive.Collection) (hasSaved bool, err error) {
 	// Marshal into json with pretty print.
 	// Use json.Marshal(bks) for more compressed format.
@@ -84,7 +92,7 @@ func (db *JSONDB) Save(bks endive.Collection) (hasSaved bool, err error) {
 	return hasSaved, nil
 }
 
-// Backup database
+// Backup JSON database by versioning it in a git repository.
 func (db *JSONDB) Backup(path string) error {
 	// use git
 	firstCommit := false

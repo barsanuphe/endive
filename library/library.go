@@ -3,9 +3,9 @@ Package library is a subpackage of Endive.
 
 Library tracks and manipulates all the Books known to Endive.
 It can:
-	- build a database of said books and their metadata
-	- search this database
-	- organize the books according to the configuration file
+- build a database of said books and their metadata
+- search this database
+- organize the books according to the configuration file
 */
 package library
 
