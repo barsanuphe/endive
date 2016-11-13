@@ -1,8 +1,6 @@
 package db
 
 import (
-	"bytes"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -21,6 +19,7 @@ func TestDBLoad(t *testing.T) {
 
 	db := JSONDB{}
 	db.SetPath(testDbName)
+	assert.Equal(testDbName, db.Path())
 
 	var collection endive.Collection
 	collection = &book.Books{}
@@ -59,17 +58,29 @@ func TestDBSave(t *testing.T) {
 	hasSaved, err = db.Save(collection)
 	assert.Nil(err, "Error saving epubs to database")
 	assert.True(hasSaved, "Error saving to database")
+	// setting original db again for following tests
+	db.SetPath(testDbName)
 
 	// compare both jsons
-	db1, err := ioutil.ReadFile(testDbName)
-	db2, err2 := ioutil.ReadFile(tempTestDbName)
-	assert.Nil(err, "Error reading db file")
-	assert.Nil(err2, "Error reading db file")
-	assert.True(bytes.Equal(db1, db2), "Error: original db != saved db")
+	var db2 endive.Database
+	db2 = &JSONDB{}
+	db2.SetPath(tempTestDbName)
+	assert.True(db.Equals(db2), "Databases should be equal, since their json have the same contents.")
 
 	// remove db2
 	err = os.Remove(tempTestDbName)
 	assert.Nil(err, "Error removing temp copy test/db2.json")
+	collection = &book.Books{}
+	assert.Nil(db2.Load(collection), "Load an empty collection since db file does not exist anymore")
+	assert.Equal(0, len(collection.Books()), "Collection should be empty")
+
+	// compare with empty db
+	db2.SetPath("../test/hashes.json")
+	assert.False(db.Equals(db2), "Should be false, second db is different (not even a real db).")
+	db2.SetPath(tempTestDbName)
+	assert.False(db.Equals(db2), "Should be false, second db is empty now.")
+	db.SetPath(tempTestDbName)
+	assert.True(db.Equals(db2), "Both are empty now.")
 }
 
 func TestDBBackup(t *testing.T) {
