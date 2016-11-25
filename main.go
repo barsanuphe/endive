@@ -92,9 +92,9 @@ func main() {
 		}
 	} else if cli.export {
 		if len(cli.searchTerms) == 0 {
-			exportCollection(e, cli.collection)
+			exportCollection(e, cli.collection, cli.exportDirectory)
 		} else {
-			exportFilter(e, cli.searchTerms)
+			exportFilter(e, cli.searchTerms, cli.exportDirectory)
 		}
 	} else if cli.info != "" {
 		switch cli.info {

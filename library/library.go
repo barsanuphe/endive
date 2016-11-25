@@ -61,15 +61,18 @@ func (l *Library) GenerateID() (id int) {
 }
 
 // ExportToEReader selected epubs.
-func (l *Library) ExportToEReader(books e.Collection) (err error) {
-	if !e.DirectoryExists(l.Config.EReaderMountPoint) {
-		return errors.New("E-Reader mount point does not exist: " + l.Config.EReaderMountPoint)
+func (l *Library) ExportToEReader(books e.Collection, path string) (err error) {
+	if path == "" {
+		path = l.Config.EReaderMountPoint
+	}
+	if !e.DirectoryExists(path) {
+		return errors.New("Target directory does not exist: " + path)
 	}
 	if len(books.Books()) != 0 {
 		l.UI.Title("Exporting books.")
 		for _, book := range books.Books() {
 			filename := book.CleanFilename()
-			destination := filepath.Join(l.Config.EReaderMountPoint, filename)
+			destination := filepath.Join(path, filename)
 			if !e.DirectoryExists(filepath.Dir(destination)) {
 				err = os.MkdirAll(filepath.Dir(destination), 0777)
 				if err != nil {

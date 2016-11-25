@@ -79,7 +79,7 @@ func TestExport(t *testing.T) {
 	assert.Nil(err, "Error loading epubs from database")
 
 	// Export first epub
-	err = l.ExportToEReader(l.Collection.First(1))
+	err = l.ExportToEReader(l.Collection.First(1), c.EReaderMountPoint)
 	assert.Nil(err, errExportOK)
 	// check right epub was copied
 	_, exists := e.FileExists(exportedB1Filename)
@@ -99,7 +99,7 @@ func TestExport(t *testing.T) {
 	assert.Nil(err, "Book with ID2 should be copied without any problem.")
 
 	// export again
-	err = l.ExportToEReader(l.Collection.First(1))
+	err = l.ExportToEReader(l.Collection.First(1), "")
 	assert.Nil(err, errExportOK)
 	// check both epubs were copied
 	_, exists = e.FileExists(exportedB1Filename)

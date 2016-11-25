@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	exportSelection   = "Exporting selection to E-Reader..."
-	exportBookError   = "Error exporting books to e-reader: %s"
-	exportFilterError = "Error filtering books for export to e-reader"
+	exportSelection   = "Exporting selection to %s..."
+	exportBookError   = "Error exporting books: %s"
+	exportFilterError = "Error filtering books for export"
 )
 
 func editMetadata(endive *Endive, books []*b.Book, args ...string) error {
@@ -177,7 +177,7 @@ func importEpubs(endive *Endive, epubs []string, isRetail bool) {
 	}
 }
 
-func exportFilter(endive *Endive, parts []string) {
+func exportFilter(endive *Endive, parts []string, directory string) {
 	query := strings.Join(parts, " ")
 	var err error
 	var books e.Collection
@@ -187,12 +187,12 @@ func exportFilter(endive *Endive, parts []string) {
 		endive.UI.Error(exportFilterError)
 		return
 	}
-	exportCollection(endive, books)
+	exportCollection(endive, books, directory)
 }
 
-func exportCollection(endive *Endive, collection e.Collection) {
-	endive.UI.Title(exportSelection)
-	if err := endive.Library.ExportToEReader(collection); err != nil {
+func exportCollection(endive *Endive, collection e.Collection, directory string) {
+	endive.UI.Title(fmt.Sprintf(exportSelection, directory))
+	if err := endive.Library.ExportToEReader(collection, directory); err != nil {
 		endive.UI.Errorf(exportBookError, err.Error())
 	}
 }

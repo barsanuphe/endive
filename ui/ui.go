@@ -7,7 +7,7 @@ necessary user input.
 Displaying large amounts of data relies on `less`, editing large texts relies
 on `$EDITOR`, falling back to `nano` if the variable is not found.
 
- */
+*/
 package ui
 
 import (

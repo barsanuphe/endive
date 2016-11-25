@@ -121,6 +121,17 @@ func TestCLI(t *testing.T) {
 	assert.True(cli.export)
 	assert.Equal(1, len(cli.collection.Books()), "1 book selected.")
 
+	cli = CLI{}
+	err = cli.parseArgs(endive, []string{"export", "id", "1", "--dir=/doesnotexist"})
+	assert.NotNil(err)
+
+	cli = CLI{}
+	err = cli.parseArgs(endive, []string{"export", "id", "1", "--dir=/tmp"})
+	assert.Nil(err)
+	assert.True(cli.export)
+	assert.Equal(1, len(cli.collection.Books()), "1 book selected.")
+	assert.Equal("/tmp", cli.exportDirectory)
+
 	// testing info
 	fmt.Println(" + Testing info subcommand")
 	cli = CLI{}

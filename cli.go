@@ -13,18 +13,19 @@ import (
 )
 
 const (
-	incorrectInput      = "Incorrect input, check endive -h for complete help."
-	incorrectIDValue    = "Incorrect ID."
-	noBookFound         = "Book with ID %d cannot be found"
-	numberOfBooksHeader = "# of Books"
-	incorrectFlag       = "--first and --last only support integer values"
-	invalidLimit        = -1
-	infoTags            = "Tags"
-	infoSeries          = "Series"
-	infoPublishers      = "Publishers"
-	infoAuthors         = "Authors"
-	infoBook            = "Book"
-	infoGeneral         = "General"
+	incorrectInput        = "Incorrect input, check endive -h for complete help."
+	incorrectIDValue      = "Incorrect ID."
+	noBookFound           = "Book with ID %d cannot be found"
+	numberOfBooksHeader   = "# of Books"
+	incorrectFlag         = "--first and --last only support integer values"
+	directoryDoesNotExist = "Directory %s does not exist"
+	invalidLimit          = -1
+	infoTags              = "Tags"
+	infoSeries            = "Series"
+	infoPublishers        = "Publishers"
+	infoAuthors           = "Authors"
+	infoBook              = "Book"
+	infoGeneral           = "General"
 
 	endiveVersion = "Endive -- CLI Epub collection manager -- v1.0."
 	endiveUsage   = `
@@ -57,7 +58,7 @@ Usage:
 	endive config
 	endive collection (check|refresh|rebuild-index|check-index)
 	endive (import|i) ((retail|r)|(nonretail|nr)) [--list] [<epub>...]
-	endive (export|x) (all|(id <ID>...)|<search-criteria>...)
+	endive (export|x) (all|(id <ID>...)|<search-criteria>...) [--dir=DIRECTORY]
 	endive info [tags|series|authors|publishers] [<ID>]
 	endive (list|ls) [--incomplete|--nonretail|--retail] [--first=N|--last=N] [--sort=SORT]
 	endive (search|s) <search-criteria>... [--first=N|--last=N] [--sort=SORT]
@@ -72,6 +73,7 @@ Options:
 	-h --help            Show this screen.
 	--version            Show version.
 	--list               List importable epubs only.
+    --dir=DIRECTORY      Override the export directory in the configuration file.
 	-f N --first=N       Filter only the n first books.
 	-l N --last=N        Filter only the n last books.
 	-s SORT --sort=SORT  Sort results [default: id].
@@ -107,7 +109,8 @@ type CLI struct {
 	importEpubs  bool
 	listImport   bool
 	// export
-	export bool
+	export          bool
+	exportDirectory string
 	// info
 	info string
 	// search
@@ -193,6 +196,14 @@ func (o *CLI) parseArgs(e *Endive, osArgs []string) error {
 		}
 	}
 	o.sortBy = strings.ToLower(args["--sort"].(string))
+	if args["--dir"] != nil {
+		exportDir := args["--dir"].(string)
+		// check it exists, do not create in case of error
+		if !en.DirectoryExists(exportDir) {
+			return fmt.Errorf(directoryDoesNotExist, o.exportDirectory)
+		}
+		o.exportDirectory = exportDir
+	}
 
 	// commands
 	o.showConfig = args["config"].(bool)
