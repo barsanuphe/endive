@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	h "github.com/barsanuphe/helpers"
 	"github.com/tj/go-spin"
 )
 
@@ -25,7 +26,7 @@ func (c EpubCandidate) String() string {
 // NewCandidate returns a filled epubCandidate struct
 func NewCandidate(filename string, knownHashes KnownHashes, collection Collection) *EpubCandidate {
 	// calculate hash
-	hash, err := CalculateSHA256(filename)
+	hash, err := h.CalculateSHA256(filename)
 	if err != nil {
 		return nil
 	}
@@ -84,7 +85,7 @@ func (c EpubCandidates) Importable() EpubCandidates {
 
 // listEpubs recursively.
 func listEpubs(root string) (epubPaths []string, err error) {
-	if !DirectoryExists(root) {
+	if !h.DirectoryExists(root) {
 		err = errors.New("Directory " + root + " does not exist")
 		return
 	}

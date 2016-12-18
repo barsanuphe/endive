@@ -23,6 +23,8 @@ import (
 	"time"
 
 	e "github.com/barsanuphe/endive/endive"
+	h "github.com/barsanuphe/helpers"
+	i "github.com/barsanuphe/helpers/ui"
 )
 
 const (
@@ -69,7 +71,7 @@ var allFields = []string{idField, filenameField, authorField, titleField, yearFi
 
 // CheckValidField checks if a field is valid.
 func CheckValidField(field string) (valid bool) {
-	_, valid = e.StringInSlice(field, allFields)
+	_, valid = h.StringInSlice(field, allFields)
 	return
 }
 
@@ -77,7 +79,7 @@ func CheckValidField(field string) (valid bool) {
 // A Book can have multiple epub files.
 type Book struct {
 	Config e.Config        `json:"-"`
-	UI     e.UserInterface `json:"-"`
+	UI     i.UserInterface `json:"-"`
 	BookID int             `json:"id"`
 	// associated files
 	RetailEpub    Epub `json:"retail"`
@@ -93,12 +95,12 @@ type Book struct {
 }
 
 // NewBook constructs a valid new Epub
-func NewBook(ui e.UserInterface, id int, filename string, c e.Config, isRetail bool) *Book {
+func NewBook(ui i.UserInterface, id int, filename string, c e.Config, isRetail bool) *Book {
 	return NewBookWithMetadata(ui, id, filename, c, isRetail, Metadata{})
 }
 
 // NewBookWithMetadata constructs a valid new Epub
-func NewBookWithMetadata(ui e.UserInterface, id int, filename string, c e.Config, isRetail bool, i Metadata) *Book {
+func NewBookWithMetadata(ui i.UserInterface, id int, filename string, c e.Config, isRetail bool, i Metadata) *Book {
 	f := Epub{Filename: filename, Config: c, UI: ui, NeedsReplacement: e.False}
 	if isRetail {
 		return &Book{BookID: id, RetailEpub: f, Config: c, UI: ui, Metadata: i, Progress: "unread", IsExported: e.False}
@@ -226,7 +228,7 @@ func (b *Book) SetExported(isExported bool) {
 // SetProgress sets reading progress
 func (b *Book) SetProgress(progress string) (err error) {
 	progress = strings.ToLower(progress)
-	if _, isIn := e.StringInSlice(progress, validProgress); isIn {
+	if _, isIn := h.StringInSlice(progress, validProgress); isIn {
 		b.Progress = progress
 	} else {
 		err = errors.New("Unknown reading progress: " + progress)
@@ -322,7 +324,7 @@ func (b *Book) RefreshEpub(epub Epub, isRetail bool) (bool, string, error) {
 		rand.Seed(time.Now().UTC().UnixNano())
 		for !uniqueNameFound {
 			destination = filepath.Join(b.Config.LibraryRoot, newName+suffix)
-			_, errFileExists := e.FileExists(destination)
+			_, errFileExists := h.FileExists(destination)
 			if errFileExists != nil {
 				uniqueNameFound = true
 			} else {
@@ -361,7 +363,7 @@ func (b *Book) Refresh() (wasRenamed []bool, newName []string, err error) {
 
 	// metadata is blank, run GetMetadata
 	if hasMetadata := b.Metadata.HasAny(); !hasMetadata {
-		_, exists := e.FileExists(b.MainEpub().FullPath())
+		_, exists := h.FileExists(b.MainEpub().FullPath())
 		if exists == nil {
 			info, ok := b.MainEpub().ReadMetadata()
 			if ok != nil {
@@ -382,7 +384,7 @@ func (b *Book) Refresh() (wasRenamed []bool, newName []string, err error) {
 	var newNameR, newNameNR string
 	var errR, errNR error
 	if b.HasRetail() {
-		if _, exists := e.FileExists(b.RetailEpub.FullPath()); exists == nil {
+		if _, exists := h.FileExists(b.RetailEpub.FullPath()); exists == nil {
 			wasRenamedR, newNameR, errR = b.RefreshEpub(b.RetailEpub, true)
 			if wasRenamedR {
 				b.RetailEpub.Filename = newNameR
@@ -393,7 +395,7 @@ func (b *Book) Refresh() (wasRenamed []bool, newName []string, err error) {
 		}
 	}
 	if b.HasNonRetail() {
-		if _, exists := e.FileExists(b.NonRetailEpub.FullPath()); exists == nil {
+		if _, exists := h.FileExists(b.NonRetailEpub.FullPath()); exists == nil {
 			wasRenamedNR, newNameNR, errNR = b.RefreshEpub(b.NonRetailEpub, false)
 			if wasRenamedNR {
 				b.NonRetailEpub.Filename = newNameNR
@@ -511,7 +513,7 @@ func (b *Book) Import(path string, isRetail bool, hash string) (imported bool, e
 	// copy
 	dest := filepath.Join(b.Config.LibraryRoot, filepath.Base(path))
 	b.UI.Debug("Importing " + path + " to " + dest)
-	err = e.CopyFile(path, dest)
+	err = h.CopyFile(path, dest)
 	if err != nil {
 		return
 	}

@@ -10,6 +10,7 @@ import (
 
 	b "github.com/barsanuphe/endive/book"
 	en "github.com/barsanuphe/endive/endive"
+	"github.com/barsanuphe/helpers"
 )
 
 const (
@@ -199,7 +200,7 @@ func (o *CLI) parseArgs(e *Endive, osArgs []string) error {
 	if args["--dir"] != nil {
 		exportDir := args["--dir"].(string)
 		// check it exists, do not create in case of error
-		if !en.DirectoryExists(exportDir) {
+		if !helpers.DirectoryExists(exportDir) {
 			return fmt.Errorf(directoryDoesNotExist, o.exportDirectory)
 		}
 		o.exportDirectory = exportDir
@@ -224,7 +225,7 @@ func (o *CLI) parseArgs(e *Endive, osArgs []string) error {
 		// cheking they are existing epubs
 		for _, epub := range o.epubs {
 			//  assert epub exists
-			if _, err := en.FileExists(epub); err != nil {
+			if _, err := helpers.FileExists(epub); err != nil {
 				return errors.New("Epub does not exist!")
 			}
 			// assert it's an epub

@@ -9,6 +9,8 @@ import (
 	"strconv"
 
 	"launchpad.net/go-xdg"
+
+	h "github.com/barsanuphe/helpers"
 )
 
 const (
@@ -97,6 +99,6 @@ func (k *KnownHashes) IsIn(hash string) (isIn bool) {
 		// no need to check
 		return
 	}
-	_, isIn = StringInSlice(hash, k.Hashes)
+	_, isIn = h.StringInSlice(hash, k.Hashes)
 	return
 }

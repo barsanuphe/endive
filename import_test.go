@@ -13,6 +13,7 @@ import (
 	en "github.com/barsanuphe/endive/endive"
 	l "github.com/barsanuphe/endive/library"
 	"github.com/barsanuphe/endive/mock"
+	"github.com/barsanuphe/helpers"
 )
 
 func TestImportPaths(t *testing.T) {
@@ -50,7 +51,7 @@ func TestImportPaths(t *testing.T) {
 	err = endive.ImportSpecific(false, "test/pg16328.epub")
 	assert.Nil(err, "import should be successful")
 	// testing file has been imported and renamed
-	_, err = en.FileExists(importedFilename)
+	_, err = helpers.FileExists(importedFilename)
 	assert.Nil(err, "Imported file should exist")
 	// testing Library contains imported epub
 	book, err = endive.Library.Collection.FindByFullPath(importedFilename)
@@ -63,7 +64,7 @@ func TestImportPaths(t *testing.T) {
 	err = endive.ImportSpecific(true, "test/pg16328_empty.epub")
 	assert.Nil(err, "import should be successful")
 	// testing file has been imported and renamed
-	_, err = en.FileExists(importedFilename)
+	_, err = helpers.FileExists(importedFilename)
 	assert.Nil(err, "Imported file should exist")
 	// testing Library contains imported epub
 	book, err = endive.Library.Collection.FindByFullPath(importedFilename)
@@ -84,7 +85,7 @@ func TestImportPaths(t *testing.T) {
 	err = endive.ImportSpecific(true, "test/pg16328_empty.epub")
 	assert.Nil(err, "import should be successful")
 	// testing file has been imported and renamed
-	_, err = en.FileExists(importedFilename)
+	_, err = helpers.FileExists(importedFilename)
 	assert.Nil(err, "Imported file should exist")
 	// testing Library contains imported epub
 	book, err = endive.Library.Collection.FindByFullPath(importedFilename)
@@ -101,7 +102,7 @@ func TestImportPaths(t *testing.T) {
 	ui.UpdateValuesResult = "irrelevant"
 	importedFilename = filepath.Join(c.LibraryRoot, "2005 [retail].epub")
 	// testing file has been imported and renamed
-	_, err = en.FileExists(importedFilename)
+	_, err = helpers.FileExists(importedFilename)
 	assert.Nil(err, "File "+importedFilename+" should exist")
 	// importing
 	err = endive.ImportSpecific(true, "test/pg16328_empty2.epub")
@@ -110,10 +111,10 @@ func TestImportPaths(t *testing.T) {
 	book, err = endive.Library.Collection.FindByID(2)
 	assert.Nil(err, "Book ID2 exists")
 	// testing the new imported epub exists (with random name)
-	_, err = en.FileExists(book.FullPath())
+	_, err = helpers.FileExists(book.FullPath())
 	assert.Nil(err, "File "+book.FullPath()+" should exist")
 	// testing the original lives on
-	_, err = en.FileExists(importedFilename)
+	_, err = helpers.FileExists(importedFilename)
 	assert.Nil(err, "File "+importedFilename+" should exist")
 
 	// TODO test import a non retail and a second non retail for same book...

@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	e "github.com/barsanuphe/endive/endive"
+	h "github.com/barsanuphe/helpers"
+	i "github.com/barsanuphe/helpers/ui"
 )
 
 const (
@@ -216,7 +218,7 @@ func (i *Metadata) useAliases(cfg e.Config) {
 	// author aliases
 	for j, author := range i.Authors {
 		for mainAlias, aliases := range cfg.AuthorAliases {
-			_, isIn := e.StringInSlice(author, aliases)
+			_, isIn := h.StringInSlice(author, aliases)
 			if isIn {
 				i.Authors[j] = mainAlias
 				break
@@ -228,7 +230,7 @@ func (i *Metadata) useAliases(cfg e.Config) {
 	for _, tag := range i.Tags {
 		added := false
 		for mainAlias, aliases := range cfg.TagAliases {
-			_, isIn := e.StringInSlice(tag.Name, aliases)
+			_, isIn := h.StringInSlice(tag.Name, aliases)
 			if isIn {
 				cleanTags.AddFromNames(mainAlias)
 				added = true
@@ -243,7 +245,7 @@ func (i *Metadata) useAliases(cfg e.Config) {
 	i.Tags = cleanTags
 	// genre aliases (same as tags)
 	for mainAlias, aliases := range cfg.TagAliases {
-		_, isIn := e.StringInSlice(i.Genre, aliases)
+		_, isIn := h.StringInSlice(i.Genre, aliases)
 		if isIn {
 			i.Genre = mainAlias
 			break
@@ -251,7 +253,7 @@ func (i *Metadata) useAliases(cfg e.Config) {
 	}
 	// type aliases (same as tags)
 	for mainAlias, aliases := range cfg.TagAliases {
-		_, isIn := e.StringInSlice(i.Type, aliases)
+		_, isIn := h.StringInSlice(i.Type, aliases)
 		if isIn {
 			i.Type = mainAlias
 			break
@@ -259,7 +261,7 @@ func (i *Metadata) useAliases(cfg e.Config) {
 	}
 	// publisher aliases
 	for mainAlias, aliases := range cfg.PublisherAliases {
-		_, isIn := e.StringInSlice(i.Publisher, aliases)
+		_, isIn := h.StringInSlice(i.Publisher, aliases)
 		if isIn {
 			i.Publisher = mainAlias
 			break
@@ -324,7 +326,7 @@ func (i *Metadata) Diff(o *Metadata, firstHeader, secondHeader string) string {
 }
 
 // Merge with another Metadata.
-func (i *Metadata) Merge(o *Metadata, cfg e.Config, ui e.UserInterface, diffOnly bool) (err error) {
+func (i *Metadata) Merge(o *Metadata, cfg e.Config, ui i.UserInterface, diffOnly bool) (err error) {
 	for _, field := range MetadataFieldNames {
 		err = i.MergeField(o, field, cfg, ui, diffOnly)
 		if err != nil {
@@ -422,13 +424,13 @@ func (i *Metadata) Set(field, value string) error {
 	return nil
 }
 
-func listLocalAndRemoteOnly(ui e.UserInterface, local, online string, options *[]string, thingsToClean ...string) {
+func listLocalAndRemoteOnly(ui i.UserInterface, local, online string, options *[]string, thingsToClean ...string) {
 	*options = append(*options, local, online)
 	CleanSliceAndTagEntries(ui, local, online, options, thingsToClean...)
 }
 
 // MergeField with another Metadata.
-func (i *Metadata) MergeField(o *Metadata, field string, cfg e.Config, ui e.UserInterface, diffOnly bool) (err error) {
+func (i *Metadata) MergeField(o *Metadata, field string, cfg e.Config, ui i.UserInterface, diffOnly bool) (err error) {
 	var userInput string
 	options := []string{}
 	usage, ok := usageMap[field]
@@ -489,7 +491,7 @@ func (i *Metadata) MergeField(o *Metadata, field string, cfg e.Config, ui e.User
 }
 
 // getOnlineMetadata retrieves the online info for this book.
-func (i *Metadata) getOnlineMetadata(ui e.UserInterface, cfg e.Config) (*Metadata, error) {
+func (i *Metadata) getOnlineMetadata(ui i.UserInterface, cfg e.Config) (*Metadata, error) {
 	if cfg.GoodReadsAPIKey == "" {
 		return nil, e.WarningGoodReadsAPIKeyMissing
 	}
@@ -534,7 +536,7 @@ func (i *Metadata) getOnlineMetadata(ui e.UserInterface, cfg e.Config) (*Metadat
 }
 
 // SearchOnline tries to find metadata from online sources.
-func (i *Metadata) SearchOnline(ui e.UserInterface, cfg e.Config, fields ...string) (err error) {
+func (i *Metadata) SearchOnline(ui i.UserInterface, cfg e.Config, fields ...string) (err error) {
 	onlineInfo, err := i.getOnlineMetadata(ui, cfg)
 	if err != nil {
 		ui.Debug(err.Error())

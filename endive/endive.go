@@ -8,6 +8,10 @@ It also contains functions that are used by other endive subpackages.
 */
 package endive
 
+import (
+	i "github.com/barsanuphe/helpers/ui"
+)
+
 const (
 	// EpubExtension is the lowercase extension for all epubs.
 	EpubExtension = ".epub"
@@ -48,7 +52,7 @@ type Collection interface {
 	// contents
 	Books() []GenericBook
 	Add(...GenericBook)
-	Propagate(UserInterface, Config)
+	Propagate(i.UserInterface, Config)
 	RemoveByID(int) error
 	Diff(Collection, Collection, Collection, Collection)
 	// 	Check() error
@@ -83,32 +87,4 @@ type Database interface {
 	Load(Collection) error
 	Save(Collection) (bool, error)
 	Backup(string) error
-}
-
-// UserInterface deals with user input, output and logging.
-type UserInterface interface {
-	// input
-	GetInput() (string, error)
-	Accept(string) bool
-	UpdateValue(string, string, string, bool) (string, error)
-	SelectOption(string, string, []string, bool) (string, error)
-	Edit(string) (string, error)
-	// output
-	Title(string, ...interface{})
-	SubTitle(string, ...interface{})
-	SubPart(string, ...interface{})
-	Choice(string, ...interface{})
-	Display(string)
-	Tag(string, bool) string
-	// log
-	InitLogger(string) error
-	CloseLog()
-	Error(string)
-	Errorf(string, ...interface{})
-	Warning(string)
-	Warningf(string, ...interface{})
-	Info(string)
-	Infof(string, ...interface{})
-	Debug(string)
-	Debugf(string, ...interface{})
 }

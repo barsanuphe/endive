@@ -4,15 +4,17 @@ import (
 	"errors"
 	"path/filepath"
 
-	en "github.com/barsanuphe/endive/endive"
-
 	"github.com/barsanuphe/epubgo"
+
+	en "github.com/barsanuphe/endive/endive"
+	h "github.com/barsanuphe/helpers"
+	i "github.com/barsanuphe/helpers/ui"
 )
 
 // Epub can manipulate an epub file.
 type Epub struct {
-	Config en.Config        `json:"-"`
-	UI     en.UserInterface `json:"-"`
+	Config en.Config       `json:"-"`
+	UI     i.UserInterface `json:"-"`
 
 	Filename         string `json:"filename"` // relative to LibraryRoot
 	Hash             string `json:"hash"`
@@ -31,7 +33,7 @@ func (e *Epub) FullPath() string {
 
 // GetHash calculates an epub's current hash
 func (e *Epub) GetHash() (err error) {
-	hash, err := en.CalculateSHA256(e.FullPath())
+	hash, err := h.CalculateSHA256(e.FullPath())
 	if err == nil {
 		e.Hash = hash
 	}
@@ -50,7 +52,7 @@ func (e *Epub) FlagForReplacement(flag bool) {
 // Check the retail epub integrity.
 func (e *Epub) Check() (hasChanged bool, err error) {
 	// get current hash
-	currentHash, err := en.CalculateSHA256(e.FullPath())
+	currentHash, err := h.CalculateSHA256(e.FullPath())
 	if err != nil {
 		return
 	}

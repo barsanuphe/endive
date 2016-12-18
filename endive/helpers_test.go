@@ -5,34 +5,9 @@ import (
 	"fmt"
 	"testing"
 
+	h "github.com/barsanuphe/helpers"
 	"github.com/stretchr/testify/assert"
 )
-
-func TestHelpersStringInSlice(t *testing.T) {
-	fmt.Println("+ Testing Helpers/StringInSlice()...")
-	candidates := []string{"one", "two"}
-	idx, isIn := StringInSlice("one", candidates)
-	if !isIn || idx != 0 {
-		t.Error("Error finding string in slice")
-	}
-	idx, isIn = StringInSlice("One", candidates)
-	if isIn || idx != -1 {
-		t.Error("Error finding string in slice")
-	}
-}
-
-func TestHelpersCSContains(t *testing.T) {
-	fmt.Println("+ Testing Helpers/CaseInsensitiveContains()...")
-	if !CaseInsensitiveContains("TestString", "test") {
-		t.Error("Error, substring in string")
-	}
-	if !CaseInsensitiveContains("TestString", "stSt") {
-		t.Error("Error, substring in string")
-	}
-	if CaseInsensitiveContains("TestString", "teest") {
-		t.Error("Error, substring not in string")
-	}
-}
 
 var isbns = []struct {
 	candidate     string
@@ -111,19 +86,19 @@ func TestOptions(t *testing.T) {
 	assert := assert.New(t)
 
 	t1 := []string{option1, option1}
-	RemoveDuplicates(&t1)
+	h.RemoveDuplicates(&t1)
 	assert.Equal(1, len(t1), fmt.Sprintf(expectedOptionsCount, 1))
 	assert.Equal(option1, t1[0], unexpectedOption)
 
 	t2 := []string{option1, option2, option3, option4, option5}
-	RemoveDuplicates(&t2)
+	h.RemoveDuplicates(&t2)
 	assert.Equal(5, len(t2), fmt.Sprintf(expectedOptionsCount, 5))
 
 	t3 := []string{option1, option2, option3, option4, option5, option5}
-	RemoveDuplicates(&t3)
+	h.RemoveDuplicates(&t3)
 	assert.Equal(5, len(t3), fmt.Sprintf(expectedOptionsCount, 5))
 
 	t4 := []string{option1, option1, option3, option4, option5, option5}
-	RemoveDuplicates(&t4)
+	h.RemoveDuplicates(&t4)
 	assert.Equal(4, len(t4), fmt.Sprintf(expectedOptionsCount, 4))
 }

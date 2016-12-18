@@ -7,6 +7,7 @@ import (
 
 	"io/ioutil"
 
+	h "github.com/barsanuphe/helpers"
 	"gopkg.in/yaml.v2"
 	"launchpad.net/go-xdg"
 )
@@ -74,7 +75,7 @@ type Config struct {
 
 // GetArchiveUniqueName in the endive archive directory.
 func GetArchiveUniqueName(filename string) (archive string, err error) {
-	return GetUniqueTimestampedFilename(filepath.Join(xdg.Data.Dirs()[0], XdgArchiveDir), filename)
+	return h.GetUniqueTimestampedFilename(filepath.Join(xdg.Data.Dirs()[0], XdgArchiveDir), filename)
 }
 
 // GetConfigPath gets the default path for configuration.
@@ -229,17 +230,17 @@ func (c *Config) Load() (err error) {
 
 // Check if the paths in the configuration file are valid, and if the EpubFilename Format is ok.
 func (c *Config) Check() error {
-	if !DirectoryExists(c.LibraryRoot) {
+	if !h.DirectoryExists(c.LibraryRoot) {
 		return ErrorLibraryRootDoesNotExist
 	}
 	// checking for sources, warnings only.
 	for _, source := range c.RetailSource {
-		if !DirectoryExists(source) {
+		if !h.DirectoryExists(source) {
 			return WarningRetailSourceDoesNotExist
 		}
 	}
 	for _, source := range c.NonRetailSource {
-		if !DirectoryExists(source) {
+		if !h.DirectoryExists(source) {
 			return WarningNonRetailSourceDoesNotExist
 		}
 	}

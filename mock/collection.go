@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/barsanuphe/endive/endive"
+	i "github.com/barsanuphe/helpers/ui"
 )
 
 // Collection represents a mock implementation of endive.Collection.
@@ -23,7 +24,7 @@ func (c *Collection) Add(books ...endive.GenericBook) {
 }
 
 // Propagate implementation for tests
-func (c *Collection) Propagate(u endive.UserInterface, cfg endive.Config) {
+func (c *Collection) Propagate(u i.UserInterface, cfg endive.Config) {
 	fmt.Println("mock Collection: Propagate")
 }
 

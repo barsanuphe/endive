@@ -12,6 +12,7 @@ import (
 	"github.com/barsanuphe/endive/db"
 	e "github.com/barsanuphe/endive/endive"
 	"github.com/barsanuphe/endive/mock"
+	"github.com/barsanuphe/helpers"
 )
 
 /*
@@ -82,9 +83,9 @@ func TestExport(t *testing.T) {
 	err = l.ExportToEReader(l.Collection.First(1), c.EReaderMountPoint)
 	assert.Nil(err, errExportOK)
 	// check right epub was copied
-	_, exists := e.FileExists(exportedB1Filename)
+	_, exists := helpers.FileExists(exportedB1Filename)
 	assert.Nil(exists, errExpectedExport)
-	_, exists = e.FileExists(exportedB2Filename)
+	_, exists = helpers.FileExists(exportedB2Filename)
 	assert.NotNil(exists, errUnexpectedExport)
 	// check right epub was marked as exported
 	lb1, err := l.Collection.FindByID(1)
@@ -95,16 +96,16 @@ func TestExport(t *testing.T) {
 	assert.NotEqual(e.True, lb2.(*b.Book).IsExported, fmt.Sprintf(errUnexpectedMarked, 2))
 
 	// copy the 2nd epub manually
-	err = e.CopyFile(libB2Filename, exportedB2Filename)
+	err = helpers.CopyFile(libB2Filename, exportedB2Filename)
 	assert.Nil(err, "Book with ID2 should be copied without any problem.")
 
 	// export again
 	err = l.ExportToEReader(l.Collection.First(1), "")
 	assert.Nil(err, errExportOK)
 	// check both epubs were copied
-	_, exists = e.FileExists(exportedB1Filename)
+	_, exists = helpers.FileExists(exportedB1Filename)
 	assert.Nil(exists, errExpectedExport)
-	_, exists = e.FileExists(exportedB2Filename)
+	_, exists = helpers.FileExists(exportedB2Filename)
 	assert.Nil(exists, errExpectedExport)
 	// check both epubs were marked as exported
 	lb1, err = l.Collection.FindByID(1)

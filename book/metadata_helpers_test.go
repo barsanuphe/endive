@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	u "github.com/barsanuphe/endive/ui"
+	u "github.com/barsanuphe/helpers/ui"
 	"github.com/stretchr/testify/assert"
 )
 

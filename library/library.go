@@ -17,6 +17,8 @@ import (
 	"strings"
 
 	e "github.com/barsanuphe/endive/endive"
+	h "github.com/barsanuphe/helpers"
+	i "github.com/barsanuphe/helpers/ui"
 )
 
 // Library manages Epubs
@@ -24,7 +26,7 @@ type Library struct {
 	Config     e.Config
 	Collection e.Collection
 	Index      e.Indexer
-	UI         e.UserInterface
+	UI         i.UserInterface
 	DB         e.Database
 }
 
@@ -65,7 +67,7 @@ func (l *Library) ExportToEReader(books e.Collection, path string) (err error) {
 	if path == "" {
 		path = l.Config.EReaderMountPoint
 	}
-	if !e.DirectoryExists(path) {
+	if !h.DirectoryExists(path) {
 		return errors.New("Target directory does not exist: " + path)
 	}
 	if len(books.Books()) != 0 {
@@ -73,15 +75,15 @@ func (l *Library) ExportToEReader(books e.Collection, path string) (err error) {
 		for _, book := range books.Books() {
 			filename := book.CleanFilename()
 			destination := filepath.Join(path, filename)
-			if !e.DirectoryExists(filepath.Dir(destination)) {
+			if !h.DirectoryExists(filepath.Dir(destination)) {
 				err = os.MkdirAll(filepath.Dir(destination), 0777)
 				if err != nil {
 					return err
 				}
 			}
-			if _, exists := e.FileExists(destination); exists != nil {
+			if _, exists := h.FileExists(destination); exists != nil {
 				l.UI.Info(" - Exporting " + book.String())
-				err = e.CopyFile(book.FullPath(), destination)
+				err = h.CopyFile(book.FullPath(), destination)
 				if err != nil {
 					return err
 				}

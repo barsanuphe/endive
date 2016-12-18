@@ -10,6 +10,7 @@ import (
 
 	"github.com/barsanuphe/endive/book"
 	"github.com/barsanuphe/endive/endive"
+	h "github.com/barsanuphe/helpers"
 )
 
 var testDbName = "../test/endive.json"
@@ -95,12 +96,12 @@ func TestDBBackup(t *testing.T) {
 	assert.Nil(os.MkdirAll(libraryRoot, 0777))
 	defer os.RemoveAll(libraryRoot)
 	// copy test/endive.json inside
-	assert.Nil(endive.CopyFile(testDbName, databaseFile))
+	assert.Nil(h.CopyFile(testDbName, databaseFile))
 
 	// db.Backup(newdir)
 	assert.Nil(db.Backup(libraryRoot))
 	// assert .git exists and git log has 1 commit
-	assert.True(endive.DirectoryExists(filepath.Join(libraryRoot, ".git")))
+	assert.True(h.DirectoryExists(filepath.Join(libraryRoot, ".git")))
 	repo, err := git.OpenRepository(libraryRoot)
 	assert.Nil(err)
 	head, err := repo.Head()
@@ -112,7 +113,7 @@ func TestDBBackup(t *testing.T) {
 	// backup again
 	assert.Nil(db.Backup(libraryRoot))
 	// assert repo has 2 commits (ie head commit has 1 parent)
-	assert.True(endive.DirectoryExists(filepath.Join(libraryRoot, ".git")))
+	assert.True(h.DirectoryExists(filepath.Join(libraryRoot, ".git")))
 	head, err = repo.Head()
 	assert.Nil(err)
 	headCommit, err = repo.LookupCommit(head.Target())

@@ -9,11 +9,12 @@ import (
 
 	b "github.com/barsanuphe/endive/book"
 	en "github.com/barsanuphe/endive/endive"
+	h "github.com/barsanuphe/helpers"
 )
 
 // importFromSource all detected epubs, tagging them as retail or non-retail as requested.
 func (e *Endive) importFromSource(sources []string, retail bool) error {
-	defer en.TimeTrack(e.UI, time.Now(), "Imported")
+	defer h.TimeTrack(e.UI, time.Now(), "Imported")
 	candidates, err := e.analyzeSources(sources, retail)
 	if err != nil {
 		return err
@@ -22,7 +23,7 @@ func (e *Endive) importFromSource(sources []string, retail bool) error {
 }
 
 func (e *Endive) analyzeSources(sources []string, retail bool) (en.EpubCandidates, error) {
-	defer en.TimeTrack(e.UI, time.Now(), "Analyzed")
+	defer h.TimeTrack(e.UI, time.Now(), "Analyzed")
 	sourceType := "retail"
 	if !retail {
 		sourceType = "non-retail"
@@ -61,7 +62,7 @@ func (e *Endive) ImportSpecific(isRetail bool, paths ...string) error {
 	// for each path:
 	for _, path := range paths {
 		// verify it exists
-		validPath, err := en.FileExists(path)
+		validPath, err := h.FileExists(path)
 		if err == nil && filepath.Ext(strings.ToLower(validPath)) == en.EpubExtension {
 			candidates = append(candidates, *en.NewCandidate(validPath, e.hashes, e.Library.Collection))
 		}

@@ -7,6 +7,8 @@ import (
 
 	b "github.com/barsanuphe/endive/book"
 	e "github.com/barsanuphe/endive/endive"
+	h "github.com/barsanuphe/helpers"
+	i "github.com/barsanuphe/helpers/ui"
 )
 
 const (
@@ -49,7 +51,7 @@ func refreshMetadata(endive *Endive, books []*b.Book, args ...string) error {
 			// field is specified
 			field := args[0]
 			// check if valid field name
-			if _, isIn := e.StringInSlice(strings.ToLower(field), b.MetadataFieldNames); !isIn {
+			if _, isIn := h.StringInSlice(strings.ToLower(field), b.MetadataFieldNames); !isIn {
 				endive.UI.Error("Invalid metadata field " + field)
 				return errors.New("Invalid metadata field")
 			}
@@ -197,7 +199,7 @@ func exportCollection(endive *Endive, collection e.Collection, directory string)
 	}
 }
 
-func displayBooks(ui e.UserInterface, books e.Collection, firstNBooks, lastNBooks int, sortBy string) {
+func displayBooks(ui i.UserInterface, books e.Collection, firstNBooks, lastNBooks int, sortBy string) {
 	if sortBy != "" {
 		books.Sort(sortBy)
 	}

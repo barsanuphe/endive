@@ -9,7 +9,8 @@ import (
 
 	"github.com/kennygrant/sanitize"
 
-	e "github.com/barsanuphe/endive/endive"
+	h "github.com/barsanuphe/helpers"
+	i "github.com/barsanuphe/helpers/ui"
 )
 
 // tagAliases defines redundant tags and a main alias for them.
@@ -23,7 +24,7 @@ func cleanLanguage(language string) (clean string) {
 	clean = strings.TrimSpace(strings.ToLower(language))
 	// reducing to main alias
 	for mainalias, aliasList := range languageAliases {
-		_, isIn := e.StringInSlice(language, aliasList)
+		_, isIn := h.StringInSlice(language, aliasList)
 		if isIn {
 			clean = mainalias
 			break
@@ -102,13 +103,13 @@ func cleanCategory(category string) (string, error) {
 	clean := strings.TrimSpace(strings.ToLower(category))
 	// reducing to main alias
 	for mainalias, aliasList := range categoryAliases {
-		if _, isIn := e.StringInSlice(clean, aliasList); isIn {
+		if _, isIn := h.StringInSlice(clean, aliasList); isIn {
 			clean = mainalias
 			break
 		}
 	}
 	// testing if valid
-	if _, isIn := e.StringInSlice(clean, validCategories); !isIn {
+	if _, isIn := h.StringInSlice(clean, validCategories); !isIn {
 		return "", errors.New("Invalid category " + category)
 	}
 	return clean, nil
@@ -129,13 +130,13 @@ func cleanType(typ string) (string, error) {
 	clean := strings.TrimSpace(strings.ToLower(typ))
 	// reducing to main alias
 	for mainalias, aliasList := range typeAliases {
-		if _, isIn := e.StringInSlice(clean, aliasList); isIn {
+		if _, isIn := h.StringInSlice(clean, aliasList); isIn {
 			clean = mainalias
 			break
 		}
 	}
 	// testing if valid
-	if _, isIn := e.StringInSlice(clean, validTypes); !isIn {
+	if _, isIn := h.StringInSlice(clean, validTypes); !isIn {
 		return "", errors.New("Invalid type " + typ)
 	}
 	return clean, nil
@@ -146,8 +147,8 @@ func cleanHTML(desc string) string {
 }
 
 // CleanSliceAndTagEntries as remote or local among a list
-func CleanSliceAndTagEntries(ui e.UserInterface, local, remote string, options *[]string, otherStringsToClean ...string) {
-	e.RemoveDuplicates(options, otherStringsToClean...)
+func CleanSliceAndTagEntries(ui i.UserInterface, local, remote string, options *[]string, otherStringsToClean ...string) {
+	h.RemoveDuplicates(options, otherStringsToClean...)
 	// NOTE: what to do is local or remote are not found?
 	// NOTE: for now, ignore that
 	for i, x := range *options {

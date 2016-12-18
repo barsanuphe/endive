@@ -9,6 +9,7 @@ import (
 
 	en "github.com/barsanuphe/endive/endive"
 	"github.com/barsanuphe/endive/mock"
+	h "github.com/barsanuphe/helpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -179,7 +180,7 @@ func TestBookRefresh(t *testing.T) {
 		epubDir := filepath.Dir(testEpub.filename)
 		tempCopy := filepath.Join(parentDir, epubDir, "temp_"+epubFilename)
 
-		err := en.CopyFile(filepath.Join(parentDir, testEpub.filename), tempCopy)
+		err := h.CopyFile(filepath.Join(parentDir, testEpub.filename), tempCopy)
 		assert.Nil(err, "Error copying")
 
 		// creating Epub object

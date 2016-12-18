@@ -7,62 +7,11 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/barsanuphe/gotabulate"
+	i "github.com/barsanuphe/helpers/ui"
 	"github.com/moraes/isbn"
-	"github.com/tj/go-spin"
 )
-
-// TimeTrack helps track the time taken by a function.
-func TimeTrack(ui UserInterface, start time.Time, name string) {
-	elapsed := time.Since(start)
-	ui.Debugf("-- %s in %s\n", name, elapsed)
-}
-
-// StringInSlice checks if a string is in a []string.
-func StringInSlice(a string, list []string) (index int, isIn bool) {
-	for i, b := range list {
-		if b == a {
-			return i, true
-		}
-	}
-	return -1, false
-}
-
-// RemoveDuplicates in []string
-func RemoveDuplicates(options *[]string, otherStringsToClean ...string) {
-	found := make(map[string]bool)
-	// specifically remove other strings from values
-	for _, o := range otherStringsToClean {
-		found[o] = true
-	}
-	j := 0
-	for i, x := range *options {
-		if !found[x] && x != "" {
-			found[x] = true
-			(*options)[j] = (*options)[i]
-			j++
-		}
-	}
-	*options = (*options)[:j]
-}
-
-// StringInSliceCaseInsensitive checks if a string is in a []string, regardless of case.
-func StringInSliceCaseInsensitive(a string, list []string) (index int, isIn bool) {
-	for i, b := range list {
-		if strings.ToLower(b) == strings.ToLower(a) {
-			return i, true
-		}
-	}
-	return -1, false
-}
-
-// CaseInsensitiveContains checks if a substring is in a string, regardless of case.
-func CaseInsensitiveContains(s, substr string) bool {
-	s, substr = strings.ToLower(s), strings.ToLower(substr)
-	return strings.Contains(s, substr)
-}
 
 // TabulateRows of map[string]int.
 func TabulateRows(rows [][]string, headers ...string) (table string) {
@@ -125,7 +74,7 @@ func CleanISBN(full string) (isbn13 string, err error) {
 }
 
 // AskForISBN when not found in epub
-func AskForISBN(ui UserInterface) (string, error) {
+func AskForISBN(ui i.UserInterface) (string, error) {
 	if ui.Accept("Do you want to enter an ISBN manually") {
 		validChoice := false
 		errs := 0
@@ -156,42 +105,4 @@ func AskForISBN(ui UserInterface) (string, error) {
 		}
 	}
 	return "", errors.New("ISBN not set")
-}
-
-//SpinWhileThingsHappen is a way to launch a function and display a spinner while it is being executed.
-func SpinWhileThingsHappen(title string, f func() error) (err error) {
-	c1 := make(chan bool)
-	c2 := make(chan error)
-
-	// first routine for the spinner
-	ticker := time.NewTicker(time.Millisecond * 100)
-	go func() {
-		for range ticker.C {
-			c1 <- true
-		}
-	}()
-	// second routine deals with the function
-	go func() {
-		// run function
-		c2 <- f()
-	}()
-
-	// await both of these values simultaneously,
-	// dealing with each one as it arrives.
-	functionDone := false
-	s := spin.New()
-	for !functionDone {
-		select {
-		case <-c1:
-			fmt.Printf("\r%s... %s ", title, s.Next())
-		case err := <-c2:
-			if err != nil {
-				fmt.Printf("\r%s... KO.\n", title)
-				return err
-			}
-			fmt.Printf("\r%s... Done.\n", title)
-			functionDone = true
-		}
-	}
-	return
 }

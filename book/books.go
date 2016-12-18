@@ -9,6 +9,8 @@ import (
 	"github.com/kylelemons/godebug/pretty"
 
 	e "github.com/barsanuphe/endive/endive"
+	h "github.com/barsanuphe/helpers"
+	i "github.com/barsanuphe/helpers/ui"
 )
 
 // Books is a slice of Book.
@@ -37,7 +39,7 @@ func (bks *Books) Add(books ...e.GenericBook) {
 }
 
 // Propagate for all Books to be aware of Config and UI.
-func (bks *Books) Propagate(ui e.UserInterface, c e.Config) {
+func (bks *Books) Propagate(ui i.UserInterface, c e.Config) {
 	// make each Book aware of current Config + UI
 	for i := range *bks {
 		(*bks)[i].Config = c
@@ -281,7 +283,7 @@ func (bks Books) Diff(o e.Collection, newB e.Collection, modifiedB e.Collection,
 	// if in current and not in other, append to new
 	commonBooks := []Book{}
 	for _, k := range bks {
-		if _, isIn := e.StringInSlice(k.FullPath(), otherFullPaths); !isIn {
+		if _, isIn := h.StringInSlice(k.FullPath(), otherFullPaths); !isIn {
 			newB.Add(&k)
 		} else {
 			commonBooks = append(commonBooks, k)
@@ -289,7 +291,7 @@ func (bks Books) Diff(o e.Collection, newB e.Collection, modifiedB e.Collection,
 	}
 	// if in other and not in current, append to deleted
 	for _, p := range oBooks {
-		if _, isIn := e.StringInSlice(p.FullPath(), knownFullPaths); !isIn {
+		if _, isIn := h.StringInSlice(p.FullPath(), knownFullPaths); !isIn {
 			deletedB.Add(&p)
 		}
 	}

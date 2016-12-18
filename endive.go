@@ -8,21 +8,23 @@ import (
 	en "github.com/barsanuphe/endive/endive"
 	i "github.com/barsanuphe/endive/index"
 	l "github.com/barsanuphe/endive/library"
-	u "github.com/barsanuphe/endive/ui"
+	u "github.com/barsanuphe/helpers/ui"
+
+	"github.com/barsanuphe/helpers"
 )
 
 // Endive is the main struct here.
 type Endive struct {
 	hashes  en.KnownHashes
 	Config  en.Config
-	UI      en.UserInterface
+	UI      u.UserInterface
 	Library l.Library
 }
 
 // NewEndive constructs a valid new Epub
 func NewEndive() (*Endive, error) {
 	// init ui
-	var ui en.UserInterface
+	var ui u.UserInterface
 	ui = &u.UI{}
 	if err := ui.InitLogger(en.XdgLogPath); err != nil {
 		return nil, err
@@ -124,7 +126,7 @@ func (e *Endive) Refresh() (renamed int, err error) {
 					destination = book.NonRetailEpub.FullPath()
 				}
 				// check if retail epub already exists
-				_, err := en.FileExists(destination)
+				_, err := helpers.FileExists(destination)
 				if err == nil {
 					// file already exists
 					e.UI.Errorf("Found epub %s with the same hash as %s, ignoring.", epub.Filename, destination)
@@ -176,6 +178,6 @@ func (e *Endive) Refresh() (renamed int, err error) {
 		}
 	}
 	// remove all empty dirs
-	err = en.DeleteEmptyFolders(e.Config.LibraryRoot, e.UI)
+	err = helpers.DeleteEmptyFolders(e.Config.LibraryRoot, e.UI)
 	return
 }

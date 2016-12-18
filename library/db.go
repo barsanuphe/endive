@@ -7,6 +7,7 @@ import (
 
 	b "github.com/barsanuphe/endive/book"
 	e "github.com/barsanuphe/endive/endive"
+	h "github.com/barsanuphe/helpers"
 )
 
 // Backup current database.
@@ -62,20 +63,20 @@ func (l *Library) Save() (hasSaved bool, err error) {
 
 // RebuildIndex from scratch if necessary
 func (l *Library) RebuildIndex() error {
-	defer e.TimeTrack(l.UI, time.Now(), "Indexing")
+	defer h.TimeTrack(l.UI, time.Now(), "Indexing")
 	f := func() error {
 		return l.Index.Rebuild(l.Collection)
 	}
-	return e.SpinWhileThingsHappen("Indexing", f)
+	return h.SpinWhileThingsHappen("Indexing", f)
 }
 
 // CheckIndex from scratch if necessary
 func (l *Library) CheckIndex() error {
-	defer e.TimeTrack(l.UI, time.Now(), "Checking index")
+	defer h.TimeTrack(l.UI, time.Now(), "Checking index")
 	f := func() error {
 		return l.Index.Check(l.Collection)
 	}
-	return e.SpinWhileThingsHappen("Checking index", f)
+	return h.SpinWhileThingsHappen("Checking index", f)
 }
 
 func (l *Library) checkBooks() error {
@@ -98,9 +99,9 @@ func (l *Library) checkBooks() error {
 
 // Check all Books
 func (l *Library) Check() error {
-	defer e.TimeTrack(l.UI, time.Now(), "Checking")
+	defer h.TimeTrack(l.UI, time.Now(), "Checking")
 	f := func() error {
 		return l.checkBooks()
 	}
-	return e.SpinWhileThingsHappen("Checking", f)
+	return h.SpinWhileThingsHappen("Checking", f)
 }

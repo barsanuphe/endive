@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	e "github.com/barsanuphe/endive/endive"
+	h "github.com/barsanuphe/helpers"
 )
 
 const (
@@ -40,7 +40,7 @@ var usageMap = map[string]string{
 
 // ForceMetadataRefresh overwrites current Metadata
 func (b *Book) ForceMetadataRefresh() (err error) {
-	_, exists := e.FileExists(b.MainEpub().FullPath())
+	_, exists := h.FileExists(b.MainEpub().FullPath())
 	if exists == nil {
 		info, ok := b.MainEpub().ReadMetadata()
 		if ok != nil {
@@ -64,7 +64,7 @@ func (b *Book) ForceMetadataRefresh() (err error) {
 // ForceMetadataFieldRefresh overwrites current Metadata for a specific field only.
 func (b *Book) ForceMetadataFieldRefresh(field string) (err error) {
 	info := Metadata{}
-	_, exists := e.FileExists(b.MainEpub().FullPath())
+	_, exists := h.FileExists(b.MainEpub().FullPath())
 	if exists == nil {
 		info, err = b.MainEpub().ReadMetadata()
 		if err != nil {
@@ -147,7 +147,7 @@ func (b *Book) Set(field, value string) error {
 		switch publicFieldName {
 		case progressField:
 			// check it's a valid progress
-			if _, isIn := e.StringInSlice(value, validProgress); !isIn {
+			if _, isIn := h.StringInSlice(value, validProgress); !isIn {
 				return errors.New("Invalid reading progress: " + value)
 			}
 			structField.SetString(value)
